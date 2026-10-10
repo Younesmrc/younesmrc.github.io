@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Younes Arjdal — M2 MIND student at Sorbonne University, focused on Machine Learning, AI and Data." />
+  <meta name="theme-color" content="#0b1f3a" />
+  <title>Younes Arjdal — Machine Learning, AI & Data</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="#home" aria-label="Go to home">YA</a>
+
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <nav id="site-nav" class="site-nav" aria-label="Primary navigation">
+        <a href="#projects">Projects</a>
+        <a href="#skills">Skills</a>
+        <a href="#education">Education</a>
+        <a href="#languages">Languages</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section id="home" class="hero section">
+      <div class="container hero-grid">
+        <div>
+          <p class="eyebrow">Machine Learning · Artificial Intelligence · Data</p>
+          <h1>Younes Arjdal</h1>
+          <p class="hero-role">M2 MIND — Machine Learning, AI & Data<br />Sorbonne University</p>
+          <p class="hero-status">Looking for a final-year internship starting March 2027.</p>
+          <p class="hero-copy">
+            Second-year Master’s student in MIND at Sorbonne University. My projects span machine learning,
+            NLP, information retrieval, LLMs and data-oriented problems, with a particular interest in
+            experimentation, model evaluation and end-to-end workflows.
+          </p>
+
+          <div class="hero-actions" aria-label="Main links">
+            <a class="button button-primary" href="https://github.com/younesmrc" target="_blank" rel="noreferrer">GitHub</a>
+            <a class="button button-secondary" href="https://linkedin.com/in/younes-arjdal-1906b8231" target="_blank" rel="noreferrer">LinkedIn</a>
+            <a class="button button-secondary" href="assets/Younes-Arjdal-CV.pdf" target="_blank" rel="noreferrer">CV</a>
+          </div>
+        </div>
+
+        <aside class="hero-card" aria-label="Profile summary">
+          <div class="hero-card-topline"></div>
+          <p class="hero-card-label">Current</p>
+          <h2>M2 MIND</h2>
+          <p>Sorbonne University<br />2026–2027</p>
+          <div class="hero-card-divider"></div>
+          <p class="hero-card-label">Focus</p>
+          <p>ML · NLP · LLMs · Retrieval · Data</p>
+          <div class="hero-card-divider"></div>
+          <p class="hero-card-label">Based in</p>
+          <p>Paris, France</p>
+        </aside>
+      </div>
+    </section>
+
+    <section id="projects" class="section section-alt">
+      <div class="container">
+        <div class="section-heading">
+          <p class="eyebrow">Selected work</p>
+          <h2>Projects</h2>
+          <p>Selected projects covering LLMs, information retrieval, machine learning, NLP and data engineering.</p>
+        </div>
+
+        <div class="project-grid">
+          <article class="project-card project-featured">
+            <div class="project-meta">
+              <span>2026</span>
+              <span>M1 MIND Research Project · Sorbonne University / LIP6</span>
+            </div>
+            <h3>Structured Outputs for LLMs: JSON Schema & Constrained Decoding</h3>
+            <p>
+              Experimental pipeline for improving the reliability of structured output generation with LLMs.
+              Integrated constrained decoding with Llama-3.1, validated outputs with JSON Schema, and analyzed
+              complex-schema limitations, timeouts and compliance errors.
+            </p>
+            <div class="tags" aria-label="Project keywords">
+              <span>LLMs</span><span>Llama-3.1</span><span>Outlines</span><span>Guidance</span><span>JSON Schema</span>
+            </div>
+          </article>
+
+          <article class="project-card">
+            <div class="project-meta">
+              <span>2025</span>
+              <span>M1 MIND · Information Retrieval</span>
+            </div>
+            <h3>Information Retrieval Engine: BM25 & Guided Traversal</h3>
+            <p>
+              Reimplemented a sparse search engine inspired by a SIGIR paper, including an inverted index,
+              BM25 scoring, neural scores and Guided Traversal. Worked on posting lists, top-K retrieval,
+              query-document scoring and efficiency-relevance trade-offs.
+            </p>
+            <div class="tags">
+              <span>Information Retrieval</span><span>BM25</span><span>Guided Traversal</span><span>Top-K Retrieval</span>
+            </div>
+          </article>
+
+          <article class="project-card">
+            <div class="project-meta">
+              <span>2025</span>
+              <span>M1 MIND · DALAS</span>
+            </div>
+            <h3>Road Accident Severity: Data Enrichment & Interpretable ML</h3>
+            <p>
+              Built a pipeline to study how weather conditions relate to road accident severity. Combined open
+              accident data with historical weather data, automated collection with Selenium, processed data with
+              PostgreSQL/PostGIS, then performed modeling and interpretability analysis.
+            </p>
+            <div class="tags">
+              <span>Interpretable ML</span><span>PostgreSQL</span><span>PostGIS</span><span>Selenium</span><span>Geospatial Data</span>
+            </div>
+          </article>
+
+          <article class="project-card">
+            <div class="project-meta">
+              <span>2026</span>
+              <span>M1 MIND · Kaggle Competition</span>
+            </div>
+            <h3>Bioacoustic Classification: Multi-label Audio ML</h3>
+            <p>
+              Designed a multi-label audio classification pipeline for species identification from Pantanal
+              soundscapes. Extracted classical audio descriptors, trained One-vs-Rest models across 234 classes,
+              handled label imbalance and analyzed the focal-recording / test-data domain gap.
+            </p>
+            <div class="tags">
+              <span>Audio ML</span><span>Multi-label</span><span>MFCC</span><span>Librosa</span><span>One-vs-Rest</span>
+            </div>
+          </article>
+
+          <article class="project-card">
+            <div class="project-meta">
+              <span>2025</span>
+              <span>M1 MIND · RITAL</span>
+            </div>
+            <h3>Classical NLP & CamemBERT Fine-tuning</h3>
+            <p>
+              Compared classical NLP approaches with CamemBERT fine-tuning for text classification and speaker
+              identification tasks on imbalanced datasets.
+            </p>
+            <div class="tags">
+              <span>NLP</span><span>CamemBERT</span><span>Fine-tuning</span><span>Text Classification</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="skills" class="section">
+      <div class="container">
+        <div class="section-heading">
+          <p class="eyebrow">Toolkit</p>
+          <h2>Skills</h2>
+        </div>
+
+        <div class="skills-grid">
+          <article class="skill-card">
+            <h3>Programming</h3>
+            <p>Python, SQL, C, JavaScript, Bash, Linux, Git</p>
+          </article>
+
+          <article class="skill-card">
+            <h3>Machine Learning / AI</h3>
+            <p>Supervised and unsupervised learning, ensemble learning, probabilistic models, dimensionality reduction, recommender systems, fundamentals of reinforcement learning</p>
+          </article>
+
+          <article class="skill-card">
+            <h3>NLP / LLMs / Retrieval</h3>
+            <p>Text classification, fine-tuning, structured outputs, constrained decoding, information retrieval</p>
+          </article>
+
+          <article class="skill-card">
+            <h3>Libraries / Frameworks</h3>
+            <p>NumPy, Pandas, scikit-learn, PyTorch, Hugging Face Transformers, CatBoost, XGBoost, Librosa</p>
+          </article>
+
+          <article class="skill-card">
+            <h3>Data</h3>
+            <p>PostgreSQL/PostGIS, Selenium, web scraping, preprocessing, feature engineering, geospatial and audio data</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="education" class="section section-alt">
+      <div class="container">
+        <div class="section-heading">
+          <p class="eyebrow">Academic background</p>
+          <h2>Education</h2>
+        </div>
+
+        <div class="timeline">
+          <article class="timeline-item">
+            <div class="timeline-marker" aria-hidden="true"></div>
+            <div>
+              <p class="timeline-date">2026–2027</p>
+              <h3>M2 MIND — Machine Learning, AI & Data</h3>
+              <p>Sorbonne University</p>
+            </div>
+          </article>
+
+          <article class="timeline-item">
+            <div class="timeline-marker" aria-hidden="true"></div>
+            <div>
+              <p class="timeline-date">2025–2026</p>
+              <h3>M1 MIND — Machine Learning, AI & Data</h3>
+              <p>Sorbonne University</p>
+            </div>
+          </article>
+
+          <article class="timeline-item">
+            <div class="timeline-marker" aria-hidden="true"></div>
+            <div>
+              <p class="timeline-date">Fall 2024</p>
+              <h3>International Exchange Semester</h3>
+              <p>Université de Montréal (UdeM), Canada</p>
+            </div>
+          </article>
+
+          <article class="timeline-item">
+            <div class="timeline-marker" aria-hidden="true"></div>
+            <div>
+              <p class="timeline-date">2022–2025</p>
+              <h3>Bachelor’s Degree in Computer Science</h3>
+              <p>Sorbonne University</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="languages" class="section">
+      <div class="container">
+        <div class="section-heading">
+          <p class="eyebrow">Languages</p>
+          <h2>Languages</h2>
+        </div>
+
+        <div class="language-grid">
+          <div class="language-card"><strong>French</strong><span>Native</span></div>
+          <div class="language-card"><strong>Berber</strong><span>Native</span></div>
+          <div class="language-card"><strong>English</strong><span>B2</span></div>
+          <div class="language-card"><strong>German</strong><span>B1</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" class="section contact-section">
+      <div class="container contact-card">
+        <div>
+          <p class="eyebrow">Contact</p>
+          <h2>Let’s connect.</h2>
+          <p>I am currently seeking a final-year internship starting March 2027.</p>
+        </div>
+
+        <div class="contact-links">
+          <a href="mailto:younesarjdal@yahoo.com">younesarjdal@yahoo.com</a>
+          <a href="https://github.com/younesmrc" target="_blank" rel="noreferrer">github.com/younesmrc</a>
+          <a href="https://linkedin.com/in/younes-arjdal-1906b8231" target="_blank" rel="noreferrer">LinkedIn</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-wrap">
+      <p>© <span id="current-year">2026</span> Younes Arjdal</p>
+      <a href="#home">Back to top ↑</a>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
