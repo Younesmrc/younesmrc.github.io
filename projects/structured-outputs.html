@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Structured Outputs for LLMs — research project by Younes Arjdal on JSON Schema, constrained decoding, Outlines and Guidance." />
+  <meta name="theme-color" content="#0b1f3a" />
+  <title>Structured Outputs for LLMs — Younes Arjdal</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="../index.html#home" aria-label="Go to home">YA</a>
+      <nav class="site-nav project-nav" aria-label="Project navigation">
+        <a href="../index.html#projects">← All projects</a>
+        <a href="#results">Results</a>
+        <a href="#report">Report</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="project-hero section">
+      <div class="container project-hero-grid">
+        <div>
+          <a class="back-link" href="../index.html#projects">← Back to projects</a>
+          <p class="eyebrow">M1 MIND Research Project · 2026</p>
+          <h1>Structured Outputs for LLMs</h1>
+          <p class="project-subtitle">JSON Schema & Constrained Decoding</p>
+          <p class="project-lead">
+            Reproduction and extension of JSONSchemaBench to study how constrained-decoding frameworks
+            improve the reliability of structured JSON generation with LLMs — and where they still fail.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="../assets/projects/structured-outputs/report.pdf" target="_blank" rel="noreferrer">Read the report</a>
+            <a class="button button-secondary" href="#results">See results</a>
+          </div>
+        </div>
+
+        <aside class="project-facts" aria-label="Project facts">
+          <div><span>Context</span><strong>M1 MIND · Sorbonne University / LIP6</strong></div>
+          <div><span>Format</span><strong>Pair project</strong></div>
+          <div><span>Model</span><strong>Llama-3.1-1B-Instruct</strong></div>
+          <div><span>Frameworks</span><strong>Outlines · Guidance</strong></div>
+          <div><span>Benchmark</span><strong>JSONSchemaBench · 9,558 schemas</strong></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section section-alt">
+      <div class="container project-content narrow-content">
+        <p class="eyebrow">Problem</p>
+        <h2>Making LLM outputs reliable enough for software</h2>
+        <p class="large-copy">
+          Prompting a model to “return JSON” does not guarantee that the result is syntactically valid or that it
+          satisfies a target JSON Schema. Constrained decoding addresses this by restricting the tokens that can be
+          generated at each step so the output remains compatible with a formal specification.
+        </p>
+        <p>
+          The project studied the practical trade-off behind that promise: a framework must not only enforce the
+          schema, but also compile complex constraints, finish generation in reasonable time, and remain robust across
+          real-world schemas.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-heading">
+          <p class="eyebrow">Approach</p>
+          <h2>From schema to validated output</h2>
+          <p>The experiments separate failures by stage instead of reducing everything to one global score.</p>
+        </div>
+
+        <div class="process-grid" aria-label="Experimental pipeline">
+          <article class="process-step"><span>01</span><h3>JSON Schema</h3><p>Take a target schema from JSONSchemaBench.</p></article>
+          <article class="process-step"><span>02</span><h3>Compile constraints</h3><p>Translate the schema with Outlines or Guidance.</p></article>
+          <article class="process-step"><span>03</span><h3>Generate</h3><p>Run constrained generation with Llama-3.1-1B-Instruct.</p></article>
+          <article class="process-step"><span>04</span><h3>Validate</h3><p>Check the final instance with an external JSON Schema validator.</p></article>
+        </div>
+
+        <div class="split-copy">
+          <article>
+            <h3>Pipeline A — end-to-end generation</h3>
+            <p>Measures the complete system: schema compilation, constrained generation and final validation. Failures are categorized as compilation, generation or validation errors.</p>
+          </article>
+          <article>
+            <h3>Pipeline B — feature-level evaluation</h3>
+            <p>Removes the LLM from the loop and tests compiler behavior directly against controlled valid and invalid instances from the JSON Schema Test Suite.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="results" class="section results-section">
+      <div class="container">
+        <div class="section-heading light-heading">
+          <p class="eyebrow">Key results</p>
+          <h2>Constrained decoding changes the reliability profile.</h2>
+          <p>The most useful result was not only who scored higher, but why.</p>
+        </div>
+
+        <div class="metric-grid">
+          <article class="metric-card"><span class="metric-value">0.4%</span><h3>Free generation</h3><p>39 valid outputs out of 9,558 schemas without a constrained-decoding framework.</p></article>
+          <article class="metric-card"><span class="metric-value">53.8%</span><h3>Outlines</h3><p>Global success rate, with failures concentrated heavily at compilation.</p></article>
+          <article class="metric-card metric-highlight"><span class="metric-value">≈80%</span><h3>Guidance</h3><p>Higher global coverage in the experimental setup and very low validation-error rate.</p></article>
+        </div>
+
+        <div class="result-comparison">
+          <div class="comparison-header">
+            <div><span>Framework</span></div><div><span>Accepted schemas</span></div><div><span>Success after compilation</span></div><div><span>Invalid outputs after generation</span></div>
+          </div>
+          <div class="comparison-row">
+            <div><strong>Outlines</strong><small>FSM-based</small></div><div><strong>5,827 / 9,558</strong></div><div><strong>88.6%</strong></div><div><strong>6.7%</strong></div>
+          </div>
+          <div class="comparison-row">
+            <div><strong>Guidance</strong><small>Interleaved / fast-forwarding</small></div><div><strong>8,549 / 9,558</strong></div><div><strong>89.5%</strong></div><div><strong>0.8%</strong></div>
+          </div>
+        </div>
+
+        <div class="project-insight">
+          <p class="eyebrow">Main insight</p>
+          <h3>The global gap mostly comes from compilation coverage, not post-compilation generation quality.</h3>
+          <p>
+            Once compilation succeeds, Outlines and Guidance are almost tied in success rate (88.6% vs 89.5%).
+            Guidance’s much higher overall score is mainly explained by its ability to accept more schemas in this setup.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt">
+      <div class="container">
+        <div class="section-heading">
+          <p class="eyebrow">Failure analysis</p>
+          <h2>Different frameworks fail at different stages.</h2>
+        </div>
+        <div class="failure-grid">
+          <article class="failure-card">
+            <span class="failure-label">Outlines</span>
+            <h3>Early failures</h3>
+            <p>Failures are dominated by compilation issues. Logical operators such as <code>not</code>, <code>oneOf</code>, <code>anyOf</code> or <code>if</code> can make FSM-based compilation expensive or unsupported.</p>
+          </article>
+          <article class="failure-card">
+            <span class="failure-label">Guidance</span>
+            <h3>Later failures</h3>
+            <p>Guidance rejects unsupported features more cautiously, then generally preserves conformity. Its main remaining failure mode is generation timeout on long or complex schemas.</p>
+          </article>
+        </div>
+        <p class="method-note"><strong>Important limitation:</strong> the pipeline used a 60-second compilation timeout, which structurally penalizes Outlines. The report therefore treats these numbers as experimental results under a specific setup, not universal framework rankings.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container project-content narrow-content">
+        <p class="eyebrow">Experimental setup</p>
+        <h2>Reproduction under real compute constraints</h2>
+        <p>
+          Experiments ran on Sorbonne University’s shared PPTI GPU infrastructure, primarily on a server equipped with
+          Tesla V100-SXM2 GPUs. The project used Outlines v0.1.8, Guidance v0.3 and Llama-3.1-1B-Instruct.
+        </p>
+        <p>
+          Shared VRAM, storage constraints, timeouts, crashes and dependency/version issues shaped the scope of the
+          reproduction. A watchdog mechanism was used to relaunch interrupted experiments, and the analysis prioritized
+          failure causes over an exhaustive latency benchmark.
+        </p>
+      </div>
+    </section>
+
+    <section id="report" class="section report-section section-alt">
+      <div class="container report-card">
+        <div>
+          <p class="eyebrow">Full report</p>
+          <h2>Want the full methodology?</h2>
+          <p>The 34-page project report contains the constrained-decoding formalization, JSON Schema examples, benchmark pipelines, feature-level analysis, experimental results and perspectives.</p>
+        </div>
+        <a class="button button-primary" href="../assets/projects/structured-outputs/report.pdf" target="_blank" rel="noreferrer">Open PDF report</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-wrap">
+      <p>© 2026 Younes Arjdal</p>
+      <a href="../index.html#projects">Back to projects ↑</a>
+    </div>
+  </footer>
+</body>
+</html>
