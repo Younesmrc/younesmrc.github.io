@@ -1,296 +1,846 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Structured Outputs for LLMs — constrained decoding with JSON Schema, Outlines and Guidance." />
-  <meta name="theme-color" content="#071426" />
+  <meta name="description" content="Structured Outputs for LLMs: reproducing JSONSchemaBench with Outlines and Guidance to see where constrained decoding holds and where it fails." />
+  <meta name="theme-color" content="#06121f" />
   <title>Structured Outputs for LLMs — Younes Arjdal</title>
   <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="../style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script>document.documentElement.classList.replace('no-js', 'js');</script>
+  <style>
+    :root {
+      --ink: #06121f;
+      --ink-2: #0a1b2e;
+      --paper: #f4f6f8;
+      --text: #12202e;
+      --muted: #566677;
+      --line: #d6dee6;
+      --dline: rgba(255, 255, 255, 0.13);
+      --blue: #1d5f9b;
+      --cy: #6bb8f5;
+      --ok: #4fd69c;
+      --bad: #ff7a84;
+      --c-compile: #c98a12;
+      --c-gen: #6d4fe0;
+      --c-val: #d63d46;
+      --c-ok: #178f5b;
+      --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --r: 8px;
+      --w: 1160px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background: var(--paper);
+      font-family: var(--sans);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    code { font-family: var(--mono); }
+    .wrap { width: min(calc(100% - 40px), var(--w)); margin: 0 auto; }
+    :focus-visible { outline: 3px solid rgba(107, 184, 245, 0.7); outline-offset: 3px; }
+
+    /* ---------- Header ---------- */
+    .top {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(6, 18, 31, 0.84);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--dline);
+    }
+    .top .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 64px; }
+    .brand {
+      display: grid; place-items: center; width: 38px; height: 38px;
+      border-radius: 9px; background: #fff; color: var(--ink);
+      font-weight: 600; letter-spacing: -0.03em; text-decoration: none;
+    }
+    .top nav { display: flex; gap: 26px; }
+    .top nav a { color: #b4c4d4; font-size: 0.9rem; font-weight: 500; text-decoration: none; }
+    .top nav a:hover { color: #fff; }
+
+    /* ---------- Buttons ---------- */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 44px; padding: 0 18px; border-radius: var(--r);
+      border: 1px solid transparent; font: 600 0.92rem var(--sans);
+      text-decoration: none; cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.15s;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-light { background: #fff; color: var(--ink); }
+    .btn-light:hover { background: #e6eef6; }
+    .btn-ghost { background: transparent; color: #dbe7f2; border-color: rgba(255, 255, 255, 0.25); }
+    .btn-ghost:hover { border-color: rgba(255, 255, 255, 0.6); }
+    .btn-dark { background: var(--ink); color: #fff; }
+    .btn-dark:hover { background: #12304f; }
+    .btn[disabled] { opacity: 0.4; cursor: default; transform: none; }
+
+    /* ---------- Hero ---------- */
+    .hero { background: var(--ink); color: #fff; padding: 56px 0 88px; }
+    .back { display: inline-block; margin-bottom: 44px; color: #8fa6bb; font-size: 0.9rem; text-decoration: none; }
+    .back:hover { color: #fff; }
+    .hero-head { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); gap: 56px; align-items: end; }
+    h1 {
+      margin: 0; font-size: clamp(2.8rem, 6.6vw, 5.8rem);
+      line-height: 0.98; letter-spacing: -0.045em; font-weight: 600;
+    }
+    .sub { margin: 20px 0 0; font: 400 1rem var(--mono); color: var(--cy); }
+    .lede { margin: 0 0 24px; max-width: 52ch; color: #b9c9d9; font-size: 1.06rem; }
+    .meta { display: grid; gap: 10px; margin: 0; font-size: 0.88rem; }
+    .meta div { display: grid; grid-template-columns: 92px 1fr; gap: 12px; padding-top: 10px; border-top: 1px solid var(--dline); }
+    .meta dt { color: #7f95aa; }
+    .meta dd { margin: 0; color: #dbe7f2; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+
+    /* ---------- Live demo ---------- */
+    .demo {
+      margin-top: 64px; padding: 28px;
+      border: 1px solid var(--dline); border-radius: 12px;
+      background: var(--ink-2);
+    }
+    .demo-intro { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 20px; }
+    .demo-intro h2 { margin: 0; font-size: 1.25rem; letter-spacing: -0.02em; font-weight: 600; }
+    .demo-intro p { margin: 0; max-width: 62ch; color: #9fb4c8; font-size: 0.95rem; }
+    .schema-chip { font: 500 0.82rem var(--mono); color: #d8edff; padding: 4px 10px; border: 1px solid rgba(107, 184, 245, 0.4); border-radius: 6px; background: rgba(107, 184, 245, 0.1); white-space: nowrap; }
+    .demo-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; border-top: 1px solid var(--dline); border-bottom: 1px solid var(--dline); }
+    .switch { display: inline-flex; align-items: center; gap: 12px; color: #dbe7f2; font-weight: 500; cursor: pointer; }
+    .switch input { position: absolute; opacity: 0; pointer-events: none; }
+    .knob { position: relative; width: 46px; height: 26px; border-radius: 99px; background: #2a4561; transition: background 0.2s; }
+    .knob::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+    .switch input:checked + .knob { background: var(--ok); }
+    .switch input:checked + .knob::after { transform: translateX(20px); }
+    .switch input:focus-visible + .knob { outline: 3px solid rgba(107, 184, 245, 0.7); outline-offset: 3px; }
+    .switch b { font-family: var(--mono); font-weight: 600; }
+    .demo-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .fsm { display: flex; align-items: flex-end; overflow-x: auto; padding: 26px 2px 10px; scrollbar-width: thin; }
+    .fsm-node {
+      flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+      border: 1.5px solid #3b5876; color: #8fa6bb; font: 500 0.8rem var(--mono); transition: all 0.25s;
+    }
+    .fsm-node.acc { box-shadow: inset 0 0 0 3px var(--ink-2), inset 0 0 0 4.5px #3b5876; }
+    .fsm-node.cur { border-color: var(--cy); color: #fff; background: rgba(107, 184, 245, 0.18); box-shadow: 0 0 0 6px rgba(107, 184, 245, 0.12); }
+    .fsm-node.done { border-color: var(--ok); color: var(--ok); }
+    .fsm-edge { flex: 1 0 70px; min-width: 70px; padding: 0 6px; text-align: center; font: 500 0.78rem var(--mono); color: #7f98b0; }
+    .fsm-edge::after { content: ""; display: block; height: 1px; margin: 22px 0 21px; background: #3b5876; }
+    .fsm.off { opacity: 0.4; }
+    .fsm-note { margin: 4px 0 0; color: #7f98b0; font-size: 0.82rem; min-height: 1.4em; }
+
+    .thead, .trow { display: grid; grid-template-columns: minmax(96px, 0.9fr) minmax(0, 1fr) 54px minmax(0, 1.3fr); gap: 16px; align-items: center; }
+    .thead { padding: 22px 14px 10px; color: #7189a1; font-size: 0.78rem; }
+    .trow { padding: 10px 14px; border: 1px solid transparent; border-radius: 10px; transition: opacity 0.3s, background 0.3s; }
+    .trow.pick { background: rgba(107, 184, 245, 0.09); border-color: rgba(107, 184, 245, 0.35); }
+    .trow.masked { opacity: 0.38; }
+    .ttok { width: fit-content; max-width: 100%; padding: 4px 9px; border-radius: 6px; background: rgba(255, 255, 255, 0.06); color: #e8f1f8; font: 500 0.9rem var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ttok.legal { box-shadow: inset 0 0 0 1px rgba(79, 214, 156, 0.45); }
+    .ttok.illegal { box-shadow: inset 0 0 0 1px rgba(255, 122, 132, 0.45); }
+    .tlogit, .tprob { display: flex; align-items: center; gap: 10px; }
+    .bar { flex: 1; height: 8px; border-radius: 99px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
+    .bar i { display: block; width: 0; height: 100%; border-radius: inherit; background: #5a7894; transition: width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .tprob .legal i { background: var(--ok); }
+    .tprob .illegal i { background: var(--bad); }
+    .tlogit span, .tprob span { min-width: 46px; text-align: right; color: #9fb4c8; font: 500 0.78rem var(--mono); }
+    .tmask { text-align: center; font: 600 0.8rem var(--mono); }
+    .tmask.zero { color: var(--ok); }
+    .tmask.inf { color: var(--bad); }
+    .tmask.na { color: #58728c; }
+    .demo-done { margin: 18px 0 4px; padding: 16px 18px; border-left: 3px solid var(--cy); background: rgba(107, 184, 245, 0.07); color: #cfe0ef; }
+    .legend-line { display: flex; flex-wrap: wrap; gap: 18px; margin: 12px 14px 0; color: #7f98b0; font-size: 0.8rem; }
+    .legend-line span::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 7px; border-radius: 50%; background: var(--ok); }
+    .legend-line span:nth-child(2)::before { background: var(--bad); }
+
+    .out { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 22px; padding: 16px 18px; border-radius: 10px; background: #050e18; border: 1px solid var(--dline); }
+    .out-label { color: #7189a1; font-size: 0.8rem; }
+    #demo-out { flex: 1 1 260px; font: 500 1.02rem var(--mono); color: #dbe7f2; word-break: break-word; }
+    #demo-out span.o-ok { color: var(--ok); }
+    #demo-out span.o-bad { color: var(--bad); text-decoration: underline wavy rgba(255, 122, 132, 0.6); text-underline-offset: 4px; }
+    .verdict { padding: 5px 12px; border-radius: 99px; font-size: 0.82rem; font-weight: 600; }
+    .verdict.ok { background: rgba(79, 214, 156, 0.15); color: var(--ok); }
+    .verdict.bad { background: rgba(255, 122, 132, 0.15); color: var(--bad); }
+
+    /* ---------- Sections ---------- */
+    .sec { padding: 104px 0; }
+    .sec.white { background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .sec.dark { background: var(--ink); color: #fff; }
+    .split { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 72px; }
+    .split > header { align-self: start; position: sticky; top: 96px; }
+    h2 { margin: 0 0 16px; font-size: clamp(1.9rem, 3.4vw, 2.8rem); line-height: 1.1; letter-spacing: -0.035em; font-weight: 600; }
+    .split > header p { max-width: 34ch; margin: 0; color: var(--muted); }
+    .dark .split > header p { color: #9fb4c8; }
+    h3 { margin: 0; font-size: 1.15rem; letter-spacing: -0.02em; font-weight: 600; }
+    p { margin-top: 0; }
+
+    /* Approach */
+    .steps { counter-reset: s; margin: 0 0 56px; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .steps li { display: grid; grid-template-columns: 36px 130px 1fr; gap: 16px; align-items: baseline; padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .steps li::before { counter-increment: s; content: counter(s); color: var(--blue); font: 500 0.9rem var(--mono); }
+    .steps b { font-size: 1.15rem; letter-spacing: -0.02em; font-weight: 600; }
+    .steps span { color: var(--muted); }
+    .tests { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+    .test { padding-top: 16px; border-top: 3px solid var(--ink); }
+    .test p { margin: 10px 0 0; color: var(--muted); }
+    .test ul { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 0.92rem; }
+    .test li::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 9px; border-radius: 2px; background: var(--c); }
+    .k-compile { --c: var(--c-compile); } .k-gen { --c: var(--c-gen); } .k-val { --c: var(--c-val); } .k-ok { --c: var(--c-ok); }
+
+    /* Results */
+    .stack-group { max-width: 100%; }
+    .sb { display: grid; grid-template-columns: 150px minmax(0, 1fr) 84px; gap: 20px; align-items: center; padding: 14px 0; border-top: 1px solid var(--dline); }
+    .sb-name b { display: block; font-weight: 600; }
+    .sb-name small { color: #8097ac; }
+    .stack { display: flex; height: 34px; border-radius: 6px; overflow: hidden; background: rgba(255, 255, 255, 0.06); }
+    .stack i { display: block; width: var(--w); height: 100%; padding-left: 8px; overflow: hidden; color: #06121f; font: 500 0.72rem/34px var(--mono); font-style: normal; white-space: nowrap; transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .js .stack:not(.on) i { width: 0; }
+    .s-ok { background: var(--ok); } .s-val { background: var(--bad); } .s-gen { background: #b79cff; } .s-compile { background: #f5c26b; }
+    .sb-val { text-align: right; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.03em; }
+    .sb.hl .sb-val { color: var(--ok); }
+    .legend { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 18px 0 0; color: #9fb4c8; font-size: 0.85rem; }
+    .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 8px; border-radius: 2px; background: var(--c); }
+    .legend .k-ok { --c: var(--ok); } .legend .k-val { --c: var(--bad); } .legend .k-gen { --c: #b79cff; } .legend .k-compile { --c: #f5c26b; }
+    .res-block + .res-block { margin-top: 72px; }
+    .res-block h3 { margin-bottom: 8px; font-size: 1.5rem; letter-spacing: -0.03em; }
+    .res-block > p { max-width: 62ch; margin-bottom: 20px; color: #a9bccd; }
+
+    /* Failures */
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+    .tab { min-height: 40px; padding: 0 16px; border: 1px solid var(--line); border-radius: 99px; background: #fff; color: var(--text); font: 500 0.92rem var(--sans); cursor: pointer; }
+    .tab[aria-selected="true"], .tab[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .fa-head { max-width: 60ch; margin-bottom: 32px; }
+    .fa-head h3 { margin-bottom: 8px; font-size: 1.6rem; letter-spacing: -0.03em; }
+    .fa-head p { margin: 0; color: var(--muted); }
+    .fa-stages { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 36px; }
+    .fa-stage { border-top: 3px solid var(--c); }
+    .fa-stage h4 { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 14px 0 4px; font-size: 1.02rem; font-weight: 600; }
+    .fa-stage h4 span { color: var(--muted); font: 500 0.82rem var(--mono); white-space: nowrap; }
+    .fa-group { margin: 16px 0 2px; color: var(--muted); font-size: 0.8rem; }
+    .fa-row { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) 40px; gap: 10px; align-items: center; padding: 5px 0; }
+    .fa-row code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.78rem; }
+    .fa-bar { height: 8px; border-radius: 99px; background: #e6ecf2; overflow: hidden; }
+    .fa-bar i { display: block; width: var(--w); height: 100%; border-radius: inherit; background: var(--c); transition: width 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .js .fa-bar:not(.on) i { width: 0; }
+    .fa-row b { text-align: right; font: 500 0.8rem var(--mono); }
+
+    /* Features */
+    .insights { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; margin-bottom: 56px; }
+    .insights div { padding-top: 14px; border-top: 3px solid var(--ink); }
+    .insights h3 { margin-bottom: 8px; font-size: 1.05rem; }
+    .insights p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+    .hm-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+    .hm-tools .tab { min-height: 36px; font-size: 0.85rem; }
+    table.hm { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .hm th { padding: 10px 8px; border-bottom: 2px solid var(--ink); color: var(--text); font-size: 0.85rem; font-weight: 600; text-align: left; }
+    .hm th:not(:first-child) { text-align: center; }
+    .hm td { padding: 0; border-bottom: 1px solid var(--line); }
+    .hm td.f { padding: 9px 8px; font: 500 0.84rem var(--mono); }
+    .hm td.v { width: 19%; }
+    .hm td.v span { display: block; padding: 9px 0; text-align: center; font: 500 0.84rem var(--mono); }
+    .hm td.b span { background: rgba(18, 32, 46, calc(var(--v) * 0.5)); color: var(--text); }
+    .hm td.o span, .hm td.g span { background: rgba(29, 95, 155, calc(var(--v) * 0.92)); color: var(--text); }
+    .hm td.hi span { color: #fff; }
+    .hm-note { margin: 14px 0 0; color: var(--muted); font-size: 0.85rem; max-width: 70ch; }
+
+    /* Limits & next */
+    .rows { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .rows > li, .rows > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 32px; padding: 22px 0; border-bottom: 1px solid var(--line); }
+    .rows dt, .rows h3 { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; }
+    .rows dd, .rows p { margin: 0; color: var(--muted); }
+    .rows dd strong { color: var(--text); font-weight: 600; }
+    .drift { display: grid; gap: 4px; margin-top: 12px; font: 400 0.82rem var(--mono); color: var(--text); }
+    .dark .rows { border-color: var(--dline); }
+    .dark .rows > li { border-color: var(--dline); }
+    .dark .rows p { color: #a9bccd; }
+    .dark .rows h3 { color: #fff; }
+
+    /* Report */
+    .report { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 32px; }
+    .report h2 { max-width: 20ch; }
+    .report p { max-width: 56ch; margin: 0 0 20px; color: #a9bccd; }
+
+    footer.foot { padding: 30px 0 42px; color: var(--muted); font-size: 0.88rem; }
+    footer.foot .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+    footer.foot a { text-decoration: none; font-weight: 500; color: var(--blue); }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 980px) {
+      .hero-head { grid-template-columns: 1fr; gap: 36px; }
+      .split { grid-template-columns: 1fr; gap: 32px; }
+      .split > header { position: static; }
+      .insights, .tests { grid-template-columns: 1fr; }
+      .rows > li, .rows > div { grid-template-columns: 1fr; gap: 8px; }
+    }
+    @media (max-width: 720px) {
+      .top nav a:not(:first-child) { display: none; }
+      .sec { padding: 72px 0; }
+      .demo { padding: 20px 16px; }
+      .thead, .trow { grid-template-columns: minmax(80px, 1fr) 44px minmax(0, 1.4fr); gap: 10px; }
+      .thead > :nth-child(2), .trow > .tlogit { display: none; }
+      .steps li { grid-template-columns: 28px 1fr; }
+      .steps li span { grid-column: 2; }
+      .sb { grid-template-columns: 1fr 70px; gap: 10px 12px; }
+      .sb-name { grid-column: 1 / -1; }
+      .sb .stack { grid-column: 1; }
+      .sb-val { grid-column: 2; font-size: 1.2rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: 0.01ms !important; }
+    }
+  </style>
 </head>
-<body class="case-study-page">
-  <header class="site-header case-header">
-    <div class="container nav-wrap">
+<body>
+  <header class="top">
+    <div class="wrap">
       <a class="brand" href="../index.html#home" aria-label="Go to home">YA</a>
-      <nav class="site-nav project-nav" aria-label="Project navigation">
+      <nav aria-label="Project navigation">
         <a href="../index.html#projects">All projects</a>
         <a href="#approach">Approach</a>
         <a href="#results">Results</a>
+        <a href="#failures">Failures</a>
+        <a href="#features">Features</a>
         <a href="#report">Report</a>
       </nav>
     </div>
   </header>
 
   <main>
-    <section class="case-hero">
-      <div class="container">
-        <a class="case-back" href="../index.html#projects">← Back to projects</a>
+    <!-- ================= HERO + LIVE DEMO ================= -->
+    <section class="hero" id="top">
+      <div class="wrap">
+        <a class="back" href="../index.html#projects">← Back to projects</a>
 
-        <div class="case-hero-grid">
-          <div class="case-hero-copy">
-            <p class="eyebrow">M1 MIND Research Project · Sorbonne University / LIP6 · 2026</p>
+        <div class="hero-head">
+          <div>
             <h1>Structured Outputs<br />for LLMs</h1>
-            <p class="case-subtitle">JSON Schema & Constrained Decoding</p>
-            <p class="case-intro">
-              Reproducing and extending JSONSchemaBench to understand when constrained-decoding frameworks
-              make LLM-generated JSON reliable — and what actually causes them to fail.
+            <p class="sub">JSON Schema and constrained decoding</p>
+          </div>
+          <div>
+            <p class="lede">
+              A model asked for JSON can still break the schema your code depends on. Constrained decoding blocks the
+              illegal tokens while the model writes. We reproduced JSONSchemaBench on 9,558 real schemas to see where
+              that works and where it fails.
             </p>
-
-            <div class="case-tags" aria-label="Project technologies">
-              <span>Llama 3.1</span><span>JSON Schema</span><span>Outlines</span><span>Guidance</span><span>Python</span>
+            <dl class="meta">
+              <div><dt>Project</dt><dd>M1 MIND research project, Sorbonne University / LIP6, 2026</dd></div>
+              <div><dt>Team</dt><dd>Younes Arjdal and Samy Mancer</dd></div>
+              <div><dt>Supervisors</dt><dd>Mohamed-Amine Baazizi, Nour ElHouda Ben Ali</dd></div>
+              <div><dt>Stack</dt><dd>Llama-3.1-1B-Instruct, Outlines, Guidance, Python</dd></div>
+            </dl>
+            <div class="hero-actions">
+              <a class="btn btn-light" href="../assets/projects/structured-outputs/report.pdf" target="_blank" rel="noreferrer">Read the report (PDF, French)</a>
+              <a class="btn btn-ghost" href="#results">Jump to results</a>
             </div>
+          </div>
+        </div>
 
-            <div class="hero-actions case-actions">
-              <a class="button button-primary" href="../assets/projects/structured-outputs/report.pdf" target="_blank" rel="noreferrer">Read full report ↗</a>
-              <a class="button button-secondary" href="#results">Jump to results</a>
+        <div class="demo" id="demo-app">
+          <div class="demo-intro">
+            <div>
+              <h2>Step through one generation</h2>
+              <p>The model scores every candidate token. The constraint adds −∞ to each token that can’t legally continue the output, then softmax renormalises. Switch it on and off to compare.</p>
+            </div>
+            <code class="schema-chip">{ "nom": "Alice" | "Bob" }</code>
+          </div>
+
+          <div class="demo-bar">
+            <label class="switch">
+              <input type="checkbox" id="demo-toggle" role="switch" />
+              <span class="knob"></span>
+              <span>Constrained decoding: <b id="demo-state">off</b></span>
+            </label>
+            <div class="demo-btns">
+              <button class="btn btn-light" id="demo-next" type="button">Next token</button>
+              <button class="btn btn-ghost" id="demo-auto" type="button">Auto-play</button>
+              <button class="btn btn-ghost" id="demo-reset" type="button">Reset</button>
             </div>
           </div>
 
-          <div class="case-visual" aria-label="Constrained decoding overview">
-            <div class="visual-window">
-              <div class="visual-topbar"><span></span><span></span><span></span><small>structured-output.pipeline</small></div>
-              <div class="visual-body">
-                <div class="schema-chip">JSON Schema</div>
-                <div class="visual-arrow">↓</div>
-                <div class="visual-frameworks">
-                  <div><strong>Outlines</strong><small>FSM compilation</small></div>
-                  <span>or</span>
-                  <div><strong>Guidance</strong><small>interleaved generation</small></div>
-                </div>
-                <div class="visual-arrow">↓</div>
-                <div class="llm-node"><span>LLM</span><strong>Llama-3.1-1B-Instruct</strong></div>
-                <div class="visual-arrow">↓</div>
-                <pre class="json-preview" aria-label="Example structured JSON"><code>{
-  "status": "valid",
-  "schema": true
-}</code></pre>
-                <div class="validator-line"><span>✓</span> External JSON Schema validation</div>
+          <div class="fsm" id="demo-fsm" aria-label="Finite state machine compiled from the schema"></div>
+          <p class="fsm-note" id="demo-fsm-note"></p>
+          <div id="demo-table" aria-live="polite"></div>
+
+          <div class="out">
+            <span class="out-label">Output</span>
+            <code id="demo-out"></code>
+            <span class="verdict" id="demo-verdict" hidden></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= APPROACH ================= -->
+    <section class="sec" id="approach">
+      <div class="wrap split">
+        <header>
+          <h2>Follow every schema to the stage where it fails</h2>
+          <p>A single success rate hides where things go wrong. We logged each schema’s outcome at every step.</p>
+        </header>
+        <div>
+          <ol class="steps">
+            <li><b>Schema</b><span>Take a JSON Schema from JSONSchemaBench: GitHub, Kubernetes, Snowplow, function calling and more.</span></li>
+            <li><b>Compile</b><span>Turn it into constraints with Outlines (finite state machine) or Guidance (interleaved generation).</span></li>
+            <li><b>Generate</b><span>Run constrained decoding with Llama-3.1-1B-Instruct.</span></li>
+            <li><b>Validate</b><span>Check the output with an external validator, <code>jsonschema</code>.</span></li>
+          </ol>
+
+          <div class="tests">
+            <div class="test">
+              <h3>Pipeline A: end to end</h3>
+              <p>The full stack on all 9,558 schemas. Each schema ends in exactly one outcome.</p>
+              <ul>
+                <li class="k-compile">Compilation error</li>
+                <li class="k-gen">Generation error (timeout, out of memory)</li>
+                <li class="k-val">Validation error</li>
+                <li class="k-ok">Valid instance</li>
+              </ul>
+            </div>
+            <div class="test">
+              <h3>Pipeline B: no LLM</h3>
+              <p>Tokenise valid and invalid instances from the JSON Schema Test Suite and run them through each compiled grammar, feature by feature.</p>
+              <ul>
+                <li>Rejects a valid instance: overconstrained</li>
+                <li>Accepts an invalid one: underconstrained</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= RESULTS ================= -->
+    <section class="sec dark" id="results">
+      <div class="wrap split">
+        <header>
+          <h2>Guidance scores higher because it accepts more schemas</h2>
+          <p>Once a schema compiles, the two frameworks succeed about equally often. They fail in different ways.</p>
+        </header>
+        <div>
+          <div class="res-block">
+            <h3>Where the 9,558 schemas end up</h3>
+            <p>Without a framework, 39 schemas produce a valid instance. Outlines reaches 54%, Guidance about 80%.</p>
+            <div class="stack-group" id="chart-all"></div>
+            <div class="legend">
+              <span class="k-ok">Valid</span><span class="k-val">Invalid output</span><span class="k-gen">Generation failed</span><span class="k-compile">Compilation failed</span>
+            </div>
+          </div>
+
+          <div class="res-block">
+            <h3>Among schemas that compiled, it’s a tie</h3>
+            <p>Outlines compiled 5,827 schemas and Guidance 8,549. After that step, 88.6% and 89.5% succeed. What differs is how the rest fail: Outlines mostly returns invalid output, Guidance mostly times out.</p>
+            <div class="stack-group" id="chart-compiled"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= FAILURES ================= -->
+    <section class="sec" id="failures">
+      <div class="wrap split">
+        <header>
+          <h2>The two frameworks fail in different places</h2>
+          <p>Counts from our run on the full benchmark, split by the stage where each schema stopped.</p>
+        </header>
+        <div>
+          <div class="tabs" role="tablist" aria-label="Framework">
+            <button class="tab" role="tab" data-fa="outlines" aria-selected="true">Outlines</button>
+            <button class="tab" role="tab" data-fa="guidance" aria-selected="false">Guidance</button>
+            <button class="tab" role="tab" data-fa="free" aria-selected="false">No framework</button>
+          </div>
+          <div id="fa-panel" role="tabpanel"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= FEATURES ================= -->
+    <section class="sec white" id="features">
+      <div class="wrap">
+        <div class="split" style="margin-bottom: 0">
+          <header>
+            <h2>Feature by feature, support is patchy</h2>
+            <p>Pipeline B, no LLM: the share of test-suite instances each compiled grammar handles correctly.</p>
+          </header>
+          <div class="insights" style="grid-template-columns: 1fr; gap: 24px; margin-bottom: 0">
+            <div>
+              <h3>Outlines is conservative</h3>
+              <p>It handles local checks such as <code>type</code>, <code>enum</code> and <code>default</code>, and drops to zero on global ones like <code>if-then-else</code>, <code>contains</code> and <code>dependentRequired</code>.</p>
+            </div>
+            <div>
+              <h3>Guidance is broader but version-dependent</h3>
+              <p>It scores well on <code>anyOf</code>, <code>items</code>, <code>required</code> and numeric bounds. Several scores moved between the paper’s version and ours.</p>
+            </div>
+            <div>
+              <h3>A positive score can mean nothing</h3>
+              <p>Some test groups contain no valid instance at all, so a dummy that rejects everything scores above zero there. That’s the baseline column.</p>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 56px">
+          <div class="hm-tools" role="group" aria-label="Table options">
+            <button class="tab" id="hm-gap" aria-pressed="true">Largest gap first</button>
+            <button class="tab" id="hm-az" aria-pressed="false">A to Z</button>
+            <button class="tab" id="hm-more" type="button">Show all</button>
+          </div>
+          <table class="hm">
+            <thead><tr><th scope="col">Feature</th><th scope="col">Reject-all baseline</th><th scope="col">Outlines</th><th scope="col">Guidance</th></tr></thead>
+            <tbody id="hm-body"></tbody>
+          </table>
+          <p class="hm-note">1.00 means every valid instance is accepted and every invalid one rejected. Our reproduction, JSON Schema Test Suite.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= LIMITS ================= -->
+    <section class="sec" id="limits">
+      <div class="wrap split">
+        <header>
+          <h2>What limits these numbers</h2>
+          <p>This is a partial reproduction under real constraints, so it measures failure causes better than speed.</p>
+        </header>
+        <dl class="rows">
+          <div>
+            <dt>60-second compile timeout</dt>
+            <dd>Our pipeline gives each schema 60 seconds to compile, which penalises Outlines by design. In production a grammar is usually compiled once and reused, which would remove much of that gap. These numbers describe this setup, not a universal ranking.</dd>
+          </div>
+          <div>
+            <dt>A 1B model with a 2,048-token prompt</dt>
+            <dd>We used Llama-3.1-1B-Instruct for stability. Large schemas overflowed its prompt window, which alone accounts for 1,355 of the baseline failures.</dd>
+          </div>
+          <div>
+            <dt>Shared GPUs</dt>
+            <dd>Runs went through Sorbonne’s shared PPTI machines (Tesla V100), often with about 30% of the VRAM free. Out-of-memory crashes and timeouts forced a watchdog to restart runs, and a stable latency benchmark (GCT, TTFT, TPOT) wasn’t possible.</dd>
+          </div>
+          <div>
+            <dt>Library versions drift</dt>
+            <dd>
+              We used Outlines v0.1.8 and Guidance v0.3. Against the paper’s scores, some features improved quietly and others regressed.
+              <div class="drift">
+                <span>Guidance maxProperties 0.00 → 0.67</span>
+                <span>Guidance multipleOf 0.20 → 0.60</span>
+                <span>Guidance exclusiveMinimum 1.00 → 0.00</span>
+                <span>Guidance pattern 1.00 → 0.67</span>
               </div>
-            </div>
+            </dd>
           </div>
-        </div>
-
-        <div class="case-facts" aria-label="Project facts">
-          <div><span>Type</span><strong>Research project</strong></div>
-          <div><span>Format</span><strong>Pair project</strong></div>
-          <div><span>Benchmark</span><strong>9,558 schemas</strong></div>
-          <div><span>Infrastructure</span><strong>Sorbonne PPTI · Tesla V100</strong></div>
-        </div>
+        </dl>
       </div>
     </section>
 
-    <section class="case-section">
-      <div class="container case-two-col">
-        <div class="case-section-label">
-          <span>01</span>
-          <p>Problem</p>
-        </div>
-        <div class="case-prose">
-          <h2>“Return JSON” is not a reliability guarantee.</h2>
-          <p class="case-lead">
-            A language model can produce syntactically valid JSON and still violate the schema expected by an API,
-            database or downstream program. Constrained decoding tries to solve that problem during generation rather
-            than repairing the output afterwards.
-          </p>
-          <p>
-            The project asks a practical question: once JSON Schema is turned into generation constraints, how much
-            reliability do we actually gain, and where do failures move — compilation, generation, or final validation?
-          </p>
-        </div>
+    <!-- ================= NEXT ================= -->
+    <section class="sec dark" id="next">
+      <div class="wrap split">
+        <header>
+          <h2>What we didn’t get to</h2>
+          <p>Directions we documented in the report for future work.</p>
+        </header>
+        <ul class="rows">
+          <li><h3>Add XGrammar</h3><p>Compare all three frameworks on the full benchmark, especially the Hard and Ultra schemas, to see whether its latency advantage holds.</p></li>
+          <li><h3>Measure latency properly</h3><p>Use a dedicated GPU and CUDA events to get reliable compile time, time to first token and time per token against schema complexity.</p></li>
+          <li><h3>Model why schemas fail</h3><p>Describe each schema by size, nesting depth and keywords used, then fit an interpretable model (decision tree, XGBoost) on the outcomes to find which features predict failure.</p></li>
+          <li><h3>Constrain whole sequences with diffusion</h3><p>Token-level masks can’t express rules like <code>uniqueItems</code> or <code>not</code>. Discrete diffusion models refine the full sequence, so those rules could be applied as projections at each step.</p></li>
+        </ul>
       </div>
     </section>
 
-    <section id="approach" class="case-section case-section-soft">
-      <div class="container">
-        <div class="case-heading-row">
-          <div class="case-section-label"><span>02</span><p>Approach</p></div>
+    <!-- ================= REPORT ================= -->
+    <section class="sec" id="report" style="background: var(--ink); padding-top: 0">
+      <div class="wrap">
+        <div class="report" style="padding-top: 72px; border-top: 1px solid var(--dline)">
           <div>
-            <h2>A pipeline built to expose the failure stage.</h2>
-            <p>Instead of keeping only a global score, each schema is followed through the full constrained-generation workflow.</p>
+            <h2 style="color: #fff">The full report has the details</h2>
+            <p>Constrained-decoding formalisation, JSON Schema examples, both pipelines, the full feature table and failure charts. It’s 34 pages, written in French.</p>
           </div>
-        </div>
-
-        <div class="pipeline-board" aria-label="Experimental pipeline">
-          <article class="pipeline-node">
-            <span class="pipeline-number">01</span>
-            <div class="pipeline-icon">{ }</div>
-            <h3>Schema</h3>
-            <p>Take a JSON Schema from JSONSchemaBench.</p>
-          </article>
-          <div class="pipeline-connector" aria-hidden="true">→</div>
-          <article class="pipeline-node">
-            <span class="pipeline-number">02</span>
-            <div class="pipeline-icon">◇</div>
-            <h3>Compile</h3>
-            <p>Build constraints with Outlines or Guidance.</p>
-          </article>
-          <div class="pipeline-connector" aria-hidden="true">→</div>
-          <article class="pipeline-node">
-            <span class="pipeline-number">03</span>
-            <div class="pipeline-icon">λ</div>
-            <h3>Generate</h3>
-            <p>Run constrained decoding with Llama 3.1.</p>
-          </article>
-          <div class="pipeline-connector" aria-hidden="true">→</div>
-          <article class="pipeline-node">
-            <span class="pipeline-number">04</span>
-            <div class="pipeline-icon">✓</div>
-            <h3>Validate</h3>
-            <p>Check the instance with an external validator.</p>
-          </article>
-        </div>
-
-        <div class="method-cards">
-          <article>
-            <div class="method-kicker">Pipeline A</div>
-            <h3>End-to-end generation</h3>
-            <p>Tests the complete stack: compilation, LLM generation and final JSON Schema validation.</p>
-          </article>
-          <article>
-            <div class="method-kicker">Pipeline B</div>
-            <h3>Feature-level compiler testing</h3>
-            <p>Removes the LLM and checks compiler behavior directly on controlled valid and invalid instances.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section id="results" class="case-section case-results">
-      <div class="container">
-        <div class="case-heading-row case-heading-light">
-          <div class="case-section-label"><span>03</span><p>Results</p></div>
-          <div>
-            <h2>The interesting part is not just the ranking.</h2>
-            <p>Guidance wins on global success in this setup, but the breakdown explains why.</p>
-          </div>
-        </div>
-
-        <div class="scoreboard">
-          <article class="score-row">
-            <div class="score-name"><strong>Free generation</strong><span>No framework</span></div>
-            <div class="score-track"><span style="--score: 0.4%"></span></div>
-            <div class="score-value">0.4%</div>
-          </article>
-          <article class="score-row">
-            <div class="score-name"><strong>Outlines</strong><span>FSM-based</span></div>
-            <div class="score-track"><span style="--score: 53.8%"></span></div>
-            <div class="score-value">53.8%</div>
-          </article>
-          <article class="score-row score-row-highlight">
-            <div class="score-name"><strong>Guidance</strong><span>Interleaved / fast-forwarding</span></div>
-            <div class="score-track"><span style="--score: 80%"></span></div>
-            <div class="score-value">≈80%</div>
-          </article>
-        </div>
-
-        <div class="result-cards">
-          <article>
-            <span class="result-number">5,827</span>
-            <p>schemas compiled by Outlines out of 9,558.</p>
-          </article>
-          <article>
-            <span class="result-number">8,549</span>
-            <p>schemas compiled by Guidance out of 9,558.</p>
-          </article>
-          <article>
-            <span class="result-number">88.6%</span>
-            <p>success after compilation for Outlines.</p>
-          </article>
-          <article>
-            <span class="result-number">89.5%</span>
-            <p>success after compilation for Guidance.</p>
-          </article>
-        </div>
-
-        <div class="key-finding">
-          <div class="finding-mark">↳</div>
-          <div>
-            <p class="eyebrow">Key finding</p>
-            <h3>The global gap is mainly a compilation-coverage gap.</h3>
-            <p>
-              Once a schema has compiled, Outlines and Guidance are almost tied in success rate. Guidance’s higher
-              overall score is largely explained by accepting substantially more schemas in this experimental setup.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="case-section">
-      <div class="container">
-        <div class="case-heading-row">
-          <div class="case-section-label"><span>04</span><p>Failure analysis</p></div>
-          <div>
-            <h2>Same objective, very different failure profiles.</h2>
-            <p>The framework choice changes where the bottleneck appears.</p>
-          </div>
-        </div>
-
-        <div class="framework-compare">
-          <article class="framework-panel">
-            <div class="framework-title"><span>Outlines</span><small>FSM-based</small></div>
-            <h3>Failures happen early.</h3>
-            <p>Most failures concentrate at compilation. Logical operators such as <code>not</code>, <code>oneOf</code>, <code>anyOf</code> and <code>if</code> make FSM construction difficult or expensive.</p>
-            <div class="failure-stat"><strong>3,770</strong><span>compilation failures</span></div>
-          </article>
-          <article class="framework-panel framework-panel-accent">
-            <div class="framework-title"><span>Guidance</span><small>interleaved generation</small></div>
-            <h3>Failures happen later.</h3>
-            <p>Guidance rejects unsupported constraints more cautiously, but its main remaining issue is generation timeout on long or complex schemas.</p>
-            <div class="failure-stat"><strong>836</strong><span>generation timeouts</span></div>
-          </article>
-        </div>
-
-        <div class="caveat-card">
-          <span>Experimental caveat</span>
-          <p>The pipeline used a 60-second compilation timeout, which structurally penalizes Outlines. These numbers describe this experimental setup, not a universal ranking of the frameworks.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="case-section case-section-soft">
-      <div class="container case-two-col">
-        <div class="case-section-label"><span>05</span><p>Setup & limits</p></div>
-        <div class="case-prose">
-          <h2>Reproduction under real compute constraints.</h2>
-          <p class="case-lead">Experiments ran on Sorbonne University’s shared PPTI infrastructure using Tesla V100-SXM2 GPUs, Outlines v0.1.8, Guidance v0.3 and Llama-3.1-1B-Instruct.</p>
-          <div class="setup-grid">
-            <div><span>GPU</span><strong>Tesla V100-SXM2</strong></div>
-            <div><span>Model</span><strong>Llama-3.1-1B-Instruct</strong></div>
-            <div><span>Outlines</span><strong>v0.1.8</strong></div>
-            <div><span>Guidance</span><strong>v0.3</strong></div>
-          </div>
-          <p>Shared VRAM, storage limits, timeouts, crashes and dependency/version issues constrained the scope. The project therefore prioritized failure analysis over a fully controlled latency benchmark.</p>
-        </div>
-      </div>
-    </section>
-
-    <section id="report" class="case-report">
-      <div class="container">
-        <div class="report-preview-card">
-          <div class="report-preview-copy">
-            <p class="eyebrow">Full project report</p>
-            <h2>34 pages of methodology, experiments and analysis.</h2>
-            <p>The report includes the constrained-decoding formalization, JSON Schema examples, benchmark pipelines, feature-level comparisons, experimental results and future directions.</p>
-            <a class="button button-primary" href="../assets/projects/structured-outputs/report.pdf" target="_blank" rel="noreferrer">Open the PDF report ↗</a>
-          </div>
-          <div class="report-sheet" aria-hidden="true">
-            <span>MASTER 1 · MIND</span>
-            <strong>Décodage sous contraintes pour les LLMs</strong>
-            <small>Analyse, reproduction et complétion des résultats du JSONSchemaBench</small>
-            <div class="report-lines"></div>
-          </div>
+          <a class="btn btn-light" href="../assets/projects/structured-outputs/report.pdf" target="_blank" rel="noreferrer">Open the PDF</a>
         </div>
       </div>
     </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="container footer-wrap">
-      <p>© 2026 Younes Arjdal</p>
+  <footer class="foot">
+    <div class="wrap">
+      <span>© 2026 Younes Arjdal</span>
       <a href="../index.html#projects">Back to projects ↑</a>
     </div>
   </footer>
+
+  <script>
+  (() => {
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+    const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const fmt = (n) => n.toLocaleString('en-US');
+
+    /* ============ Live demo ============ */
+    const STEPS = [
+      { valid: ['{'],                cand: [['Sure', 2.8], ['{', 2.5], ['```json', 1.4], ['Here', 0.9], ['[', 0.3]] },
+      { valid: ['"nom"'],            cand: [['"name"', 2.7], ['"nom"', 2.2], ['"user"', 1.1], ['"id"', 0.8], ['}', -0.2]] },
+      { valid: [':'],                cand: [[':', 3.0], ['=', 0.9], ['->', 0.4], ['is', 0.1]] },
+      { valid: ['"Alice"', '"Bob"'], cand: [['42', 2.6], ['"Alice"', 2.4], ['"Bob"', 2.0], ['"Charlie"', 1.2], ['null', 0.6]] },
+      { valid: ['}'],                cand: [[',', 2.6], ['}', 2.2], ['"age"', 1.0], ['\\n', 0.3]] }
+    ];
+    const EDGES = ['{', '"nom"', ':', '"Alice" | "Bob"', '}'];
+    const demo = { i: 0, on: false, out: [], timer: null };
+    const el = {
+      toggle: $('#demo-toggle'), state: $('#demo-state'), next: $('#demo-next'), auto: $('#demo-auto'), reset: $('#demo-reset'),
+      fsm: $('#demo-fsm'), note: $('#demo-fsm-note'), table: $('#demo-table'), out: $('#demo-out'), verdict: $('#demo-verdict')
+    };
+
+    const softmax = (a) => {
+      const m = Math.max(...a.filter(Number.isFinite));
+      const e = a.map((x) => Math.exp(x - m));
+      const s = e.reduce((p, c) => p + c, 0);
+      return e.map((x) => x / s);
+    };
+    const rawArgmax = (st) => st.cand.reduce((b, c, k, arr) => (c[1] > arr[b][1] ? k : b), 0);
+
+    function currentDist() {
+      const st = STEPS[demo.i];
+      const masked = st.cand.map(([t, l]) => (demo.on && !st.valid.includes(t) ? -Infinity : l));
+      const probs = softmax(masked);
+      return { st, probs, pick: probs.indexOf(Math.max(...probs)) };
+    }
+
+    function renderFsm() {
+      const done = demo.i >= STEPS.length;
+      let html = '';
+      for (let k = 0; k <= EDGES.length; k++) {
+        const cls = ['fsm-node'];
+        if (k === EDGES.length) cls.push('acc');
+        if (demo.on) {
+          if (k < demo.i) cls.push('done');
+          else if (k === demo.i) cls.push('cur');
+        }
+        html += `<div class="${cls.join(' ')}">q${k}</div>`;
+        if (k < EDGES.length) html += `<div class="fsm-edge">${esc(EDGES[k])}</div>`;
+      }
+      el.fsm.innerHTML = html;
+      el.fsm.classList.toggle('off', !demo.on);
+      el.note.textContent = demo.on
+        ? (done ? 'The machine ended in its accepting state, q5.' : `In state q${demo.i}, only the green tokens can continue the output.`)
+        : 'Constraint off: no grammar is applied, the model can pick any token.';
+    }
+
+    function renderTable() {
+      if (demo.i >= STEPS.length) {
+        const overrides = demo.out.filter((o) => o.overrode).length;
+        el.table.innerHTML = `<p class="demo-done">${demo.on
+          ? `Every token stayed inside the grammar, so the output is valid by construction. The constraint overrode the model’s first choice ${overrides} time${overrides === 1 ? '' : 's'}.`
+          : 'Nothing stopped the model from taking its favourite token each time. Switch constrained decoding on and run it again.'}</p>`;
+        return;
+      }
+      const { st, probs, pick } = currentDist();
+      const rows = st.cand.map(([tok, logit], k) => {
+        const legal = st.valid.includes(tok);
+        const masked = demo.on && !legal;
+        const lw = Math.max(4, Math.min(100, ((logit + 1) / 4) * 100));
+        const mask = demo.on ? (legal ? '+0' : '−∞') : '·';
+        const mcls = demo.on ? (legal ? 'zero' : 'inf') : 'na';
+        return `<div class="trow ${masked ? 'masked' : ''} ${k === pick ? 'pick' : ''}">
+          <code class="ttok ${legal ? 'legal' : 'illegal'}">${esc(tok)}</code>
+          <div class="tlogit"><div class="bar"><i data-w="${lw}"></i></div><span>${logit.toFixed(1)}</span></div>
+          <div class="tmask ${mcls}">${mask}</div>
+          <div class="tprob"><div class="bar ${legal ? 'legal' : 'illegal'}"><i data-w="${(probs[k] * 100).toFixed(1)}"></i></div><span>${(probs[k] * 100).toFixed(1)}%</span></div>
+        </div>`;
+      }).join('');
+      el.table.innerHTML = `
+        <div class="thead"><span>Candidate token</span><span>Model logit</span><span>Mask</span><span>Probability after softmax</span></div>
+        ${rows}
+        <div class="legend-line"><span>legal under the schema</span><span>illegal under the schema</span></div>`;
+      requestAnimationFrame(() => requestAnimationFrame(() => $$('#demo-table .bar i').forEach((b) => { b.style.width = b.dataset.w + '%'; })));
+    }
+
+    function renderOut() {
+      el.out.innerHTML = demo.out.length
+        ? demo.out.map((o) => `<span class="${o.legal ? 'o-ok' : 'o-bad'}">${esc(o.tok)}</span>`).join(' ')
+        : '<span style="color:#58728c">…</span>';
+      const done = demo.i >= STEPS.length;
+      el.verdict.hidden = !done;
+      if (done) {
+        const text = demo.out.map((o) => o.tok).join(' ');
+        let ok = false, msg = 'Not even parsable JSON';
+        try {
+          const obj = JSON.parse(text);
+          ok = obj && typeof obj === 'object' && Object.keys(obj).length === 1 && ['Alice', 'Bob'].includes(obj.nom);
+          if (!ok) msg = 'Parsable, but breaks the schema';
+        } catch (e) { /* stays "not parsable" */ }
+        el.verdict.className = 'verdict ' + (ok ? 'ok' : 'bad');
+        el.verdict.textContent = ok ? 'Valid against the schema' : msg;
+      }
+      el.next.disabled = done;
+      el.auto.disabled = done;
+    }
+
+    function renderDemo() { renderFsm(); renderTable(); renderOut(); }
+
+    function stopAuto() {
+      clearInterval(demo.timer); demo.timer = null; el.auto.textContent = 'Auto-play';
+    }
+    function step() {
+      if (demo.i >= STEPS.length) { stopAuto(); return; }
+      const { st, pick } = currentDist();
+      const tok = st.cand[pick][0];
+      demo.out.push({ tok, legal: st.valid.includes(tok), overrode: pick !== rawArgmax(st) });
+      demo.i++;
+      renderDemo();
+      if (demo.i >= STEPS.length) stopAuto();
+    }
+    function resetDemo() { stopAuto(); demo.i = 0; demo.out = []; renderDemo(); }
+
+    el.next.addEventListener('click', () => { stopAuto(); step(); });
+    el.reset.addEventListener('click', resetDemo);
+    el.auto.addEventListener('click', () => {
+      if (demo.timer) { stopAuto(); return; }
+      if (demo.i >= STEPS.length) resetDemo();
+      el.auto.textContent = 'Pause';
+      step();
+      demo.timer = setInterval(step, 1300);
+    });
+    el.toggle.addEventListener('change', () => {
+      demo.on = el.toggle.checked;
+      el.state.textContent = demo.on ? 'on' : 'off';
+      resetDemo();
+    });
+    renderDemo();
+
+    /* ============ Stacked outcome charts ============ */
+    const TOTAL = 9558;
+    function stack(target, rows) {
+      target.innerHTML = rows.map((r) => {
+        const segs = r.segs.map((s) => {
+          const p = (s.v / r.total) * 100;
+          const label = p >= 6 ? p.toFixed(p >= 10 ? 0 : 1) + '%' : '';
+          return `<i class="s-${s.k}" style="--w:${p}%" title="${esc(s.t)}">${label}</i>`;
+        }).join('');
+        return `<div class="sb ${r.hl ? 'hl' : ''}">
+          <div class="sb-name"><b>${esc(r.name)}</b><small>${esc(r.note)}</small></div>
+          <div class="stack" role="img" aria-label="${esc(r.aria)}">${segs}</div>
+          <div class="sb-val">${esc(r.value)}</div>
+        </div>`;
+      }).join('');
+    }
+    stack($('#chart-all'), [
+      { name: 'No framework', note: 'prompt only', value: '0.4%', total: TOTAL, aria: '39 valid of 9,558',
+        segs: [{ k: 'ok', v: 39, t: 'Valid' }, { k: 'val', v: TOTAL - 39, t: 'Invalid output' }] },
+      { name: 'Outlines', note: 'FSM compilation', value: '54%', total: TOTAL, aria: 'Outlines: 54% valid',
+        segs: [{ k: 'ok', v: 5160, t: 'Valid' }, { k: 'val', v: 371, t: 'Invalid output' }, { k: 'gen', v: 296, t: 'Generation failed' }, { k: 'compile', v: 3731, t: 'Compilation failed' }] },
+      { name: 'Guidance', note: 'interleaved generation', value: '≈80%', hl: true, total: TOTAL, aria: 'Guidance: about 80% valid',
+        segs: [{ k: 'ok', v: 7654, t: 'Valid' }, { k: 'val', v: 59, t: 'Invalid output' }, { k: 'gen', v: 836, t: 'Generation failed' }, { k: 'compile', v: 1009, t: 'Compilation failed' }] }
+    ]);
+    stack($('#chart-compiled'), [
+      { name: 'Outlines', note: '5,827 compiled', value: '88.6%', total: 5827, aria: 'Outlines after compilation: 88.6% valid',
+        segs: [{ k: 'ok', v: 5160, t: 'Valid' }, { k: 'val', v: 371, t: 'Invalid output' }, { k: 'gen', v: 296, t: 'Generation failed' }] },
+      { name: 'Guidance', note: '8,549 compiled', value: '89.5%', hl: true, total: 8549, aria: 'Guidance after compilation: 89.5% valid',
+        segs: [{ k: 'ok', v: 7654, t: 'Valid' }, { k: 'val', v: 59, t: 'Invalid output' }, { k: 'gen', v: 836, t: 'Generation failed' }] }
+    ]);
+
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('on'); io.unobserve(e.target); } });
+      }, { threshold: 0.35 });
+      $$('.stack').forEach((s) => io.observe(s));
+    } else {
+      $$('.stack').forEach((s) => s.classList.add('on'));
+    }
+
+    /* ============ Failure anatomy ============ */
+    const FA = {
+      outlines: {
+        title: 'Outlines fails early, before the model writes a token.',
+        text: 'Most failures happen at compilation: schemas time out at 60 seconds or use logic (not, oneOf, anyOf) that a finite state machine struggles to encode.',
+        stages: [
+          { k: 'compile', name: 'Compilation', total: '3,770 (39%)', items: [
+            { g: 'Timeout', l: '> 60 s', v: 2019 },
+            { g: 'Unsupported logic', l: 'not', v: 676 }, { l: 'oneOf', v: 639 }, { l: 'anyOf', v: 235 }, { l: 'if', v: 85 }, { l: 'allOf', v: 38 }, { l: 'format', v: 15 },
+            { l: 'uniqueItems', v: 3 }, { l: 'then', v: 2 }, { l: 'dependencies', v: 2 }, { l: 'patternProperties', v: 2 },
+            { g: 'Other', l: 'internal error', v: 54 } ] },
+          { k: 'gen', name: 'Generation', total: '297 (3%)', items: [{ l: 'timeout', v: 193 }, { l: 'GPU out of memory', v: 104 }] },
+          { k: 'val', name: 'Validation', total: '376 (3.9%)', items: [
+            { g: 'Invalid syntax', l: 'missing comma', v: 35 }, { l: 'unclosed string', v: 15 }, { l: 'missing value', v: 5 }, { l: 'missing punctuation', v: 4 }, { l: 'extra text', v: 4 }, { l: 'other syntax', v: 3 },
+            { g: 'Valid JSON, wrong schema', l: 'wrong structure', v: 135 }, { l: 'non-conforming fields', v: 86 }, { l: 'list error', v: 33 }, { l: 'dimensions field', v: 26 }, { l: 'type field', v: 13 }, { l: 'other', v: 17 } ] }
+        ]
+      },
+      guidance: {
+        title: 'Guidance refuses early, then mostly times out.',
+        text: 'It declines schemas it can’t enforce exactly rather than approximate them. After that, 836 generations time out, a cost of interleaving on long schemas. Invalid output is rare.',
+        stages: [
+          { k: 'compile', name: 'Compilation', total: '1,009 (10.6%)', items: [
+            { g: 'Unsupported formats', l: 'uri', v: 285 }, { l: 'path', v: 47 }, { l: 'topic', v: 44 }, { l: 'url', v: 34 }, { l: 'uri-reference', v: 17 }, { l: 'other formats', v: 134 },
+            { g: 'Unsupported keywords', l: 'dependencies', v: 122 }, { l: 'uniqueItems', v: 86 }, { l: 'not', v: 85 }, { l: 'if / then / else', v: 33 }, { l: 'propertyNames', v: 19 }, { l: 'min/maxProperties', v: 31 },
+            { g: 'Engine limits', l: 'large schema', v: 3 }, { l: 'unsupported regex', v: 2 }, { l: 'other technical', v: 67 } ] },
+          { k: 'gen', name: 'Generation', total: '837 (8%)', items: [{ l: 'timeout', v: 836 }, { l: 'crash', v: 1 }] },
+          { k: 'val', name: 'Validation', total: '58 (0.6%)', items: [{ l: 'oneOf', v: 52 }, { l: 'multipleOf', v: 2 }, { l: 'uniqueItems', v: 1 }, { l: 'pattern', v: 1 }, { l: 'anyOf', v: 1 }, { l: 'bug', v: 1 }] }
+        ]
+      },
+      free: {
+        title: 'Prompting alone doesn’t hold up.',
+        text: 'With the same 1B model and no constraint, 39 of 9,558 schemas produce a valid instance. Most outputs drift, copy the schema back, or can’t be parsed.',
+        stages: [
+          { k: 'val', name: 'Why 9,519 schemas fail', total: '', wide: true, items: [
+            { l: 'loop / drift', v: 3453 }, { l: 'unreadable JSON', v: 2755 }, { l: 'prompt > 2,048 tokens', v: 1355 }, { l: '“##” prefix', v: 753 }, { l: 'schema copied back', v: 600 }, { l: 'refusal', v: 307 }, { l: 'text outside JSON', v: 243 }, { l: 'other', v: 53 } ] },
+          { k: 'ok', name: 'Valid instances', total: '39 (0.4%)', items: [{ l: 'success', v: 39 }] }
+        ]
+      }
+    };
+
+    function renderFA(key) {
+      const d = FA[key];
+      const max = Math.max(...d.stages.flatMap((s) => s.items.map((i) => i.v)));
+      $('#fa-panel').innerHTML = `
+        <div class="fa-head"><h3>${esc(d.title)}</h3><p>${esc(d.text)}</p></div>
+        <div class="fa-stages">${d.stages.map((s) => {
+          let rows = '';
+          s.items.forEach((it) => {
+            if (it.g) rows += `<div class="fa-group">${esc(it.g)}</div>`;
+            const w = Math.max(2, (it.v / max) * 100);
+            rows += `<div class="fa-row"><code title="${esc(it.l)}">${esc(it.l)}</code><div class="fa-bar"><i style="--w:${w}%"></i></div><b>${fmt(it.v)}</b></div>`;
+          });
+          return `<div class="fa-stage k-${s.k}"><h4>${esc(s.name)}<span>${esc(s.total)}</span></h4>${rows}</div>`;
+        }).join('')}</div>`;
+      requestAnimationFrame(() => requestAnimationFrame(() => $$('#fa-panel .fa-bar').forEach((b) => b.classList.add('on'))));
+    }
+    $$('.tab[data-fa]').forEach((t) => t.addEventListener('click', () => {
+      $$('.tab[data-fa]').forEach((x) => x.setAttribute('aria-selected', String(x === t)));
+      renderFA(t.dataset.fa);
+    }));
+    renderFA('outlines');
+
+    /* ============ Feature heatmap ============ */
+    // [feature, reject-all baseline, Outlines (ours), Guidance (ours)]
+    const FEAT = [
+      ['additionalProperties', .22, .22, .78], ['allOf', .17, .42, .75], ['anchor', 0, .75, 1], ['anyOf', .13, .38, 1],
+      ['boolean_schema', .5, .5, 1], ['const', 0, .47, .59], ['contains', 0, 0, 0], ['content', 0, 0, 1], ['default', 0, .67, 1],
+      ['defs', 0, 0, 0], ['dependentRequired', 0, 0, 0], ['dependentSchemas', 0, 0, 0], ['dynamicRef', 0, 0, 0], ['enum', .07, .53, .73],
+      ['exclusiveMaximum', 0, 0, 1], ['exclusiveMinimum', 0, 0, 0], ['if-then-else', 0, 0, 0], ['infinite-loop', 0, 0, 1], ['items', 0, .10, 1],
+      ['maxContains', 0, 0, 0], ['maxItems', 0, 0, .5], ['maxLength', 0, 0, 0], ['maxProperties', 0, 0, .67], ['maximum', 0, 0, 1],
+      ['minContains', .13, .13, .13], ['minItems', 0, 0, .5], ['minLength', 0, 0, .5], ['minProperties', 0, 0, .5], ['minimum', 0, 0, 1],
+      ['multipleOf', .2, .4, .6], ['not', .22, .22, .22], ['oneOf', .27, .46, .46], ['pattern', 0, 0, .67], ['patternProperties', 0, 0, .5],
+      ['prefixItems', 0, .25, 1], ['properties', 0, .17, .83], ['propertyNames', 0, 0, 0], ['$ref', .06, .33, .89], ['required', 0, .4, 1],
+      ['type', 0, .64, .91], ['unevaluatedItems', .10, .17, .10], ['unevaluatedProperties', .14, .21, .14], ['uniqueItems', 0, .17, 0]
+    ];
+    const hm = { sort: 'gap', all: false };
+    const cell = (cls, v) => `<td class="v ${cls} ${v > 0.5 ? 'hi' : ''}"><span style="--v:${v}">${v.toFixed(2)}</span></td>`;
+    function renderHM() {
+      const rows = [...FEAT].sort((a, b) => hm.sort === 'az'
+        ? a[0].localeCompare(b[0])
+        : Math.abs(b[3] - b[2]) - Math.abs(a[3] - a[2]) || a[0].localeCompare(b[0]));
+      const shown = hm.all ? rows : rows.slice(0, 12);
+      $('#hm-body').innerHTML = shown.map(([n, b, o, g]) =>
+        `<tr><td class="f">${esc(n)}</td>${cell('b', b)}${cell('o', o)}${cell('g', g)}</tr>`).join('');
+      $('#hm-more').textContent = hm.all ? 'Show fewer' : `Show all ${FEAT.length}`;
+      $('#hm-gap').setAttribute('aria-pressed', String(hm.sort === 'gap'));
+      $('#hm-az').setAttribute('aria-pressed', String(hm.sort === 'az'));
+    }
+    $('#hm-gap').addEventListener('click', () => { hm.sort = 'gap'; renderHM(); });
+    $('#hm-az').addEventListener('click', () => { hm.sort = 'az'; renderHM(); });
+    $('#hm-more').addEventListener('click', () => { hm.all = !hm.all; renderHM(); });
+    renderHM();
+  })();
+  </script>
 </body>
 </html>

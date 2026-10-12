@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Road Accident Severity: enriching French accident records with historical weather, then measuring with interpretable models how much weather adds to predicting severity." />
+  <meta name="theme-color" content="#06121f" />
+  <title>Road Accident Severity — Younes Arjdal</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script>document.documentElement.classList.replace('no-js', 'js');</script>
+  <style>
+    :root {
+      --ink: #06121f;
+      --ink-2: #0a1b2e;
+      --paper: #f4f6f8;
+      --text: #12202e;
+      --muted: #566677;
+      --line: #d6dee6;
+      --dline: rgba(255, 255, 255, 0.13);
+      --blue: #1d5f9b;
+      --cy: #6bb8f5;
+      --ok: #4fd69c;
+      --bad: #ff7a84;
+      --wx: #1b8fe0;
+      --g-users: #c98a12;
+      --g-time: #7a62d8;
+      --g-veh: #2e9e78;
+      --g-road: #6b7b8c;
+      --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --r: 8px;
+      --w: 1160px;
+    }
+    .g-users { --g: var(--g-users); } .g-time { --g: var(--g-time); } .g-veh { --g: var(--g-veh); }
+    .g-road { --g: var(--g-road); } .g-wx { --g: var(--wx); }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+    body { margin: 0; color: var(--text); background: var(--paper); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+    code { font-family: var(--mono); }
+    .wrap { width: min(calc(100% - 40px), var(--w)); margin: 0 auto; }
+    :focus-visible { outline: 3px solid rgba(107, 184, 245, 0.7); outline-offset: 3px; }
+    .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+    /* ---------- Header ---------- */
+    .top { position: sticky; top: 0; z-index: 50; background: rgba(6, 18, 31, 0.84); backdrop-filter: blur(14px); border-bottom: 1px solid var(--dline); }
+    .top .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 64px; }
+    .brand { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 9px; background: #fff; color: var(--ink); font-weight: 600; letter-spacing: -0.03em; text-decoration: none; }
+    .top nav { display: flex; gap: 26px; }
+    .top nav a { color: #b4c4d4; font-size: 0.9rem; font-weight: 500; text-decoration: none; }
+    .top nav a:hover { color: #fff; }
+
+    /* ---------- Buttons ---------- */
+    .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: var(--r); border: 1px solid transparent; font: 600 0.92rem var(--sans); text-decoration: none; cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.15s; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-light { background: #fff; color: var(--ink); }
+    .btn-light:hover { background: #e6eef6; }
+    .btn-ghost { background: transparent; color: #dbe7f2; border-color: rgba(255, 255, 255, 0.25); }
+    .btn-ghost:hover { border-color: rgba(255, 255, 255, 0.6); }
+
+    /* ---------- Hero ---------- */
+    .hero { background: var(--ink); color: #fff; padding: 56px 0 88px; }
+    .back { display: inline-block; margin-bottom: 44px; color: #8fa6bb; font-size: 0.9rem; text-decoration: none; }
+    .back:hover { color: #fff; }
+    .hero-head { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); gap: 56px; align-items: end; }
+    h1 { margin: 0; font-size: clamp(2.8rem, 6.6vw, 5.8rem); line-height: 0.98; letter-spacing: -0.045em; font-weight: 600; }
+    .sub { margin: 20px 0 0; font: 400 1rem var(--mono); color: var(--cy); }
+    .lede { margin: 0 0 24px; max-width: 52ch; color: #b9c9d9; font-size: 1.06rem; }
+    .meta { display: grid; gap: 10px; margin: 0; font-size: 0.88rem; }
+    .meta div { display: grid; grid-template-columns: 92px 1fr; gap: 12px; padding-top: 10px; border-top: 1px solid var(--dline); }
+    .meta dt { color: #7f95aa; }
+    .meta dd { margin: 0; color: #dbe7f2; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+
+    /* ---------- Weather demo ---------- */
+    .demo { margin-top: 64px; padding: 28px; border: 1px solid var(--dline); border-radius: 12px; background: var(--ink-2); }
+    .demo-intro { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 20px; }
+    .demo-intro h2 { margin: 0; font-size: 1.25rem; letter-spacing: -0.02em; font-weight: 600; }
+    .demo-intro p { margin: 6px 0 0; max-width: 64ch; color: #9fb4c8; font-size: 0.95rem; }
+    .chip { font: 500 0.82rem var(--mono); color: #d8edff; padding: 4px 10px; border: 1px solid rgba(107, 184, 245, 0.4); border-radius: 6px; background: rgba(107, 184, 245, 0.1); white-space: nowrap; }
+    .demo-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; border-top: 1px solid var(--dline); border-bottom: 1px solid var(--dline); }
+    .switch { display: inline-flex; align-items: center; gap: 12px; color: #dbe7f2; font-weight: 500; cursor: pointer; }
+    .switch input { position: absolute; opacity: 0; pointer-events: none; }
+    .knob { position: relative; width: 46px; height: 26px; border-radius: 99px; background: #2a4561; transition: background 0.2s; }
+    .knob::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+    .switch input:checked + .knob { background: var(--wx); }
+    .switch input:checked + .knob::after { transform: translateX(20px); }
+    .switch input:focus-visible + .knob { outline: 3px solid rgba(107, 184, 245, 0.7); outline-offset: 3px; }
+    .switch b { font-family: var(--mono); font-weight: 600; }
+    .demo-hint { color: #7f98b0; font-size: 0.85rem; }
+
+    .wx-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 40px; }
+    .wx-grid h3 { margin: 22px 0 8px; color: #9fb4c8; font-size: 0.92rem; font-weight: 500; letter-spacing: 0; }
+    .mrow { display: grid; grid-template-columns: 128px minmax(0, 1fr) 52px 66px; gap: 12px; align-items: center; padding: 7px 0; }
+    .mlabel { color: #dbe7f2; font-size: 0.9rem; }
+    .mbar { position: relative; height: 10px; border-radius: 99px; background: rgba(255, 255, 255, 0.08); }
+    .mbar .fill { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: #5a7894; transition: width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.3s; }
+    .on-wx .mbar .fill { background: var(--cy); }
+    .mbar .tick { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: #fff; opacity: 0; transition: opacity 0.3s; }
+    .on-wx .mbar .tick { opacity: 0.9; }
+    .mval { font: 500 0.85rem var(--mono); text-align: right; color: #e8f1f8; }
+    .mdelta { min-height: 1em; font: 500 0.78rem var(--mono); text-align: right; white-space: nowrap; }
+    .mdelta.up { color: var(--ok); } .mdelta.down { color: var(--bad); } .mdelta.flat { color: #7f98b0; }
+    .cblock { padding: 8px 0 4px; border-top: 1px solid var(--dline); }
+    .cblock:first-of-type { border-top: 0; }
+    .chead { display: flex; justify-content: space-between; align-items: baseline; }
+    .chead b { font-weight: 600; }
+    .chead span { color: #7f98b0; font-size: 0.8rem; }
+    .fine { margin: 18px 0 0; color: #7f98b0; font-size: 0.82rem; max-width: 80ch; }
+    .verdict { margin: 18px 0 0; padding: 16px 18px; border-left: 3px solid var(--cy); background: rgba(107, 184, 245, 0.07); color: #cfe0ef; }
+
+    /* ---------- Sections ---------- */
+    .sec { padding: 104px 0; }
+    .sec.white { background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .sec.dark { background: var(--ink); color: #fff; }
+    .split { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 72px; }
+    .split > * { min-width: 0; }
+    .split > header { align-self: start; position: sticky; top: 96px; }
+    h2 { margin: 0 0 16px; font-size: clamp(1.9rem, 3.4vw, 2.8rem); line-height: 1.1; letter-spacing: -0.035em; font-weight: 600; }
+    .split > header p { max-width: 34ch; margin: 0; color: var(--muted); }
+    .dark .split > header p { color: #9fb4c8; }
+    h3 { margin: 0; font-size: 1.15rem; letter-spacing: -0.02em; font-weight: 600; }
+    p { margin-top: 0; }
+    .block + .block { margin-top: 72px; }
+    .block > h3 { margin-bottom: 8px; font-size: 1.5rem; letter-spacing: -0.03em; }
+    .block > p { max-width: 64ch; margin-bottom: 20px; color: var(--muted); }
+    .dark .block > p { color: #a9bccd; }
+    .note { margin: 14px 0 0; color: var(--muted); font-size: 0.85rem; max-width: 72ch; }
+    .dark .note { color: #8097ac; }
+
+    /* Steps + rows */
+    .steps { counter-reset: s; margin: 0 0 56px; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .steps li { display: grid; grid-template-columns: 36px 130px 1fr; gap: 16px; align-items: baseline; padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .steps li::before { counter-increment: s; content: counter(s); color: var(--blue); font: 500 0.9rem var(--mono); }
+    .steps b { font-size: 1.15rem; letter-spacing: -0.02em; font-weight: 600; }
+    .steps span { color: var(--muted); }
+    .rows { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .rows > div, .rows > li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 32px; padding: 22px 0; border-bottom: 1px solid var(--line); }
+    .rows dt { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; }
+    .rows dd { margin: 0; color: var(--muted); }
+    .dark .rows, .dark .rows > div { border-color: var(--dline); }
+    .dark .rows dd { color: #a9bccd; }
+    .dark .rows dt { color: #fff; }
+
+    /* Missing values */
+    .miss { display: grid; gap: 2px; }
+    .mi { display: grid; grid-template-columns: 190px minmax(0, 1fr) 128px; gap: 16px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+    .mi code { font-size: 0.85rem; font-weight: 500; }
+    .mi small { display: block; color: var(--muted); font-family: var(--sans); font-size: 0.78rem; }
+    .mi .tr { height: 10px; border-radius: 99px; background: #e6ecf2; overflow: hidden; }
+    .mi .bw { display: block; width: var(--w); height: 100%; border-radius: inherit; background: var(--g); transition: width 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .js .grow:not(.on) .bw { width: 0; }
+    .mi .v { text-align: right; font: 500 0.82rem var(--mono); }
+    .mi .v small { display: inline; font-family: var(--mono); }
+
+    /* Class proportion */
+    .prop { display: flex; height: 44px; border-radius: 6px; overflow: hidden; gap: 2px; }
+    .prop span { display: block; min-width: 4px; }
+    .p-slight { background: #5a7894; } .p-hosp { background: var(--cy); } .p-fatal { background: var(--bad); }
+    .plegend { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin-top: 18px; }
+    .plegend div { padding-top: 12px; border-top: 3px solid var(--c); }
+    .plegend b { display: block; font-weight: 600; }
+    .plegend span { color: #a9bccd; font: 400 0.88rem var(--mono); }
+    .defs { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+    .defs div { padding-top: 14px; border-top: 3px solid #fff; }
+    .defs h4 { margin: 0 0 6px; font-size: 1.02rem; font-weight: 600; }
+    .defs p { margin: 0; color: #a9bccd; font-size: 0.95rem; }
+
+    /* Tabs / toggles */
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .tab { min-height: 40px; padding: 0 16px; border: 1px solid var(--line); border-radius: 99px; background: #fff; color: var(--text); font: 500 0.92rem var(--sans); cursor: pointer; }
+    .tab[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+    /* Scatter */
+    .legend-row { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; margin: 0 0 8px; color: var(--muted); font-size: 0.85rem; }
+    .legend-row i { display: inline-block; width: 11px; height: 11px; margin-right: 7px; border-radius: 50%; vertical-align: -1px; }
+    .legend-row .ring { background: #fff; border: 2px solid var(--muted); width: 12px; height: 12px; }
+    .scatter svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .scatter .gl { stroke: #e3e9ef; stroke-width: 1; }
+    .scatter .ax { fill: var(--muted); font: 400 11px var(--mono); }
+    .scatter .at { fill: var(--text); font: 500 12px var(--sans); }
+    .scatter .pl { fill: var(--text); font: 500 11px var(--mono); }
+    .scatter .pt { cursor: pointer; outline: none; }
+    .scatter .pt:focus-visible circle, .scatter .pt:hover circle { stroke-width: 3; }
+    .scatter.wx-off .wxel { display: none; }
+    .readout { min-height: 3em; margin: 6px 0 0; padding: 10px 14px; border-left: 3px solid var(--blue); background: #eef3f8; font-size: 0.92rem; }
+
+    /* Runs table */
+    .tw { overflow-x: auto; margin-top: 36px; }
+    table.runs, table.perm, table.depth { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .runs th, .perm th, .depth th { padding: 10px 10px; border-bottom: 2px solid var(--ink); font-size: 0.82rem; font-weight: 600; text-align: right; white-space: nowrap; }
+    .runs th:first-child, .perm th:first-child, .depth th:first-child { text-align: left; }
+    .runs td, .depth td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: right; font: 500 0.84rem var(--mono); }
+    .runs td:first-child, .depth td:first-child { text-align: left; font-family: var(--sans); font-weight: 400; }
+    .runs td.best { font-weight: 600; color: var(--blue); }
+    .runs tr.grp th { padding-top: 18px; border-bottom: 1px solid var(--line); color: var(--muted); font-weight: 500; text-align: left; }
+
+    /* Importance */
+    .imp-legend { display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 18px 0 14px; color: var(--muted); font-size: 0.85rem; }
+    .imp-legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 8px; border-radius: 2px; background: var(--g); }
+    .imp { --rh: 30px; position: relative; height: calc(20 * var(--rh)); }
+    .irow { position: absolute; top: 0; left: 0; right: 0; height: var(--rh); display: grid; grid-template-columns: 26px 200px minmax(0, 1fr); gap: 10px; align-items: center; transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s; }
+    .irow.gone { opacity: 0; pointer-events: none; }
+    .irank { color: var(--muted); font: 400 0.76rem var(--mono); text-align: right; }
+    .iname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8rem; font-weight: 500; }
+    .irow.g-wx .iname { color: var(--wx); font-weight: 600; }
+    .itrack { height: 14px; border-radius: 3px; background: #eef2f6; }
+    .ifill { display: block; height: 100%; border-radius: 3px; background: var(--g); transition: width 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .imp-note { margin: 18px 0 0; padding: 12px 16px; border-left: 3px solid var(--wx); background: #eef5fc; font-size: 0.95rem; max-width: 72ch; }
+
+    /* Tree */
+    .tree { overflow-x: auto; margin: 22px 0 18px; padding: 8px 0; }
+    .tree svg { display: block; min-width: 700px; width: 100%; height: auto; }
+    .tree .n { fill: #fff; stroke: var(--g); stroke-width: 2; }
+    .tree text { fill: var(--text); font: 500 11px var(--mono); }
+    .tree .e { stroke: #b7c4d1; stroke-width: 1.4; fill: none; }
+    .tree .el { fill: var(--muted); font: 400 10px var(--mono); }
+    .tree .leaf { fill: #f4f7fa; stroke: var(--wx); stroke-width: 1.4; stroke-dasharray: 3 3; }
+    .tree .cut { stroke: var(--wx); stroke-width: 1; stroke-dasharray: 5 4; }
+    .tree .cap { fill: var(--wx); font: 500 11px var(--sans); }
+    table.depth { max-width: 560px; }
+
+    /* Permutation */
+    table.perm td { padding: 0; border-bottom: 1px solid var(--line); }
+    table.perm td.f { padding: 9px 10px; font: 500 0.84rem var(--mono); }
+    table.perm td.c span { display: block; padding: 9px 0; text-align: center; font: 500 0.84rem var(--mono); background: rgba(27, 143, 224, calc(var(--v) * 0.85)); color: var(--text); }
+    table.perm td.c.hi span { color: #fff; }
+    table.perm th:not(:first-child) { text-align: center; }
+
+    /* Report */
+    .report { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 32px; padding-top: 72px; border-top: 1px solid var(--dline); }
+    .report h2 { max-width: 20ch; color: #fff; }
+    .report p { max-width: 56ch; margin: 0 0 20px; color: #a9bccd; }
+    footer.foot { padding: 30px 0 42px; color: var(--muted); font-size: 0.88rem; }
+    footer.foot .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+    footer.foot a { text-decoration: none; font-weight: 500; color: var(--blue); }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 980px) {
+      .hero-head { grid-template-columns: 1fr; gap: 36px; }
+      .split { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+      .split > header { position: static; }
+      .rows > div, .rows > li { grid-template-columns: 1fr; gap: 8px; }
+      .wx-grid { grid-template-columns: 1fr; gap: 0; }
+      .defs { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      .top nav a:not(:first-child) { display: none; }
+      .sec { padding: 72px 0; }
+      .demo { padding: 20px 16px; }
+      .mrow { grid-template-columns: 92px minmax(0, 1fr) 44px 58px; gap: 8px; }
+      .steps li { grid-template-columns: 28px 1fr; }
+      .steps li span { grid-column: 2; }
+      .mi { grid-template-columns: 1fr 100px; gap: 6px 12px; }
+      .mi .tr { grid-column: 1 / -1; grid-row: 2; }
+      .plegend { grid-template-columns: 1fr; gap: 14px; }
+      .irow { grid-template-columns: 22px 150px minmax(0, 1fr); gap: 8px; }
+      .iname { font-size: 0.72rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="../index.html#home" aria-label="Go to home">YA</a>
+      <nav aria-label="Project navigation">
+        <a href="../index.html#projects">All projects</a>
+        <a href="#data">Data</a>
+        <a href="#models">Models</a>
+        <a href="#interpretability">Interpretability</a>
+        <a href="#conclusion">Conclusion</a>
+        <a href="#report">Report</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- ================= HERO + WEATHER DEMO ================= -->
+    <section class="hero" id="top">
+      <div class="wrap">
+        <a class="back" href="../index.html#projects">← Back to projects</a>
+
+        <div class="hero-head">
+          <div>
+            <h1>Road Accident<br />Severity</h1>
+            <p class="sub">Data enrichment and interpretable machine learning</p>
+          </div>
+          <div>
+            <p class="lede">
+              French accident records say who was involved and where, but not what the sky looked like. We attached
+              historical weather to 110,124 accidents and measured how much it adds to predicting how severe they were.
+            </p>
+            <dl class="meta">
+              <div><dt>Project</dt><dd>M1 MIND, DALAS course, Sorbonne University, 2025</dd></div>
+              <div><dt>Team</dt><dd>Younes Arjdal and Haidar Fico Ramadhan Aryputra</dd></div>
+              <div><dt>Data</dt><dd>BAAC accident files 2022–2023, Weather Underground, French open weather data</dd></div>
+              <div><dt>Stack</dt><dd>Python, Selenium, PostgreSQL/PostGIS, scikit-learn, CatBoost</dd></div>
+            </dl>
+            <div class="hero-actions">
+              <a class="btn btn-light" href="../assets/projects/road-accident-severity/report.pdf" target="_blank" rel="noreferrer">Read the report (PDF)</a>
+              <a class="btn btn-ghost" href="#conclusion">Jump to the answer</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo" id="wx-demo">
+          <div class="demo-intro">
+            <div>
+              <h2>Add the weather, see what moves</h2>
+              <p>The best random forest without weather against the best one with it. Same model family, same hyperparameter searches, same random seeds. White ticks mark the no-weather baseline.</p>
+            </div>
+            <code class="chip">Random forest · 110,124 accidents</code>
+          </div>
+
+          <div class="demo-bar">
+            <label class="switch">
+              <input type="checkbox" id="wx-toggle" role="switch" />
+              <span class="knob"></span>
+              <span>Weather variables: <b id="wx-state">off</b></span>
+            </label>
+            <span class="demo-hint">Target: the worst injury in each accident</span>
+          </div>
+
+          <div class="wx-grid">
+            <div><h3>Overall</h3><div id="wx-overall"></div></div>
+            <div><h3>By severity class</h3><div id="wx-classes"></div></div>
+          </div>
+          <noscript><p class="fine">Turn on JavaScript to use this comparison. The same numbers are in the table in the Models section.</p></noscript>
+          <p class="fine">Precision: of the accidents the model flags in a class, how many really belong to it. Recall: of the accidents that really belong to a class, how many the model flags.</p>
+          <p class="verdict" id="wx-verdict" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= DATA ================= -->
+    <section class="sec" id="data">
+      <div class="wrap split">
+        <header>
+          <h2>Three sources, one row per accident</h2>
+          <p>The accident file has no weather in it. Getting some meant scraping one source, then covering its gaps with a second.</p>
+        </header>
+        <div>
+          <ol class="steps">
+            <li><b>Accidents</b><span>BAAC files for 2022 and 2023 from data.gouv.fr: characteristics, places, vehicles and users. They are merged to one row per accident, with the number of users and vehicles added as new columns. The result is 110,124 accidents and 33 columns.</span></li>
+            <li><b>Scraping</b><span>Selenium on Weather Underground. Each accident’s coordinates became a city through a REST API, then a time-specific page URL. Over 100,000 records came back with little blocking, but many stations don’t report visibility or ground conditions.</span></li>
+            <li><b>Open data</b><span>Hourly weather files from the French government fill those gaps. They run to over 2 GB compressed and 20 GB unpacked, so they went into PostgreSQL with PostGIS, where lookups by place and hour dropped from minutes to milliseconds.</span></li>
+          </ol>
+
+          <div class="block">
+            <h3>Where weather values are missing</h3>
+            <p>The incomplete columns are the weather ones. About three accidents in ten have no visibility value.</p>
+            <div class="miss grow" id="miss"></div>
+            <p class="note">Share of the 110,124 accidents, computed from the report’s counts.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PREPARATION ================= -->
+    <section class="sec white" id="prep">
+      <div class="wrap split">
+        <header>
+          <h2>Cleaning without deleting accidents</h2>
+          <p>Rows stay. Extreme values are clipped and unknowns get their own category.</p>
+        </header>
+        <dl class="rows">
+          <div>
+            <dt>Missing and invalid codes</dt>
+            <dd>The source marks unknowns with <code>-1</code>. Those became NaN. In categorical columns the NaN became an explicit <code>inconnu</code> category, so uncertainty stays visible to the model. Missing speed limits took the median for their road category.</dd>
+          </div>
+          <div>
+            <dt>Outliers</dt>
+            <dd>Quantile bounds per variable (average age, number of users, number of vehicles, speed limit), compared at the 95th, 97th, 98th and 99th percentiles and checked against domain knowledge. Values beyond a bound were replaced by the median of that tail, not dropped.</dd>
+          </div>
+          <div>
+            <dt>Codes to labels</dt>
+            <dd>Numeric BAAC codes became readable categories, and close ones were merged. Road surface went from seven values to four: normal, wet, slippery and degraded.</dd>
+          </div>
+          <div>
+            <dt>The target</dt>
+            <dd><code>grav_max</code> is the worst injury among the people in an accident: fatal, hospitalized or slight.</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- ================= TARGET ================= -->
+    <section class="sec dark" id="target">
+      <div class="wrap split">
+        <header>
+          <h2>Fatal accidents are 4% of the data</h2>
+          <p>That makes accuracy a poor judge, so models are compared on macro F1 and read class by class.</p>
+        </header>
+        <div>
+          <div class="block">
+            <h3>110,124 accidents by worst injury</h3>
+            <p>A model that always answers “slight” is right about 7 times in 10 and misses every fatal accident.</p>
+            <div class="prop" role="img" aria-label="Slight injury 77,621 accidents, hospitalized 27,889, fatal 4,614">
+              <span class="p-slight" style="flex: 77621"></span>
+              <span class="p-hosp" style="flex: 27889"></span>
+              <span class="p-fatal" style="flex: 4614"></span>
+            </div>
+            <div class="plegend">
+              <div style="--c: #5a7894"><b>Slight injury</b><span>77,621 · 70.5%</span></div>
+              <div style="--c: var(--cy)"><b>Hospitalized</b><span>27,889 · 25.3%</span></div>
+              <div style="--c: var(--bad)"><b>Fatal</b><span>4,614 · 4.2%</span></div>
+            </div>
+          </div>
+          <div class="block">
+            <div class="defs">
+              <div>
+                <h4>Macro F1</h4>
+                <p>The average of each class’s F1 score. The 4.2% fatal class counts as much as the 70.5% slight class.</p>
+              </div>
+              <div>
+                <h4>Precision and recall, per class</h4>
+                <p>Precision: of the accidents flagged fatal, how many were. Recall: of the fatal accidents, how many were flagged.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= MODELS ================= -->
+    <section class="sec" id="models">
+      <div class="wrap split">
+        <header>
+          <h2>A fatal-accident alert is a trade-off</h2>
+          <p>Catching more fatal accidents floods the alerts with false ones. Trusting the alerts means missing more.</p>
+        </header>
+        <div>
+          <p class="note" style="margin: 0 0 24px; font-size: 1rem; color: var(--text)">
+            Decision trees and random forests handle mixed numeric and categorical columns and can be inspected afterwards.
+            Each got a hyperparameter search, scored once on accuracy and once on macro F1. A simple forest search covers
+            trees, depth and leaf size, and a complex one adds split size and features per split. The weather runs reuse the
+            same searches and seeds, so the only change is the columns.
+          </p>
+
+          <div class="tabs">
+            <button class="tab" id="sc-wx" type="button" aria-pressed="true">Show runs with weather</button>
+          </div>
+          <div class="legend-row" aria-hidden="true">
+            <span><i style="background: var(--g-users)"></i>Decision tree</span>
+            <span><i style="background: var(--blue)"></i>Random forest</span>
+            <span><i style="background: var(--muted)"></i>No weather</span>
+            <span><i class="ring"></i>With weather</span>
+          </div>
+          <div class="scatter" id="scatter"></div>
+          <p class="readout" id="sc-readout" aria-live="polite">Hover or focus a point to read its numbers.</p>
+
+          <div class="tw">
+            <table class="runs">
+              <thead><tr><th scope="col">Model</th><th scope="col">Accuracy</th><th scope="col">Macro F1</th><th scope="col">Fatal precision</th><th scope="col">Fatal recall</th></tr></thead>
+              <tbody id="runs-body"></tbody>
+            </table>
+          </div>
+
+          <dl class="rows" style="margin-top: 40px">
+            <div>
+              <dt>Forests lead overall</dt>
+              <dd>Best forest: accuracy 0.672, macro F1 0.504. Best tree: 0.623 and 0.447. Forests gain most on hospitalized accidents (F1 around 0.45), the class between slight and severe.</dd>
+            </div>
+            <div>
+              <dt>Trees shout, forests hedge</dt>
+              <dd>The tree tuned on accuracy catches 59% of fatal accidents, but only 12% of its alerts are right. The forest tuned on macro F1 catches 34%, with 22% of alerts right.</dd>
+            </div>
+            <div>
+              <dt>Weather makes forests cautious</dt>
+              <dd>With weather, forests catch 27–28% of fatal accidents with 22% precision: fewer alerts, about as reliable, and small gains on the other two classes.</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= INTERPRETABILITY ================= -->
+    <section class="sec white" id="interpretability">
+      <div class="wrap split">
+        <header>
+          <h2>Who and when matter first. Weather comes after</h2>
+          <p>Three views of the same question: which columns do the models use, and what happens when one is scrambled?</p>
+        </header>
+        <div>
+          <div class="block">
+            <h3>What the forest relies on</h3>
+            <p>Average age of the people involved ranks first in both runs, followed by day, hour and number of users. With weather added, pressure jumps to second, temperature to fourth and wind speed to seventh. Continuous columns like these tend to score high on this measure, so the checks below matter.</p>
+            <div class="tabs" role="group" aria-label="Forest run">
+              <button class="tab" type="button" data-imp="no" aria-pressed="true">Without weather</button>
+              <button class="tab" type="button" data-imp="wx" aria-pressed="false">With weather</button>
+            </div>
+            <div class="imp-legend" aria-hidden="true">
+              <span class="g-users">People involved</span><span class="g-time">Time</span><span class="g-veh">Vehicles and collision</span><span class="g-road">Road and setting</span><span class="g-wx">Weather</span>
+            </div>
+            <div class="imp" id="imp" role="img" aria-label="Top 20 column importances for the random forest. Bars are traced from the report’s figures."></div>
+            <noscript><p class="note">Turn on JavaScript to see this chart, or open the report for the same figure.</p></noscript>
+            <p class="imp-note" id="imp-note" aria-live="polite"></p>
+            <p class="note">Rows are ranked by importance. Bar lengths are traced from the report’s figures, so read the ranks rather than exact values.</p>
+          </div>
+
+          <div class="block">
+            <h3>Where the decision tree uses weather</h3>
+            <p>One tree splits first on the number of users (one person or more), then on average age and on whether the crash was outside a built-up area. Weather never appears in the first three levels.</p>
+            <div class="tree" id="tree"></div>
+            <div class="tw" style="margin-top: 8px">
+              <table class="depth">
+                <thead><tr><th scope="col">Weather column</th><th scope="col">Splits</th><th scope="col">First depth</th><th scope="col">Average depth</th></tr></thead>
+                <tbody>
+                  <tr><td>temperature</td><td>7</td><td>3</td><td>5.43</td></tr>
+                  <tr><td>pressure</td><td>4</td><td>5</td><td>5.75</td></tr>
+                  <tr><td>wind speed</td><td>3</td><td>6</td><td>6.00</td></tr>
+                  <tr><td>visibility</td><td>0</td><td>–</td><td>–</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="block">
+            <h3>What happens when a weather column is shuffled</h3>
+            <p>Shuffling a column breaks its link to severity, and the change in F1 shows how much the forest used it. All changes are small. The largest, pressure on fatal accidents, is about 0.012 of F1. Visibility changes nothing.</p>
+            <div class="tw" style="margin-top: 0">
+              <table class="perm">
+                <thead><tr><th scope="col">Shuffled column</th><th scope="col">All classes</th><th scope="col">Fatal</th><th scope="col">Hospitalized</th><th scope="col">Slight</th></tr></thead>
+                <tbody>
+                  <tr><td class="f">temperature</td><td class="c" style="--v: .09"><span>1.1</span></td><td class="c" style="--v: .24"><span>2.9</span></td><td class="c" style="--v: .44"><span>5.3</span></td><td class="c" style="--v: .07"><span>0.9</span></td></tr>
+                  <tr><td class="f">wind_speed</td><td class="c" style="--v: .19"><span>2.3</span></td><td class="c" style="--v: .28"><span>3.4</span></td><td class="c" style="--v: .34"><span>4.1</span></td><td class="c" style="--v: .04"><span>0.5</span></td></tr>
+                  <tr><td class="f">pressure</td><td class="c" style="--v: .03"><span>0.4</span></td><td class="c hi" style="--v: 1"><span>12.1</span></td><td class="c hi" style="--v: .71"><span>8.6</span></td><td class="c" style="--v: .18"><span>2.2</span></td></tr>
+                  <tr><td class="f">visibility</td><td class="c" style="--v: 0"><span>0</span></td><td class="c" style="--v: 0"><span>0</span></td><td class="c" style="--v: 0"><span>0</span></td><td class="c" style="--v: 0"><span>0</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="note">Size of the F1 change in thousandths, ignoring direction. Values are read from the report’s figure, so treat them as approximate.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CONCLUSION ================= -->
+    <section class="sec dark" id="conclusion">
+      <div class="wrap split">
+        <header>
+          <h2>Weather modulates the prediction. It doesn’t drive it</h2>
+          <p>The answer to the research question, and what backs it up.</p>
+        </header>
+        <dl class="rows">
+          <div>
+            <dt>Main drivers</dt>
+            <dd>Who is involved (average age, number of users), when it happens (day, hour, month) and the road setting. Without any weather, models already reach macro F1 0.504.</dd>
+          </div>
+          <div>
+            <dt>What weather adds</dt>
+            <dd>Accuracy rises by 0.012 and macro F1 stays at 0.504. There are small gains on hospitalized and slight injuries, and a more cautious forest on fatal accidents.</dd>
+          </div>
+          <div>
+            <dt>Where it shows up</dt>
+            <dd>Pressure, temperature and wind speed sit in the forest’s top seven columns, yet a single tree only uses them below its third level. Visibility shows no effect.</dd>
+          </div>
+          <div>
+            <dt>An upper bound</dt>
+            <dd>CatBoost, used as a ceiling, reaches macro F1 0.5487, about 4.5 points above the forest, and F1 0.2757 on fatal accidents.</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- ================= LIMITS ================= -->
+    <section class="sec" id="limits">
+      <div class="wrap split">
+        <header>
+          <h2>What limits these results</h2>
+          <p>The conclusions hold for this data and these models.</p>
+        </header>
+        <dl class="rows">
+          <div>
+            <dt>Two years, one country</dt>
+            <dd>Accidents from 2022 and 2023 only, all in France.</dd>
+          </div>
+          <div>
+            <dt>Uneven weather coverage</dt>
+            <dd>Many stations don’t record visibility or ground state, so about three accidents in ten have no visibility value. That makes visibility’s null result hard to interpret.</dd>
+          </div>
+          <div>
+            <dt>Few fatal accidents</dt>
+            <dd>4,614 out of 110,124. Fatal-class precision never exceeds 0.23 in any run.</dd>
+          </div>
+          <div>
+            <dt>Importance isn’t cause</dt>
+            <dd>Feature importance and shuffling describe what the models use, not what makes a crash deadlier.</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- ================= REPORT ================= -->
+    <section class="sec" id="report" style="background: var(--ink); padding-top: 0">
+      <div class="wrap">
+        <div class="report">
+          <div>
+            <h2>The full report has the details</h2>
+            <p>Data collection, cleaning, every model run and the interpretability figures. 19 pages, in English.</p>
+          </div>
+          <a class="btn btn-light" href="../assets/projects/road-accident-severity/report.pdf" target="_blank" rel="noreferrer">Open the PDF</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <span>© 2026 Younes Arjdal</span>
+      <a href="../index.html#projects">Back to projects ↑</a>
+    </div>
+  </footer>
+
+  <script>
+  (() => {
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+    const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const f3 = (n) => n.toFixed(3);
+    const fmt = (n) => n.toLocaleString('en-US');
+
+    /* ============ Weather on/off comparison ============ */
+    const BASE = { acc: .672, f1: .504, prec: .490, rec: .528, p2: .219, r2: .343, p3: .426, r3: .478, p4: .826, r4: .762 };
+    const WX   = { acc: .684, f1: .504, prec: .496, rec: .515, p2: .224, r2: .278, p3: .438, r3: .487, p4: .824, r4: .780 };
+    const OVERALL = [['acc', 'Accuracy'], ['f1', 'Macro F1'], ['prec', 'Macro precision'], ['rec', 'Macro recall']];
+    const CLASSES = [
+      ['Fatal', '4.2% of accidents', 'p2', 'r2'],
+      ['Hospitalized', '25.3% of accidents', 'p3', 'r3'],
+      ['Slight injury', '70.5% of accidents', 'p4', 'r4']
+    ];
+    const mrow = (k, label) => `<div class="mrow" data-k="${k}"><span class="mlabel">${label}</span>
+      <div class="mbar"><span class="fill" style="width:${BASE[k] * 100}%"></span><span class="tick" style="left:${BASE[k] * 100}%"></span></div>
+      <span class="mval">${f3(BASE[k])}</span><span class="mdelta"></span></div>`;
+    $('#wx-overall').innerHTML = OVERALL.map(([k, l]) => mrow(k, l)).join('');
+    $('#wx-classes').innerHTML = CLASSES.map(([n, share, p, r]) =>
+      `<div class="cblock"><div class="chead"><b>${n}</b><span>${share}</span></div>${mrow(p, 'Precision')}${mrow(r, 'Recall')}</div>`).join('');
+
+    const wx = { on: false };
+    function updateWx() {
+      $('#wx-demo').classList.toggle('on-wx', wx.on);
+      $('#wx-state').textContent = wx.on ? 'on' : 'off';
+      $$('#wx-demo .mrow').forEach((row) => {
+        const k = row.dataset.k;
+        const v = wx.on ? WX[k] : BASE[k];
+        $('.fill', row).style.width = v * 100 + '%';
+        $('.mval', row).textContent = f3(v);
+        const dEl = $('.mdelta', row);
+        if (!wx.on) { dEl.textContent = ''; dEl.className = 'mdelta'; return; }
+        const d = Math.round((WX[k] - BASE[k]) * 1000) / 1000;
+        if (d === 0) { dEl.textContent = 'unchanged'; dEl.className = 'mdelta flat'; }
+        else { dEl.textContent = (d > 0 ? '+' : '−') + Math.abs(d).toFixed(3); dEl.className = 'mdelta ' + (d > 0 ? 'up' : 'down'); }
+      });
+      $('#wx-verdict').textContent = wx.on
+        ? 'Accuracy rises by 0.012 and macro F1 doesn’t move. On fatal accidents the forest becomes more cautious: it catches 28% instead of 34%, and its alerts are about as reliable (22%).'
+        : 'Baseline. With no weather column at all, the forest already reaches macro F1 0.504. It catches 34% of fatal accidents, and 22% of its fatal alerts are right.';
+    }
+    $('#wx-toggle').addEventListener('change', (e) => { wx.on = e.target.checked; updateWx(); });
+    updateWx();
+
+    /* ============ Missing values ============ */
+    const N = 110124;
+    const MISS = [
+      ['visibility', '', 32832, 'g-wx'], ['circ', 'traffic regime', 7046, 'g-road'],
+      ['wind_speed', '', 3226, 'g-wx'], ['temperature', '', 3226, 'g-wx'], ['pressure', '', 3226, 'g-wx'],
+      ['vma', 'speed limit', 1910, 'g-road'], ['infra', 'infrastructure', 1200, 'g-road'],
+      ['col, situ, prof, surf, atm, lum', 'six road columns', 76, 'g-road', '4 to 76 rows']
+    ];
+    $('#miss').innerHTML = MISS.map(([name, gloss, c, g, custom]) => {
+      const pct = c / N * 100;
+      const w = Math.max(0.6, c / 32832 * 100);
+      const val = custom
+        ? `${custom}<br><small>under 0.1%</small>`
+        : `${fmt(c)}<br><small>${pct >= 1 ? pct.toFixed(1) : pct.toFixed(2)}%</small>`;
+      return `<div class="mi ${g}"><div><code>${esc(name)}</code>${gloss ? `<small>${esc(gloss)}</small>` : ''}</div>
+        <div class="tr"><span class="bw" style="--w:${w}%"></span></div><div class="v">${val}</div></div>`;
+    }).join('');
+
+    /* ============ Fatal-class trade-off scatter ============ */
+    const TREE = 'var(--g-users)', FOREST = 'var(--blue)';
+    const PTS = [
+      { id: 'dtF', fam: TREE, wx: 0, r: .538, p: .137, name: 'Decision tree, tuned on macro F1', lab: ['tree · F1', -10, 18, 'end'] },
+      { id: 'dtA', fam: TREE, wx: 0, r: .594, p: .124, name: 'Decision tree, tuned on accuracy', lab: ['tree · acc.', 0, 0, 'start'], skipLabel: true },
+      { id: 'rfS1', fam: FOREST, wx: 0, r: .443, p: .181, name: 'Forest, simple search, tuned on macro F1', lab: ['forest simple · F1', 12, 4, 'start'] },
+      { id: 'rfS2', fam: FOREST, wx: 0, r: .564, p: .143, name: 'Forest, simple search, tuned on accuracy', lab: ['forest simple · acc.', 0, -13, 'middle'] },
+      { id: 'rfC', fam: FOREST, wx: 0, r: .343, p: .219, name: 'Forest, complex search (macro F1 and accuracy give identical results)', lab: ['forest complex', 12, 4, 'start'] },
+      { id: 'dtF_w', fam: TREE, wx: 1, r: .547, p: .137, from: 'dtF', name: 'Decision tree, tuned on macro F1' },
+      { id: 'dtA_w', fam: TREE, wx: 1, r: .605, p: .122, from: 'dtA', name: 'Decision tree, tuned on accuracy', lab: ['tree · acc.', 16, 4, 'start'] },
+      { id: 'rfF_w', fam: FOREST, wx: 1, r: .273, p: .220, from: 'rfC', name: 'Forest, tuned on macro F1' },
+      { id: 'rfA_w', fam: FOREST, wx: 1, r: .278, p: .224, from: 'rfC', name: 'Forest, tuned on accuracy', lab: ['forest + weather', -14, 4, 'end'] }
+    ];
+    const S = { W: 680, H: 410, l: 64, r: 20, t: 16, b: 64 };
+    const pw = S.W - S.l - S.r, ph = S.H - S.t - S.b;
+    const X = (v) => S.l + v / 0.7 * pw, Y = (v) => S.t + (1 - v / 0.3) * ph;
+    (function buildScatter() {
+      let g = '';
+      for (let i = 0; i <= 7; i++) { const v = i / 10; g += `<line class="gl" x1="${X(v)}" x2="${X(v)}" y1="${S.t}" y2="${S.t + ph}"/><text class="ax" x="${X(v)}" y="${S.t + ph + 16}" text-anchor="middle">${v.toFixed(1)}</text>`; }
+      for (let i = 0; i <= 6; i++) { const v = i * 0.05; g += `<line class="gl" x1="${S.l}" x2="${S.l + pw}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${S.l - 10}" y="${Y(v) + 4}" text-anchor="end">${v.toFixed(2)}</text>`; }
+      const byId = Object.fromEntries(PTS.map((p) => [p.id, p]));
+      const lines = PTS.filter((p) => p.from).map((p) => { const b = byId[p.from];
+        return `<line class="wxel" x1="${X(b.r)}" y1="${Y(b.p)}" x2="${X(p.r)}" y2="${Y(p.p)}" stroke="${p.fam}" stroke-width="2" stroke-dasharray="3 3" opacity=".6"/>`; }).join('');
+      const pts = [...PTS].sort((a, b) => b.wx - a.wx).map((p) => {
+        const lab = p.lab && !p.skipLabel ? `<text class="pl ${p.wx ? 'wxel' : ''}" x="${X(p.r) + p.lab[1]}" y="${Y(p.p) + p.lab[2]}" text-anchor="${p.lab[3]}">${p.lab[0]}</text>` : '';
+        const aria = `${p.name}, ${p.wx ? 'with weather' : 'no weather'}: recall ${f3(p.r)}, precision ${f3(p.p)}`;
+        const circ = p.wx
+          ? `<circle cx="${X(p.r)}" cy="${Y(p.p)}" r="8" fill="#fff" stroke="${p.fam}" stroke-width="2"/>`
+          : `<circle cx="${X(p.r)}" cy="${Y(p.p)}" r="5.5" fill="${p.fam}" stroke="#fff" stroke-width="1.5"/>`;
+        return `<g class="pt ${p.wx ? 'wxel' : ''}" tabindex="0" role="img" aria-label="${esc(aria)}" data-t="${esc(aria)}">${circ}</g>${lab}`;
+      }).join('');
+      $('#scatter').innerHTML = `<svg viewBox="0 0 ${S.W} ${S.H}" role="group" aria-label="Fatal-class precision against recall for each model run">
+        ${g}${lines}${pts}
+        <text class="at" x="${S.l + pw / 2}" y="${S.H - 10}" text-anchor="middle">Fatal accidents caught (recall)</text>
+        <text class="ax" x="${S.l}" y="${S.H - 10}">← fewer alerts</text>
+        <text class="ax" x="${S.l + pw}" y="${S.H - 10}" text-anchor="end">more alerts →</text>
+        <text class="at" transform="translate(16 ${S.t + ph / 2}) rotate(-90)" text-anchor="middle">Alerts that are right (precision)</text></svg>`;
+      const ro = $('#sc-readout'), idle = 'Hover or focus a point to read its numbers.';
+      $$('#scatter .pt').forEach((el) => {
+        const show = () => { ro.textContent = el.dataset.t; };
+        el.addEventListener('mouseenter', show); el.addEventListener('focus', show);
+        el.addEventListener('mouseleave', () => { ro.textContent = idle; }); el.addEventListener('blur', () => { ro.textContent = idle; });
+      });
+    })();
+    $('#sc-wx').addEventListener('click', (e) => {
+      const on = e.currentTarget.getAttribute('aria-pressed') !== 'true';
+      e.currentTarget.setAttribute('aria-pressed', String(on));
+      $('#scatter').classList.toggle('wx-off', !on);
+    });
+
+    /* ============ Runs table ============ */
+    const RUNS = [
+      ['No weather', [
+        ['Decision tree · macro F1', .623, .447, .137, .538], ['Decision tree · accuracy', .601, .433, .124, .594],
+        ['Forest, complex search · macro F1', .672, .504, .219, .343], ['Forest, complex search · accuracy', .672, .504, .219, .343],
+        ['Forest, simple search · macro F1', .649, .485, .181, .443], ['Forest, simple search · accuracy', .616, .448, .143, .564]]],
+      ['With weather', [
+        ['Decision tree · macro F1', .620, .447, .137, .547], ['Decision tree · accuracy', .600, .433, .122, .605],
+        ['Forest · macro F1', .682, .500, .220, .273], ['Forest · accuracy', .684, .504, .224, .278]]]
+    ];
+    $('#runs-body').innerHTML = RUNS.map(([grp, rows]) => {
+      const best = Math.max(...rows.map((r) => r[2]));
+      return `<tr class="grp"><th colspan="5" scope="colgroup">${grp}</th></tr>` + rows.map((r) =>
+        `<tr><td>${esc(r[0])}</td><td>${f3(r[1])}</td><td class="${r[2] === best ? 'best' : ''}">${f3(r[2])}</td><td>${f3(r[3])}</td><td>${f3(r[4])}</td></tr>`).join('');
+    }).join('');
+
+    /* ============ Column importance (animated ranking) ============ */
+    const IMP = {
+      no: { age_moyen: .170, jour: .100, heure: .091, nb_usagers: .084, mois: .073, nb_vehicules: .040, vma: .0385, has_PL: .0285, agg_hors_agglomeration: .026, circ_double_sens: .0258, has_2RM: .024, an: .0205, has_MD: .019, situ_chaussee: .016, col_autre: .0148, agg_en_agglomeration: .0145, catr_route_departementale: .0141, catr_voie_communale: .0138, col_frontale: .0108, has_VL: .010 },
+      wx: { age_moyen: .130, pressure: .088, nb_usagers: .076, temperature: .073, jour: .068, heure: .0645, wind_speed: .053, mois: .045, nb_vehicules: .0385, vma: .0305, has_PL: .0272, agg_hors_agglomeration: .0248, circ_double_sens: .0218, has_2RM: .0215, has_MD: .0158, agg_en_agglomeration: .0143, situ_chaussee: .0138, an: .0136, col_autre: .0130, catr_voie_communale: .0122 }
+    };
+    const GRP = { age_moyen: 'users', nb_usagers: 'users', jour: 'time', heure: 'time', mois: 'time', an: 'time',
+      nb_vehicules: 'veh', has_PL: 'veh', has_2RM: 'veh', has_MD: 'veh', has_VL: 'veh', col_autre: 'veh', col_frontale: 'veh',
+      vma: 'road', agg_hors_agglomeration: 'road', agg_en_agglomeration: 'road', circ_double_sens: 'road', situ_chaussee: 'road', catr_route_departementale: 'road', catr_voie_communale: 'road',
+      pressure: 'wx', temperature: 'wx', wind_speed: 'wx' };
+    const IMPMAX = .18, RH = () => parseFloat(getComputedStyle($('#imp')).getPropertyValue('--rh')) || 30;
+    const feats = [...new Set([...Object.keys(IMP.no), ...Object.keys(IMP.wx)])];
+    $('#imp').innerHTML = feats.map((f) => `<div class="irow g-${GRP[f]} gone" data-f="${f}" aria-hidden="true"><span class="irank"></span><code class="iname" title="${f}">${f}</code><div class="itrack"><span class="ifill" style="width:0"></span></div></div>`).join('');
+    const IMPNOTE = {
+      no: 'Without weather, the top five are average age, day, hour, number of users and month.',
+      wx: 'With weather, pressure ranks 2nd, temperature 4th and wind speed 7th. Average age still comes first, and visibility isn’t in the top 20.'
+    };
+    function setImp(mode) {
+      const sorted = Object.entries(IMP[mode]).sort((a, b) => b[1] - a[1]).map((e) => e[0]);
+      const rh = RH();
+      $$('#imp .irow').forEach((row) => {
+        const f = row.dataset.f, i = sorted.indexOf(f);
+        if (i >= 0) {
+          row.classList.remove('gone'); row.removeAttribute('aria-hidden');
+          row.style.transform = `translateY(${i * rh}px)`;
+          $('.irank', row).textContent = i + 1;
+          $('.ifill', row).style.width = (IMP[mode][f] / IMPMAX * 100) + '%';
+        } else {
+          row.classList.add('gone'); row.setAttribute('aria-hidden', 'true');
+          row.style.transform = `translateY(${20 * rh}px)`;
+          $('.ifill', row).style.width = '0';
+        }
+      });
+      $('#imp-note').textContent = IMPNOTE[mode];
+      $$('.tab[data-imp]').forEach((t) => t.setAttribute('aria-pressed', String(t.dataset.imp === mode)));
+    }
+    $$('.tab[data-imp]').forEach((t) => t.addEventListener('click', () => setImp(t.dataset.imp)));
+    setImp('no');
+    window.addEventListener('resize', () => setImp($('.tab[data-imp][aria-pressed="true"]').dataset.imp));
+
+    /* ============ Decision tree figure ============ */
+    (function buildTree() {
+      const cw = 6.6, nodeW = (t) => t.length * cw + 22;
+      const leafX = [55, 150, 245, 340, 435, 530, 625, 720];
+      const L2 = [[102.5, 'situ_chaussee ≤ 0.5', 'road'], [292.5, 'has_2RM ≤ 0.5', 'veh'], [482.5, 'age_moyen ≤ 53.9', 'users'], [672.5, 'circ_double_sens ≤ 0.5', 'road']];
+      const L1 = [[197.5, 'age_moyen ≤ 59.5', 'users', 'true'], [577.5, 'agg_hors_agglomeration ≤ 0.5', 'road', 'false']];
+      const root = [387.5, 'nb_usagers ≤ 1.5', 'users'];
+      const y0 = 34, y1 = 112, y2 = 190, yl = 262;
+      let out = '';
+      const edge = (x1, y1_, x2, y2_, label, side) => {
+        out += `<path class="e" d="M${x1} ${y1_ + 14} L${x2} ${y2_ - 14}"/>`;
+        if (label) out += `<text class="el" x="${(x1 + x2) / 2 + (side < 0 ? -8 : 8)}" y="${(y1_ + y2_) / 2 + 3}" text-anchor="${side < 0 ? 'end' : 'start'}">${label}</text>`;
+      };
+      edge(root[0], y0, L1[0][0], y1, 'true', -1); edge(root[0], y0, L1[1][0], y1, 'false', 1);
+      [[0, 0], [0, 1], [1, 2], [1, 3]].forEach(([p, c], i) => edge(L1[p][0], y1, L2[c][0], y2, '', 0));
+      L2.forEach(([x], i) => { edge(x, y2, leafX[i * 2], yl + 3, '', 0); edge(x, y2, leafX[i * 2 + 1], yl + 3, '', 0); });
+      out += `<line class="cut" x1="8" x2="767" y1="${yl - 24}" y2="${yl - 24}"/>`;
+      leafX.forEach((x) => { out += `<rect class="leaf" x="${x - 20}" y="${yl - 8}" width="40" height="22" rx="4"/><text x="${x}" y="${yl + 7}" text-anchor="middle">…</text>`; });
+      const node = ([x, t, g], y) => `<g class="g-${g}"><rect class="n" x="${x - nodeW(t) / 2}" y="${y - 14}" width="${nodeW(t)}" height="28" rx="6"/><text x="${x}" y="${y + 4}" text-anchor="middle">${esc(t)}</text></g>`;
+      out += node(root, y0) + L1.map((n) => node(n, y1)).join('') + L2.map((n) => node(n, y2)).join('');
+      out += `<text class="cap" x="387.5" y="${yl + 40}" text-anchor="middle">Weather splits only start below the dashed line: temperature at depth 3, pressure at 5, wind speed at 6</text>`;
+      $('#tree').innerHTML = `<svg viewBox="0 0 775 318" role="img" aria-label="Top three levels of the decision tree. Splits: number of users, then average age or built-up area, then road situation, two-wheelers, age and traffic direction. Weather appears only below these levels.">${out}</svg>`;
+    })();
+
+    /* ============ Reveal bars on scroll ============ */
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('on'); io.unobserve(e.target); } });
+      }, { threshold: 0.25 });
+      $$('.grow').forEach((s) => io.observe(s));
+    } else { $$('.grow').forEach((s) => s.classList.add('on')); }
+  })();
+  </script>
+</body>
+</html>
