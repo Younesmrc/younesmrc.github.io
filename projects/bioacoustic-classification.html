@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="BirdCLEF+ 2026: multi-label audio classification of 234 Pantanal species with hand-built spectral features, One-vs-Rest CatBoost and an analysis of the focal-to-soundscape domain gap." />
+  <meta name="theme-color" content="#06121f" />
+  <title>Bioacoustic Classification — Younes Arjdal</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script>document.documentElement.classList.replace('no-js', 'js');</script>
+  <style>
+    :root {
+      --ink: #06121f; --ink-2: #0a1b2e; --paper: #f4f6f8; --text: #12202e; --muted: #566677;
+      --line: #d6dee6; --dline: rgba(255, 255, 255, 0.13);
+      --blue: #1d5f9b; --cy: #6bb8f5; --ok: #4fd69c; --bad: #ff7a84; --warn: #f5c26b; --pub: #b79cff;
+      --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --r: 8px; --w: 1160px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+    body { margin: 0; color: var(--text); background: var(--paper); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+    code { font-family: var(--mono); }
+    .wrap { width: min(calc(100% - 40px), var(--w)); margin: 0 auto; }
+    :focus-visible { outline: 3px solid rgba(107, 184, 245, 0.7); outline-offset: 3px; }
+
+    .top { position: sticky; top: 0; z-index: 50; background: rgba(6, 18, 31, 0.84); backdrop-filter: blur(14px); border-bottom: 1px solid var(--dline); }
+    .top .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 64px; }
+    .brand { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 9px; background: #fff; color: var(--ink); font-weight: 600; letter-spacing: -0.03em; text-decoration: none; }
+    .top nav { display: flex; gap: 26px; }
+    .top nav a { color: #b4c4d4; font-size: 0.9rem; font-weight: 500; text-decoration: none; }
+    .top nav a:hover { color: #fff; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: var(--r); border: 1px solid transparent; font: 600 0.92rem var(--sans); text-decoration: none; cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.15s; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-light { background: #fff; color: var(--ink); }
+    .btn-light:hover { background: #e6eef6; }
+    .btn-ghost { background: transparent; color: #dbe7f2; border-color: rgba(255, 255, 255, 0.25); }
+    .btn-ghost:hover { border-color: rgba(255, 255, 255, 0.6); }
+    .btn[disabled] { opacity: 0.4; cursor: default; transform: none; }
+
+    /* ---------- Hero ---------- */
+    .hero { background: var(--ink); color: #fff; padding: 56px 0 88px; }
+    .back { display: inline-block; margin-bottom: 44px; color: #8fa6bb; font-size: 0.9rem; text-decoration: none; }
+    .back:hover { color: #fff; }
+    .hero-head { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); gap: 56px; align-items: end; }
+    h1 { margin: 0; font-size: clamp(2.8rem, 6.6vw, 5.8rem); line-height: 0.98; letter-spacing: -0.045em; font-weight: 600; }
+    .sub { margin: 20px 0 0; font: 400 1rem var(--mono); color: var(--cy); }
+    .lede { margin: 0 0 24px; max-width: 52ch; color: #b9c9d9; font-size: 1.06rem; }
+    .meta { display: grid; gap: 10px; margin: 0; font-size: 0.88rem; }
+    .meta div { display: grid; grid-template-columns: 92px 1fr; gap: 12px; padding-top: 10px; border-top: 1px solid var(--dline); }
+    .meta dt { color: #7f95aa; }
+    .meta dd { margin: 0; color: #dbe7f2; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+
+    /* ---------- Traversal demo ---------- */
+    .demo { margin-top: 64px; padding: 28px; border: 1px solid var(--dline); border-radius: 12px; background: var(--ink-2); }
+    .demo-intro { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 20px; }
+    .demo-intro h2 { margin: 0; font-size: 1.25rem; letter-spacing: -0.02em; font-weight: 600; }
+    .demo-intro p { margin: 6px 0 0; max-width: 66ch; color: #9fb4c8; font-size: 0.95rem; }
+    .chip { font: 500 0.82rem var(--mono); color: #d8edff; padding: 4px 10px; border: 1px solid rgba(107, 184, 245, 0.4); border-radius: 6px; background: rgba(107, 184, 245, 0.1); white-space: nowrap; }
+    .demo-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; border-top: 1px solid var(--dline); }
+    .modes { display: flex; flex-wrap: wrap; gap: 8px; }
+    .mode { min-height: 40px; padding: 0 16px; border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 99px; background: transparent; color: #dbe7f2; font: 500 0.9rem var(--sans); cursor: pointer; }
+    .mode[aria-pressed="true"] { background: #fff; border-color: #fff; color: var(--ink); }
+    .demo-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+    .trap { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--dline); border-bottom: 1px solid var(--dline); }
+    .switch { display: inline-flex; align-items: center; gap: 12px; color: #dbe7f2; font-weight: 500; cursor: pointer; }
+    .switch input { position: absolute; opacity: 0; pointer-events: none; }
+    .knob { position: relative; flex: none; width: 46px; height: 26px; border-radius: 99px; background: #2a4561; transition: background 0.2s; }
+    .knob::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+    .switch input:checked + .knob { background: var(--warn); }
+    .switch input:checked + .knob::after { transform: translateX(20px); }
+    .switch input:focus-visible + .knob { outline: 3px solid rgba(107, 184, 245, 0.7); outline-offset: 3px; }
+    .trap small { color: #7f98b0; font-size: 0.85rem; }
+    .out { margin-top: 18px; padding: 16px 18px; border-left: 3px solid var(--cy); background: rgba(107, 184, 245, 0.07); color: #cfe0ef; min-height: 3.2em; }
+    .out.diff { border-color: var(--warn); background: rgba(245, 194, 107, 0.08); }
+    .tw { overflow-x: auto; }
+    /* ---------- Sections ---------- */
+    .sec { padding: 104px 0; }
+    .sec.white { background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .sec.dark { background: var(--ink); color: #fff; }
+    .split { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 72px; }
+    .split > * { min-width: 0; }
+    .split > header { align-self: start; position: sticky; top: 96px; }
+    h2 { margin: 0 0 16px; font-size: clamp(1.9rem, 3.4vw, 2.8rem); line-height: 1.1; letter-spacing: -0.035em; font-weight: 600; }
+    .split > header p { max-width: 34ch; margin: 0; color: var(--muted); }
+    .dark .split > header p { color: #9fb4c8; }
+    h3 { margin: 0; font-size: 1.15rem; letter-spacing: -0.02em; font-weight: 600; }
+    p { margin-top: 0; }
+    .block + .block { margin-top: 64px; }
+    .block > h3 { margin-bottom: 8px; font-size: 1.5rem; letter-spacing: -0.03em; }
+    .block > p { max-width: 64ch; margin-bottom: 20px; color: var(--muted); }
+    .dark .block > p { color: #a9bccd; }
+    .note { margin: 14px 0 0; color: var(--muted); font-size: 0.85rem; max-width: 72ch; }
+    .dark .note { color: #8097ac; }
+
+    .rows { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .rows > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 32px; padding: 22px 0; border-bottom: 1px solid var(--line); }
+    .rows dt { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; }
+    .rows dd { margin: 0; color: var(--muted); }
+    .rows dd code { color: var(--text); font-size: 0.86em; }
+    .formula { display: block; margin-top: 8px; padding: 10px 12px; border-radius: 6px; background: #eef3f8; color: var(--text); font: 500 0.82rem var(--mono); overflow-x: auto; white-space: nowrap; }
+
+    .steps { counter-reset: s; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .steps li { display: grid; grid-template-columns: 36px 150px 1fr; gap: 16px; align-items: baseline; padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .steps li::before { counter-increment: s; content: counter(s); color: var(--blue); font: 500 0.9rem var(--mono); }
+    .steps b { font-size: 1.1rem; letter-spacing: -0.02em; font-weight: 600; }
+    .steps span { color: var(--muted); }
+
+    .facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; margin: 0 0 12px; }
+    .facts div { padding-top: 12px; border-top: 3px solid var(--ink); }
+    .facts b { display: block; font: 600 1.35rem var(--mono); letter-spacing: -0.03em; }
+    .facts span { color: var(--muted); font-size: 0.85rem; }
+    table.wp { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .wp th { padding: 10px; border-bottom: 2px solid var(--ink); font-size: 0.82rem; font-weight: 600; text-align: left; }
+    .wp td { padding: 9px 10px; border-bottom: 1px solid var(--line); font: 500 0.84rem var(--mono); }
+    .wp td.bad { color: #c0303c; } .wp td.good { color: #178f5b; font-weight: 600; }
+    /* results */
+    .pair { display: grid; grid-template-columns: 190px minmax(0, 1fr) 96px; gap: 16px; align-items: center; padding: 14px 0; border-top: 1px solid var(--dline); }
+    .pair b { display: block; font-weight: 600; }
+    .pair small { color: #8097ac; }
+    .pbars { display: grid; gap: 6px; }
+    .pb { display: flex; align-items: center; gap: 10px; }
+    .pb .tr { flex: 1; height: 12px; border-radius: 99px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
+    .pb .bw { display: block; width: var(--w); height: 100%; border-radius: inherit; background: var(--c); transition: width 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .js .grow:not(.on) .bw { width: 0; }
+    .pb em { min-width: 76px; color: #9fb4c8; font: 500 0.78rem var(--mono); font-style: normal; }
+    .pb.bm { --c: #5a7894; } .pb.di { --c: var(--cy); } .pb.pu { --c: var(--pub); }
+    .gain { text-align: right; color: var(--ok); font: 600 1.15rem var(--mono); letter-spacing: -0.03em; }
+    .tag-pub { display: inline-block; margin-bottom: 14px; padding: 3px 10px; border: 1px solid rgba(183, 156, 255, 0.5); border-radius: 6px; background: rgba(183, 156, 255, 0.1); color: var(--pub); font: 500 0.78rem var(--mono); }
+    .callout { margin: 20px 0 0; padding: 14px 18px; border-left: 3px solid var(--warn); background: rgba(245, 194, 107, 0.08); color: #e6d6b4; max-width: 74ch; }
+    .rows > div > *, .rows dd { min-width: 0; }
+    .formula { max-width: 100%; }
+    @media (max-width: 760px) { table.runs { display: block; overflow-x: auto; } }
+    table.runs { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 0.9rem; }
+    .runs th { padding: 10px; border-bottom: 1px solid var(--dline); color: #9fb4c8; font-size: 0.8rem; font-weight: 500; text-align: right; white-space: nowrap; }
+    .runs th:first-child, .runs th:nth-child(2) { text-align: left; }
+    .runs td { padding: 9px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.07); text-align: right; font: 500 0.84rem var(--mono); }
+    .runs td:first-child, .runs td:nth-child(2) { text-align: left; font-family: var(--sans); font-weight: 400; }
+    .runs td.best { color: var(--cy); font-weight: 600; }
+
+    .report { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 32px; padding-top: 72px; border-top: 1px solid var(--dline); }
+    .report h2 { max-width: 20ch; color: #fff; }
+    .report p { max-width: 56ch; margin: 0 0 20px; color: #a9bccd; }
+    footer.foot { padding: 30px 0 42px; color: var(--muted); font-size: 0.88rem; }
+    footer.foot .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+    footer.foot a { text-decoration: none; font-weight: 500; color: var(--blue); }
+    h1 { font-size: clamp(2.4rem, 5.2vw, 4.7rem); }
+    .hero-head > div { min-width: 0; }
+
+    /* ---------- Wave demo ---------- */
+    .ctl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding: 18px 0; border-top: 1px solid var(--dline); }
+    .ctl label { display: block; color: #dbe7f2; font-weight: 500; font-size: 0.92rem; }
+    .ctl label output { float: right; font: 500 0.88rem var(--mono); color: var(--cy); }
+    .ctl input[type=range] { width: 100%; margin: 10px 0 0; accent-color: #6bb8f5; }
+    .ctl small { display: block; margin-top: 2px; color: #7f98b0; font-size: 0.78rem; }
+    .ctl label.switch { display: inline-flex; margin-top: 4px; }
+    .wv { margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--dline); }
+    .wv + .wv { margin-top: 14px; }
+    .wv-h { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; margin-bottom: 6px; font-size: 0.88rem; color: #dbe7f2; }
+    .wv-h span { color: #7f98b0; font: 400 0.8rem var(--mono); }
+    .wv svg { display: block; width: 100%; height: 96px; border-radius: 6px; background: rgba(255, 255, 255, 0.035); }
+    .wv path.mix { stroke: #8da3b8; stroke-width: 1; fill: none; }
+    .wv path.tgt { stroke: #6bb8f5; stroke-width: 1.2; fill: none; }
+    .wv line.mid { stroke: rgba(255, 255, 255, 0.1); }
+    .share b { font: 600 1.6rem var(--mono); color: var(--cy); letter-spacing: -0.03em; }
+    .share { margin-top: 18px; padding: 14px 18px; border-left: 3px solid var(--cy); background: rgba(107, 184, 245, 0.07); color: #cfe0ef; }
+
+    /* ---------- Class grid ---------- */
+    .grid-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+    .gmode { min-height: 40px; padding: 0 16px; border: 1px solid var(--line); border-radius: 99px; background: #fff; color: var(--text); font: 500 0.9rem var(--sans); cursor: pointer; }
+    .gmode[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .groups { display: flex; flex-wrap: wrap; gap: 22px 40px; }
+    .grp { min-width: 0; }
+    .grp.wide { flex-basis: 100%; }
+    .grp h4 { margin: 0 0 8px; font: 500 0.82rem var(--mono); color: var(--muted); }
+    .dots { display: flex; flex-wrap: wrap; gap: 3px; max-width: 760px; }
+    .d { width: 11px; height: 11px; border-radius: 3px; border: 1.5px solid transparent; transition: background 0.3s, border-color 0.3s, opacity 0.3s; }
+    .d.c { background: #178f5b; } .d.v { background: #1d5f9b; } .d.s { background: #b87a0a; }
+    .d.s.off { background: transparent; border-color: #b87a0a; opacity: 0.55; }
+    .gleg { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 18px 0 0; color: var(--muted); font-size: 0.85rem; }
+    .gleg i { display: inline-block; width: 11px; height: 11px; margin-right: 7px; border-radius: 3px; vertical-align: -1px; }
+    .gcap { margin: 14px 0 0; padding: 14px 18px; border-left: 3px solid var(--blue); background: #eef3f8; color: var(--text); max-width: 74ch; min-height: 3.4em; }
+
+    /* ---------- Score bars + dumbbells ---------- */
+    .kag { display: grid; gap: 12px; margin-top: 8px; }
+    .kag .pb em { min-width: 64px; color: #dbe7f2; }
+    .kag .lab { display: block; margin-bottom: 4px; font-size: 0.9rem; color: #dbe7f2; }
+    .axisnote { margin: 8px 0 0; color: #7f98b0; font: 400 0.78rem var(--mono); }
+    .stack { display: flex; height: 34px; margin: 6px 0 4px; border-radius: 6px; overflow: hidden; gap: 2px; }
+    .stack span { display: grid; place-items: center; min-width: 0; color: #06121f; font: 600 0.82rem var(--mono); }
+    .stack .up { flex: 29; background: var(--ok); } .stack .eq { flex: 5; background: #8da3b8; } .stack .dn { flex: 8; background: var(--bad); }
+    .stack-l { display: flex; flex-wrap: wrap; gap: 4px 20px; color: #9fb4c8; font-size: 0.84rem; margin-bottom: 8px; }
+    .db { display: grid; grid-template-columns: 220px minmax(0, 1fr) 156px; gap: 16px; align-items: center; padding: 11px 0; border-top: 1px solid var(--dline); }
+    .db b { display: block; font-weight: 500; font-size: 0.92rem; }
+    .db small { color: #7f98b0; }
+    .dtrack { position: relative; height: 26px; }
+    .dtrack::before { content: ""; position: absolute; left: 0; right: 0; top: 12px; height: 2px; background: rgba(255, 255, 255, 0.08); }
+    .dtrack .chance { position: absolute; top: 0; bottom: 0; left: var(--ch); border-left: 1px dashed rgba(255, 255, 255, 0.28); }
+    .dtrack .seg2 { position: absolute; top: 10px; height: 6px; border-radius: 3px; left: var(--a); width: var(--wd); background: var(--k); opacity: 0.55; }
+    .dtrack .m { position: absolute; top: 4px; left: var(--x); width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; border: 2px solid var(--k); background: var(--ink); }
+    .dtrack .m.f { background: var(--k); }
+    .dv { font: 500 0.82rem var(--mono); color: #cfe0ef; text-align: right; white-space: nowrap; }
+    .dv.up { --k: var(--ok); } .dv.dn { --k: var(--bad); } .dv.ce { --k: var(--warn); }
+    .db.up { --k: var(--ok); } .db.dn { --k: var(--bad); } .db.ce { --k: var(--warn); }
+    .dleg { margin: 10px 0 0; color: #7f98b0; font-size: 0.82rem; }
+    .case { display: inline-block; margin-left: 8px; padding: 1px 9px; border-radius: 99px; background: #eef3f8; color: var(--blue); font: 500 0.74rem var(--mono); vertical-align: 2px; white-space: nowrap; }
+    table.wp td.num, table.wp th.num { text-align: right; }
+    table.wp td.top { color: var(--blue); font-weight: 600; }
+    .tw { overflow-x: auto; }
+
+    @media (max-width: 980px) {
+      .hero-head { grid-template-columns: 1fr; gap: 36px; }
+      .split { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+      .split > header { position: static; }
+      .rows > div { grid-template-columns: 1fr; gap: 8px; }
+      .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .ctl { grid-template-columns: 1fr; gap: 16px; }
+    }
+    @media (max-width: 720px) {
+      .top nav a:not(:first-child) { display: none; }
+      .sec { padding: 72px 0; }
+      .demo { padding: 20px 16px; }
+      .steps li { grid-template-columns: 28px 1fr; }
+      .steps li span { grid-column: 2; }
+      .pair { grid-template-columns: 1fr 76px; gap: 8px 12px; }
+      .pair > div:first-child { grid-column: 1 / -1; }
+      .db { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; }
+      .db .dtrack { grid-column: 1 / -1; order: 3; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="../index.html#home" aria-label="Go to home">YA</a>
+      <nav aria-label="Project navigation">
+        <a href="../index.html#projects">All projects</a>
+        <a href="#data">Data</a>
+        <a href="#v1">Version 1</a>
+        <a href="#v2">Version 2</a>
+        <a href="#results">Results</a>
+        <a href="#errors">Errors</a>
+        <a href="#report">Report</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- ================= HERO + DOMAIN-GAP DEMO ================= -->
+    <section class="hero" id="top">
+      <div class="wrap">
+        <a class="back" href="../index.html#projects">← Back to projects</a>
+
+        <div class="hero-head">
+          <div>
+            <h1>Bioacoustic<br />Classification</h1>
+            <p class="sub">BirdCLEF+ 2026: 234 species, classical audio features</p>
+          </div>
+          <div>
+            <p class="lede">
+              A Kaggle competition: say which of 234 Pantanal species are calling in a five-second passive recording.
+              The training audio is clean close-ups, the test is a noisy mixture. A hand-built feature vector and one
+              CatBoost per species reach 0.737 on the leaderboard, and the report spends most of its effort on why that is
+              where they stop.
+            </p>
+            <dl class="meta">
+              <div><dt>Project</dt><dd>M1 MIND, Sorbonne University</dd></div>
+              <div><dt>Contest</dt><dd>BirdCLEF+ 2026 on Kaggle</dd></div>
+              <div><dt>Task</dt><dd>Multi-label, 234 classes, macro AUC-ROC</dd></div>
+              <div><dt>Stack</dt><dd>Python, librosa, scikit-learn, XGBoost, CatBoost</dd></div>
+            </dl>
+            <div class="hero-actions">
+              <a class="btn btn-light" href="#results">Jump to results</a>
+              <a class="btn btn-ghost" href="../assets/projects/bioacoustic-classification/report.pdf" target="_blank" rel="noreferrer">Read the report</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo" aria-labelledby="demo-title">
+          <div class="demo-intro">
+            <div>
+              <h2 id="demo-title">The same frog, two recordings</h2>
+              <p>Training clips are one species up close. The test is a passive microphone that hears about four species at once, up to ten. Add species and noise and watch how little of the signal belongs to the target.</p>
+            </div>
+            <span class="chip">synthetic signal, not real audio</span>
+          </div>
+
+          <div class="ctl">
+            <div>
+              <label for="nsp">Species in the segment <output id="nsp-o">4</output></label>
+              <input id="nsp" type="range" min="1" max="10" step="1" value="4" />
+              <small>Soundscape average in the data: 4.2</small>
+            </div>
+            <div>
+              <label for="nz">Background noise <output id="nz-o">35 %</output></label>
+              <input id="nz" type="range" min="0" max="100" step="5" value="35" />
+              <small>Wind, insects, distant calls</small>
+            </div>
+            <div>
+              <label class="switch"><input id="hl" type="checkbox" checked /><span class="knob"></span><span>Highlight the target frog</span></label>
+            </div>
+          </div>
+
+          <div class="wv">
+            <div class="wv-h"><b>Focal recording</b><span>Base 1 · one species, microphone aimed at it</span></div>
+            <svg id="w-focal" viewBox="0 0 600 96" preserveAspectRatio="none" role="img" aria-label="Waveform of a clean focal recording with three calls"></svg>
+          </div>
+          <div class="wv">
+            <div class="wv-h"><b>Soundscape segment</b><span id="w-cap">Test · 5 s, 4 species + noise</span></div>
+            <svg id="w-soup" viewBox="0 0 600 96" preserveAspectRatio="none" role="img" aria-label="Waveform of a noisy soundscape mixture"></svg>
+          </div>
+          <p class="share" id="share" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= DATA ================= -->
+    <section class="sec" id="data">
+      <div class="wrap split">
+        <header>
+          <h2>Three datasets that don't match</h2>
+          <p>Before any model, the report maps what exists and where the test will differ from the training data.</p>
+        </header>
+        <div>
+          <div class="block">
+            <h3>What is provided</h3>
+            <p>All audio is OGG Vorbis, mono, 32 kHz. The difficulty is not the format but how each set was recorded.</p>
+            <dl class="rows">
+              <div><dt>Base 1<br /><span style="font-weight:400;color:var(--muted)">train_audio</span></dt><dd>35,549 recordings from xeno-canto (23,043) and iNaturalist (12,506). One primary label each, variable length (0.03 s to 549 s, median 19.6 s). Covers 206 of the 234 classes.</dd></div>
+              <div><dt>Base 2<br /><span style="font-weight:400;color:var(--muted)">train_soundscapes</span></dt><dd>1,478 five-second segments from passive Pantanal recorders, with a multi-label vector. Covers 75 classes, 4.2 species per segment on average and up to 10.</dd></div>
+              <div><dt>Test</dt><dd>About 7,200 five-second segments from the same passive recorders. One probability per class, scored by the mean AUC-ROC over classes, so a rare insect counts as much as a common bird.</dd></div>
+            </dl>
+          </div>
+
+          <div class="block">
+            <h3>Who can be learned from what</h3>
+            <p>Crossing the two training sets gives four statuses for the 234 targets. Switch the training data to see what version 2 unlocks.</p>
+            <dl class="facts">
+              <div><b>47</b><span>in both bases</span></div>
+              <div><b>159</b><span>Base 1 only: lots of audio, never heard in a soundscape</span></div>
+              <div><b>28</b><span>Base 2 only: few examples, test-like</span></div>
+              <div><b>0</b><span>species with no data at all</span></div>
+            </dl>
+            <div class="grid-tools" role="group" aria-label="Training data">
+              <button type="button" class="gmode" data-g="v1" aria-pressed="true">Version 1: train on Base 1</button>
+              <button type="button" class="gmode" data-g="v2" aria-pressed="false">Version 2: Base 1 + 80 % of Base 2</button>
+            </div>
+            <div class="groups" id="groups"></div>
+            <div class="gleg">
+              <span><i style="background:#178f5b"></i>In both bases</span>
+              <span><i style="background:#1d5f9b"></i>Base 1 only</span>
+              <span><i style="background:#b87a0a"></i>Base 2 only</span>
+              <span style="color:var(--muted)">One square = one species</span>
+            </div>
+            <p class="gcap" id="gcap" aria-live="polite"></p>
+            <p class="note">Group split read from the report's coverage figure and its totals. Birds dominate with 162 of 234 species; nearly all insects (25 of 28) exist only in Base 2.</p>
+          </div>
+
+          <div class="block">
+            <h3>Three shifts between training and test</h3>
+            <dl class="rows">
+              <div><dt>Focal vs passive</dt><dd>Base 1 clips aim a microphone at one animal. The test is autonomous recorders capturing everything in range. A model that learns a clean signal is later asked to find it inside a mixture, so a validation split drawn from Base 1 would flatter it.</dd></div>
+              <div><dt>Two sources</dt><dd>xeno-canto gives a quality rating from 1 to 5 (mostly 4 or 5). iNaturalist gives none, all its files read 0, so quality cannot be filtered the same way on both. About 12 % of files, xeno-canto only, carry secondary labels.</dd></div>
+              <div><dt>World vs Pantanal</dt><dd>97 % of Base 1 was recorded outside the Pantanal. About 70 species may sing differently there, so the model can learn dialects it will not hear at test time.</dd></div>
+            </dl>
+          </div>
+
+          <div class="block">
+            <h3>Three acoustic signatures</h3>
+            <dl class="rows">
+              <div><dt>Birds</dt><dd>Short modulated syllables separated by silences. Needs dynamics, which averaging flattens.</dd></div>
+              <div><dt>Insects</dt><dd>Continuous wide-band signal with no temporal structure.</dd></div>
+              <div><dt>Amphibians</dt><dd>Continuous too, but in a narrow band. Global statistics are enough for insects and amphibians, so the features have to mix static and dynamic information.</dd></div>
+            </dl>
+            <p class="note">Most energy sits below 8 kHz, so audio can be resampled from 32 kHz to 16 kHz without losing what matters.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VERSION 1 ================= -->
+    <section class="sec white" id="v1">
+      <div class="wrap split">
+        <header>
+          <h2>A hand-built feature vector</h2>
+          <p>Version 1 bets on analysis over model size: no neural network, only what the data called for.</p>
+        </header>
+        <div>
+          <div class="block">
+            <h3>The pipeline</h3>
+            <ol class="steps">
+              <li><b>Resample</b><span>To 16 kHz, justified by the spectral analysis.</span></li>
+              <li><b>Cut</b><span>Non-overlapping 5 s segments, capped at 20 per file so a ten-minute file does not over-represent its species. Base 1 gives 198,437 segments, Base 2 keeps its 1,478.</span></li>
+              <li><b>Describe</b><span>170 numbers per segment, mean and standard deviation of each: MFCC with delta and delta-delta, spectral centroid, bandwidth, rolloff, flatness and contrast, RMS and zero-crossing rate, chroma.</span></li>
+              <li><b>One-vs-Rest</b><span>One binary classifier per species, each outputting a probability. Positives are re-weighted automatically, with <code>scale_pos_weight</code> capped at 100.</span></li>
+              <li><b>CatBoost</b><span>Depth 6, learning rate 0.05, L2 regularisation 3 and early stopping: a robust compromise rather than a tuned optimum.</span></li>
+            </ol>
+          </div>
+
+          <div class="block">
+            <h3>Three classifiers, same protocol</h3>
+            <p>Trained on all of Base 1, evaluated on all of Base 2, macro AUC.</p>
+            <div class="tw">
+              <table class="wp">
+                <thead><tr><th>Classifier</th><th class="num">All</th><th class="num">47 shared</th><th class="num">Mammalia</th><th class="num">Aves</th><th class="num">Amphibia</th><th class="num">Time</th></tr></thead>
+                <tbody>
+                  <tr><td>SGD (linear)</td><td class="num">0.543</td><td class="num">0.569</td><td class="num">0.518</td><td class="num">0.602</td><td class="num">0.518</td><td class="num">5 min</td></tr>
+                  <tr><td>XGBoost</td><td class="num">0.609</td><td class="num">0.674</td><td class="num">0.841</td><td class="num">0.651</td><td class="num">0.653</td><td class="num">7 min</td></tr>
+                  <tr><td>CatBoost</td><td class="num top">0.652</td><td class="num top">0.742</td><td class="num">0.839</td><td class="num top">0.752</td><td class="num top">0.680</td><td class="num">2 min</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="note">CatBoost wins on almost every column and is the fastest thanks to the GPU. Submitted to Kaggle it scores <b>0.728</b>, well above the 0.65 local figure.</p>
+          </div>
+
+          <div class="block">
+            <h3>What version 1 showed</h3>
+            <dl class="rows">
+              <div><dt>Learnable classes work</dt><dd>On the 47 shared classes CatBoost averages 0.742 and some species pass 0.98.</dd></div>
+              <div><dt>A ceiling by construction</dt><dd>The 28 Base-2-only classes stay at 0.5 on all three models because Base 1 holds no positives for them. They drag the macro AUC down mechanically.</dd></div>
+              <div><dt>Anti-predicted classes</dt><dd>Three classes score below 0.4 (trsowl, 116570, magant1) despite hundreds to thousands of training examples. That is the typical symptom of a strong focal to soundscape gap.</dd></div>
+              <div><dt>Uneven by group</dt><dd>Mammalia 0.84, Aves 0.75, Amphibia 0.68, Insecta 0.50, Reptilia 0.43: plain statistics do not capture the same information in every kind of signal.</dd></div>
+            </dl>
+          </div>
+
+          <div class="block">
+            <h3>A dead end: BirdNET embeddings</h3>
+            <p>BirdNET v2.4 produces a 1024-dimensional vector per 3 s and was trained largely on xeno-canto, so it looked like a natural fit. On CPU it took about two seconds per focal file, hours for Base 1 (the report later estimates over twenty), and batching and parallelism did not help. The idea was dropped to keep a pipeline that already scored well and had room to improve.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VERSION 2 ================= -->
+    <section class="sec" id="v2">
+      <div class="wrap split">
+        <header>
+          <h2>Version 2: more signal, more data</h2>
+          <p>Three changes stacked on top of version 1, each answering something the first run exposed.</p>
+        </header>
+        <div>
+          <div class="block">
+            <h3>Three cumulative changes</h3>
+            <dl class="rows">
+              <div><dt>307 features</dt><dd>Skewness and kurtosis of the MFCCs for temporal dynamics, eight mel bands (mean and standard deviation) to separate stationary insect and amphibian signatures, and a silence rate to tell dense focal files from airy soundscapes.</dd></div>
+              <div><dt>Multi-label targets</dt><dd>Secondary labels, present in 12.2 % of Base 1 files, turn each target into a 234-dimensional binary vector, which adds positives for species that co-occur.</dd></div>
+              <div><dt>Train on both bases</dt><dd>Base 2 matches the test distribution but is tiny and easy to overfit, so it is split by soundscape file: 52 files (1,182 segments) join training, 14 files (296 segments) stay out for an honest hold-out. This unlocks the 28 Base-2-only classes, and the report counts 229 trained classes.</dd></div>
+            </dl>
+          </div>
+
+          <div class="block">
+            <h3>Same three classifiers, new split</h3>
+            <p>Early stopping on the hold-out, evaluated on its 296 segments. 42 classes have at least one positive there and can be scored.</p>
+            <div class="tw">
+              <table class="wp">
+                <thead><tr><th>Classifier</th><th class="num">Macro AUC</th><th class="num">Shared classes</th><th class="num">Base-2-only</th><th class="num">Time</th></tr></thead>
+                <tbody>
+                  <tr><td>SGD (linear)</td><td class="num">0.641</td><td class="num">0.642</td><td class="num">0.639</td><td class="num">8 min</td></tr>
+                  <tr><td>XGBoost</td><td class="num">0.749</td><td class="num">0.816</td><td class="num">0.639</td><td class="num">44 min</td></tr>
+                  <tr><td>CatBoost</td><td class="num top">0.803</td><td class="num top">0.880</td><td class="num top">0.677</td><td class="num">14 min</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="note">CatBoost leads XGBoost by 0.05 and SGD by 0.16. These numbers are not comparable with version 1's table: the evaluation set shrank from 1,478 segments and 75 classes to 296 segments and 42 classes.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= RESULTS ================= -->
+    <section class="sec dark" id="results">
+      <div class="wrap split">
+        <header>
+          <h2>A small gain on Kaggle, a large change underneath</h2>
+          <p>Only the Kaggle score is comparable between versions. The hold-out shows where the gain went.</p>
+        </header>
+        <div>
+          <div class="block grow">
+            <h3>Kaggle leaderboard</h3>
+            <p>Macro AUC on the hidden test.</p>
+            <div class="kag">
+              <div><span class="lab">Version 1, 170 features, Base 1 only</span><div class="pb bm"><span class="tr"><span class="bw" style="--w:45.6%"></span></span><em>0.728</em></div></div>
+              <div><span class="lab">Version 2, 307 features, Base 1 + 80 % Base 2</span><div class="pb di"><span class="tr"><span class="bw" style="--w:47.4%"></span></span><em>0.737</em></div></div>
+            </div>
+            <p class="axisnote">Bars start at 0.5, which is chance. Gain: +0.009.</p>
+          </div>
+
+          <div class="block grow">
+            <h3>Per biological group</h3>
+            <p>CatBoost AUC on the 42 classes scored in both versions, v1 against v2 on the hold-out. Mean change +0.165, and every group improves.</p>
+            <div id="grp-pairs"></div>
+          </div>
+
+          <div class="block">
+            <h3>Class by class</h3>
+            <div class="stack" role="img" aria-label="29 classes improved, 5 stable, 8 regressed"><span class="up">29</span><span class="eq">5</span><span class="dn">8</span></div>
+            <div class="stack-l"><span>29 improved (more than +0.02)</span><span>5 stable</span><span>8 regressed</span></div>
+            <div id="dumbbells" style="margin-top:18px"></div>
+            <p class="dleg">Hollow = version 1, filled = version 2. Dashed line = 0.5, chance. The four insect sounds (son17, son21, son22, son23) all move from a forced 0.5 to between 0.97 and 1.00.</p>
+          </div>
+
+          <p class="callout">Why only +0.009 on Kaggle? Half of the newly unlocked classes stay stuck near 0.5, the insects are hard to tell apart with averaged statistics, and the 47 shared classes were already the best predicted, so their gain weighs little in a macro AUC pulled down by the hard ones. The public score also covers only part of the hidden test, so the private gap may be wider.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= ERRORS ================= -->
+    <section class="sec white" id="errors">
+      <div class="wrap split">
+        <header>
+          <h2>Where the features run out</h2>
+          <p>Three classes that version 2 does not fix, each for a different reason.</p>
+        </header>
+        <div>
+          <dl class="rows">
+            <div><dt>Two-colored oval frog<span class="case">domain gap</span><br /><span style="font-weight:400;color:var(--muted);font-size:.9rem">Amphibia, 0.85 → 0.52</span></dt><dd>The focal clip is dominated by continuous broadband noise around 2 kHz with a few low-frequency pings. The soundscape shows regular horizontal bands between 2 and 5 kHz, probably a chorus of several individuals. In version 1 the model only met soundscapes at evaluation time and found chance correlations. Once trained on soundscapes, it learned that its focal signature was far from the annotated ones.</dd></div>
+            <div><dt>Southern Spectacled Caiman<span class="case">too little data</span><br /><span style="font-weight:400;color:var(--muted);font-size:.9rem">Reptilia, 0.43 → 0.55</span></dt><dd>Its calls are short, powerful low-frequency bars, but it rarely calls: most positive soundscape segments are ambient noise with a faint signal. Base 1 holds a single focal file, so learning a decision boundary from one example is statistically impossible. The 26 positives in Base 2 lift it slightly and then it plateaus.</dd></div>
+            <div><dt>Rococo Toad<span class="case">masked by others</span><br /><span style="font-weight:400;color:var(--muted);font-size:.9rem">Amphibia, 0.87 → 0.59</span></dt><dd>A steady call around 500 to 1,000 Hz is its focal signature. In soundscapes that drone is buried under bird and amphibian transients, and statistics averaged over five seconds cannot isolate it. Version 2 exposes a problem version 1 was hiding: the features cannot separate overlapping sources.</dd></div>
+          </dl>
+          <p class="note" style="margin-top:24px">The report's reading: the pipeline copes when a species' signature stays consistent between focal and soundscape (most birds and mammals) and unlocks Base-2-only classes mechanically. It fails on rare classes, on signatures drowned by other sources, and where averaged statistics miss what is specific to a species. These are structural gaps, not tuning problems.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= NEXT ================= -->
+    <section class="sec" id="next">
+      <div class="wrap split">
+        <header>
+          <h2>What a version 3 would try</h2>
+          <p>Ranked by expected return on effort, from the report's perspectives. None of this was run.</p>
+        </header>
+        <div>
+          <ol class="steps">
+            <li><b>Pretrained embeddings</b><span>BirdNET (1024-d), Perch (1280-d) or AVES in place of the 307 statistics. They help most on the focal to soundscape transfer and on masked signals, but need GPU time or a one-off chunked extraction. Little help for the caiman, whose problem is data.</span></li>
+            <li><b>Targeted augmentation</b><span>Mix soundscape background into focal files and stack several focal clips to imitate co-occurrence. Nearly free and aimed straight at the domain gap, so it should ease the amphibian regressions.</span></li>
+            <li><b>Non-audio metadata</b><span>A geographic prior from the species' training locations against the Pantanal, a seasonal filter (the test is February to March), and a cheap test of quality against quantity: train on xeno-canto rating 3 or more plus iNaturalist.</span></li>
+            <li><b>Ensembling and tuning</b><span>A geometric mean of XGBoost and CatBoost probabilities, then a short Optuna search on the hard classes. Sure but marginal, kept for last.</span></li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= REPORT ================= -->
+    <section class="sec" id="report" style="background: var(--ink); padding-top: 0">
+      <div class="wrap">
+        <div class="report">
+          <div>
+            <h2>Read the full report</h2>
+            <p>In French, 15 pages: data analysis, both versions, error analysis with spectrograms, and perspectives.</p>
+          </div>
+          <a class="btn btn-light" href="../assets/projects/bioacoustic-classification/report.pdf" target="_blank" rel="noreferrer">Open the report (PDF)</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <span>© 2026 Younes Arjdal</span>
+      <a href="../index.html#projects">Back to projects ↑</a>
+    </div>
+  </footer>
+  <script>
+  (() => {
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+    /* ============ Wave demo (synthetic, seeded) ============ */
+    function rng(a) { return () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+    const N = 300, W = 600, MID = 48;
+    const R = rng(7), sg = () => R() * 2 - 1;
+    const bump = (t, c, w) => Math.exp(-Math.pow((t - c) / w, 2));
+    const tgt = Array.from({ length: N }, (_, i) => { const t = i / N * 5; return (0.9 * bump(t, 0.9, 0.16) + 0.8 * bump(t, 2.1, 0.2) + 0.95 * bump(t, 3.5, 0.14) + 0.55 * bump(t, 4.3, 0.1)) * sg(); });
+    const others = Array.from({ length: 9 }, (_, j) => {
+      const kind = j % 3, cs = [0, 1, 2, 3].map(() => R() * 4.6 + 0.2), ph = R() * 6;
+      return Array.from({ length: N }, (_, i) => {
+        const t = i / N * 5;
+        if (kind === 0) return 0.7 * cs.reduce((a, c) => a + bump(t, c, 0.09), 0) * sg();
+        if (kind === 1) return 0.3 * sg();
+        return 0.42 * (0.6 + 0.4 * Math.sin(t * 3 + ph)) * sg();
+      });
+    });
+    const noise = Array.from({ length: N }, sg);
+
+    function path(arr, scale) {
+      let d = '';
+      for (let i = 0; i < N; i++) {
+        const x = (i + 0.5) / N * W, a = Math.min(Math.abs(arr[i]) * scale, 1) * (MID - 4);
+        d += `M${x.toFixed(1)} ${(MID - a).toFixed(1)}V${(MID + a).toFixed(1)}`;
+      }
+      return d;
+    }
+    const svgWave = (el, layers) => { el.innerHTML = `<line class="mid" x1="0" x2="${W}" y1="${MID}" y2="${MID}"/>` + layers.map((l) => `<path class="${l.c}" d="${path(l.a, l.s)}"/>`).join(''); };
+
+    const nsp = $('#nsp'), nz = $('#nz'), hl = $('#hl');
+    function wave() {
+      const k = +nsp.value, nzv = +nz.value / 100;
+      $('#nsp-o').textContent = k; $('#nz-o').textContent = nz.value + ' %';
+      const mix = Array.from({ length: N }, (_, i) => {
+        let v = tgt[i] + 0.4 * nzv * 2 * noise[i];
+        for (let j = 0; j < k - 1; j++) v += others[j][i];
+        return v;
+      });
+      const mx = Math.max(...mix.map(Math.abs), 1), sc = 1 / mx;
+      const fo = tgt.map((v, i) => v + 0.05 * noise[i]);
+      svgWave($('#w-focal'), [{ c: 'tgt', a: fo, s: 1 }]);
+      svgWave($('#w-soup'), [{ c: 'mix', a: mix, s: sc }].concat(hl.checked ? [{ c: 'tgt', a: tgt, s: sc }] : []));
+      $('#w-cap').textContent = `Test · 5 s, ${k} species + noise`;
+      const e = (a) => a.reduce((s, v) => s + v * v, 0);
+      let eo = 0; for (let j = 0; j < k - 1; j++) eo += e(others[j]);
+      const en = e(noise.map((v) => 0.8 * nzv * v)), et = e(tgt);
+      const share = et / (et + eo + en);
+      $('#share').innerHTML = `Target share of the signal energy in this toy mixture: <b>${Math.round(share * 100)} %</b>. In the focal clip it is nearly 100 %.`;
+    }
+    [nsp, nz, hl].forEach((el) => el.addEventListener('input', wave));
+    wave();
+
+    /* ============ Species grid ============ */
+    const G = [['Aves', 28, 134, 0, true], ['Amphibia', 14, 18, 3], ['Insecta', 0, 3, 25], ['Mammalia', 4, 4, 0], ['Reptilia', 1, 0, 0]];
+    const gwrap = $('#groups');
+    gwrap.innerHTML = G.map(([n, c, v, s, wide]) => {
+      const dots = [['c', c, 'in both bases'], ['v', v, 'Base 1 only'], ['s', s, 'Base 2 only']].map(([k, m, lab]) => Array.from({ length: m }, () => `<span class="d ${k}" title="${n}: ${lab}"></span>`).join('')).join('');
+      return `<div class="grp${wide ? ' wide' : ''}"><h4>${n} · ${c + v + s}</h4><div class="dots">${dots}</div></div>`;
+    }).join('');
+    const CAP = {
+      v1: 'Trained on Base 1 alone, the 28 Base-2-only species (hollow squares) have no positive example. Their AUC is forced to 0.5 and mechanically pulls the macro AUC down.',
+      v2: 'Adding 80 % of Base 2 to training lets the model learn those 28 species, and the test-like soundscapes sharpen the 47 shared ones. The report counts 229 trained classes.'
+    };
+    function setG(m) {
+      $$('.gmode').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.g === m)));
+      $$('.d.s').forEach((d) => d.classList.toggle('off', m === 'v1'));
+      $('#gcap').textContent = CAP[m];
+    }
+    $$('.gmode').forEach((b) => b.addEventListener('click', () => setG(b.dataset.g)));
+    setG('v1');
+
+    /* ============ Per-group pairs ============ */
+    const P = [['Mammalia', 3, 0.785, 0.991, '+0.206'], ['Aves', 9, 0.756, 0.931, '+0.175'], ['Insecta', 13, 0.5, 0.662, '+0.162'], ['Amphibia', 16, 0.668, 0.825, '+0.157'], ['Reptilia', 1, 0.431, 0.552, '+0.121']];
+    $('#grp-pairs').innerHTML = P.map(([n, k, a, b, g]) => `
+      <div class="pair">
+        <div><b>${n}</b><small>${k} class${k > 1 ? 'es' : ''}</small></div>
+        <div class="pbars">
+          <div class="pb bm"><span class="tr"><span class="bw" style="--w:${a * 100}%"></span></span><em>v1 ${a.toFixed(3)}</em></div>
+          <div class="pb di"><span class="tr"><span class="bw" style="--w:${b * 100}%"></span></span><em>v2 ${b.toFixed(3)}</em></div>
+        </div>
+        <div class="gain">${g}</div>
+      </div>`).join('');
+
+    /* ============ Dumbbells ============ */
+    const lo = 0.4, hi = 1.0, pos = (v) => ((v - lo) / (hi - lo) * 100).toFixed(2) + '%';
+    const D = [
+      ['Guaraní leaf-litter frog', 'Amphibia', 0.5, 0.93, null, 'up'],
+      ['Little Nightjar', 'Aves', 0.52, 0.98, null, 'up'],
+      ['Pauraque', 'Aves', 0.53, 0.90, null, 'up'],
+      ['Striated Heron', 'Aves', 0.57, 0.94, null, 'up'],
+      ['Four insect sounds', 'son17, son21, son22, son23', 0.5, 0.97, 1.0, 'up'],
+      ['Southern Spectacled Caiman', 'Reptilia, one focal file in Base 1', 0.43, 0.55, null, 'ce'],
+      ['Two-colored oval frog', 'Amphibia', 0.85, 0.52, null, 'dn'],
+      ['Rococo Toad', 'Amphibia', 0.87, 0.59, null, 'dn']
+    ];
+    $('#dumbbells').innerHTML = D.map(([n, s, a, b, b2, k]) => {
+      const l = Math.min(a, b), r = Math.max(a, b2 || b);
+      const val = b2 ? `${a.toFixed(2)} → ${b.toFixed(2)}–${b2.toFixed(2)}` : `${a.toFixed(2)} → ${b.toFixed(2)}`;
+      return `<div class="db ${k}">
+        <div><b>${n}</b><small>${s}</small></div>
+        <div class="dtrack" style="--ch:${pos(0.5)}">
+          <span class="chance"></span>
+          <span class="seg2" style="--a:${pos(l)};--wd:calc(${pos(r)} - ${pos(l)})"></span>
+          <span class="m" style="--x:${pos(a)}"></span>
+          <span class="m f" style="--x:${pos(b)}"></span>
+          ${b2 ? `<span class="m f" style="--x:${pos(b2)}"></span>` : ''}
+        </div>
+        <div class="dv ${k}">${val}</div>
+      </div>`;
+    }).join('');
+
+    /* ============ Reveal bars on scroll ============ */
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('on'); io.unobserve(e.target); } });
+      }, { threshold: 0.2 });
+      $$('.grow').forEach((s) => io.observe(s));
+    } else { $$('.grow').forEach((s) => s.classList.add('on')); }
+  })();
+  </script>
+</body>
+</html>
