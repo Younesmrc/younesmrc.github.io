@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+
+<html class="no-js" lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="TAL classique contre CamemBERT : prétraitement et représentation de critiques de films, puis cinq versions de fine-tuning CamemBERT sur des discours présidentiels déséquilibrés." name="description"/>
+<meta content="#06121f" name="theme-color"/>
+<title>TAL classique et CamemBERT - Younes Arjdal</title>
+<link href="../../assets/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<script>document.documentElement.classList.replace('no-js', 'js');</script>
+<style>
+    :root {
+      --ink: #06121f; --ink-2: #0a1b2e; --paper: #f4f6f8; --text: #12202e; --muted: #566677;
+      --line: #d6dee6; --dline: rgba(255, 255, 255, 0.13);
+      --blue: #1d5f9b; --cy: #6bb8f5; --ok: #4fd69c; --bad: #ff7a84; --warn: #f5c26b; --pub: #b79cff;
+      --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --r: 8px; --w: 1160px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+    body { margin: 0; color: var(--text); background: var(--paper); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+    code { font-family: var(--mono); }
+    .wrap { width: min(calc(100% - 40px), var(--w)); margin: 0 auto; }
+    :focus-visible { outline: 3px solid rgba(107, 184, 245, 0.7); outline-offset: 3px; }
+
+    .top { position: sticky; top: 0; z-index: 50; background: rgba(6, 18, 31, 0.84); backdrop-filter: blur(14px); border-bottom: 1px solid var(--dline); }
+    .top .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 64px; }
+    .brand { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 9px; background: #fff; color: var(--ink); font-weight: 600; letter-spacing: -0.03em; text-decoration: none; }
+    .top nav { display: flex; gap: 26px; }
+    .top nav a { color: #b4c4d4; font-size: 0.9rem; font-weight: 500; text-decoration: none; }
+    .top nav a:hover { color: #fff; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: var(--r); border: 1px solid transparent; font: 600 0.92rem var(--sans); text-decoration: none; cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.15s; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-light { background: #fff; color: var(--ink); }
+    .btn-light:hover { background: #e6eef6; }
+    .btn-ghost { background: transparent; color: #dbe7f2; border-color: rgba(255, 255, 255, 0.25); }
+    .btn-ghost:hover { border-color: rgba(255, 255, 255, 0.6); }
+    .btn[disabled] { opacity: 0.4; cursor: default; transform: none; }
+
+    /* ---------- Hero ---------- */
+    .hero { background: var(--ink); color: #fff; padding: 56px 0 88px; }
+    .back { display: inline-block; margin-bottom: 44px; color: #8fa6bb; font-size: 0.9rem; text-decoration: none; }
+    .back:hover { color: #fff; }
+    .hero-head { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); gap: 56px; align-items: end; }
+    h1 { margin: 0; font-size: clamp(2.8rem, 6.6vw, 5.8rem); line-height: 0.98; letter-spacing: -0.045em; font-weight: 600; }
+    .sub { margin: 20px 0 0; font: 400 1rem var(--mono); color: var(--cy); }
+    .lede { margin: 0 0 24px; max-width: 52ch; color: #b9c9d9; font-size: 1.06rem; }
+    .meta { display: grid; gap: 10px; margin: 0; font-size: 0.88rem; }
+    .meta div { display: grid; grid-template-columns: 92px 1fr; gap: 12px; padding-top: 10px; border-top: 1px solid var(--dline); }
+    .meta dt { color: #7f95aa; }
+    .meta dd { margin: 0; color: #dbe7f2; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+
+    /* ---------- Traversal demo ---------- */
+    .demo { margin-top: 64px; padding: 28px; border: 1px solid var(--dline); border-radius: 12px; background: var(--ink-2); }
+    .demo-intro { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 20px; }
+    .demo-intro h2 { margin: 0; font-size: 1.25rem; letter-spacing: -0.02em; font-weight: 600; }
+    .demo-intro p { margin: 6px 0 0; max-width: 66ch; color: #9fb4c8; font-size: 0.95rem; }
+    .chip { font: 500 0.82rem var(--mono); color: #d8edff; padding: 4px 10px; border: 1px solid rgba(107, 184, 245, 0.4); border-radius: 6px; background: rgba(107, 184, 245, 0.1); white-space: nowrap; }
+    .demo-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; border-top: 1px solid var(--dline); }
+    .modes { display: flex; flex-wrap: wrap; gap: 8px; }
+    .mode { min-height: 40px; padding: 0 16px; border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 99px; background: transparent; color: #dbe7f2; font: 500 0.9rem var(--sans); cursor: pointer; }
+    .mode[aria-pressed="true"] { background: #fff; border-color: #fff; color: var(--ink); }
+    .demo-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+    .trap { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--dline); border-bottom: 1px solid var(--dline); }
+    .switch { display: inline-flex; align-items: center; gap: 12px; color: #dbe7f2; font-weight: 500; cursor: pointer; }
+    .switch input { position: absolute; opacity: 0; pointer-events: none; }
+    .knob { position: relative; flex: none; width: 46px; height: 26px; border-radius: 99px; background: #2a4561; transition: background 0.2s; }
+    .knob::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+    .switch input:checked + .knob { background: var(--warn); }
+    .switch input:checked + .knob::after { transform: translateX(20px); }
+    .switch input:focus-visible + .knob { outline: 3px solid rgba(107, 184, 245, 0.7); outline-offset: 3px; }
+    .trap small { color: #7f98b0; font-size: 0.85rem; }
+    .out { margin-top: 18px; padding: 16px 18px; border-left: 3px solid var(--cy); background: rgba(107, 184, 245, 0.07); color: #cfe0ef; min-height: 3.2em; }
+    .out.diff { border-color: var(--warn); background: rgba(245, 194, 107, 0.08); }
+    .tw { overflow-x: auto; }
+    /* ---------- Sections ---------- */
+    .sec { padding: 104px 0; }
+    .sec.white { background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .sec.dark { background: var(--ink); color: #fff; }
+    .split { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 72px; }
+    .split > * { min-width: 0; }
+    .split > header { align-self: start; position: sticky; top: 96px; }
+    h2 { margin: 0 0 16px; font-size: clamp(1.9rem, 3.4vw, 2.8rem); line-height: 1.1; letter-spacing: -0.035em; font-weight: 600; }
+    .split > header p { max-width: 34ch; margin: 0; color: var(--muted); }
+    .dark .split > header p { color: #9fb4c8; }
+    h3 { margin: 0; font-size: 1.15rem; letter-spacing: -0.02em; font-weight: 600; }
+    p { margin-top: 0; }
+    .block + .block { margin-top: 64px; }
+    .block > h3 { margin-bottom: 8px; font-size: 1.5rem; letter-spacing: -0.03em; }
+    .block > p { max-width: 64ch; margin-bottom: 20px; color: var(--muted); }
+    .dark .block > p { color: #a9bccd; }
+    .note { margin: 14px 0 0; color: var(--muted); font-size: 0.85rem; max-width: 72ch; }
+    .dark .note { color: #8097ac; }
+
+    .rows { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .rows > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 32px; padding: 22px 0; border-bottom: 1px solid var(--line); }
+    .rows dt { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; }
+    .rows dd { margin: 0; color: var(--muted); }
+    .rows dd code { color: var(--text); font-size: 0.86em; }
+    .formula { display: block; margin-top: 8px; padding: 10px 12px; border-radius: 6px; background: #eef3f8; color: var(--text); font: 500 0.82rem var(--mono); overflow-x: auto; white-space: nowrap; }
+
+    .steps { counter-reset: s; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .steps li { display: grid; grid-template-columns: 36px 150px 1fr; gap: 16px; align-items: baseline; padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .steps li::before { counter-increment: s; content: counter(s); color: var(--blue); font: 500 0.9rem var(--mono); }
+    .steps b { font-size: 1.1rem; letter-spacing: -0.02em; font-weight: 600; }
+    .steps span { color: var(--muted); }
+
+    .facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; margin: 0 0 12px; }
+    .facts div { padding-top: 12px; border-top: 3px solid var(--ink); }
+    .facts b { display: block; font: 600 1.35rem var(--mono); letter-spacing: -0.03em; }
+    .facts span { color: var(--muted); font-size: 0.85rem; }
+    table.wp { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .wp th { padding: 10px; border-bottom: 2px solid var(--ink); font-size: 0.82rem; font-weight: 600; text-align: left; }
+    .wp td { padding: 9px 10px; border-bottom: 1px solid var(--line); font: 500 0.84rem var(--mono); }
+    .wp td.bad { color: #c0303c; } .wp td.good { color: #178f5b; font-weight: 600; }
+    /* results */
+    .pair { display: grid; grid-template-columns: 190px minmax(0, 1fr) 96px; gap: 16px; align-items: center; padding: 14px 0; border-top: 1px solid var(--dline); }
+    .pair b { display: block; font-weight: 600; }
+    .pair small { color: #8097ac; }
+    .pbars { display: grid; gap: 6px; }
+    .pb { display: flex; align-items: center; gap: 10px; }
+    .pb .tr { flex: 1; height: 12px; border-radius: 99px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
+    .pb .bw { display: block; width: var(--w); height: 100%; border-radius: inherit; background: var(--c); transition: width 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .js .grow:not(.on) .bw { width: 0; }
+    .pb em { min-width: 76px; color: #9fb4c8; font: 500 0.78rem var(--mono); font-style: normal; }
+    .pb.bm { --c: #5a7894; } .pb.di { --c: var(--cy); } .pb.pu { --c: var(--pub); }
+    .gain { text-align: right; color: var(--ok); font: 600 1.15rem var(--mono); letter-spacing: -0.03em; }
+    .tag-pub { display: inline-block; margin-bottom: 14px; padding: 3px 10px; border: 1px solid rgba(183, 156, 255, 0.5); border-radius: 6px; background: rgba(183, 156, 255, 0.1); color: var(--pub); font: 500 0.78rem var(--mono); }
+    .callout { margin: 20px 0 0; padding: 14px 18px; border-left: 3px solid var(--warn); background: rgba(245, 194, 107, 0.08); color: #e6d6b4; max-width: 74ch; }
+    .rows > div > *, .rows dd { min-width: 0; }
+    .formula { max-width: 100%; }
+    @media (max-width: 760px) { table.runs { display: block; overflow-x: auto; } }
+    table.runs { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 0.9rem; }
+    .runs th { padding: 10px; border-bottom: 1px solid var(--dline); color: #9fb4c8; font-size: 0.8rem; font-weight: 500; text-align: right; white-space: nowrap; }
+    .runs th:first-child, .runs th:nth-child(2) { text-align: left; }
+    .runs td { padding: 9px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.07); text-align: right; font: 500 0.84rem var(--mono); }
+    .runs td:first-child, .runs td:nth-child(2) { text-align: left; font-family: var(--sans); font-weight: 400; }
+    .runs td.best { color: var(--cy); font-weight: 600; }
+
+    .report { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 32px; padding-top: 72px; border-top: 1px solid var(--dline); }
+    .report h2 { max-width: 20ch; color: #fff; }
+    .report p { max-width: 56ch; margin: 0 0 20px; color: #a9bccd; }
+    footer.foot { padding: 30px 0 42px; color: var(--muted); font-size: 0.88rem; }
+    footer.foot .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+    footer.foot a { text-decoration: none; font-weight: 500; color: var(--blue); }
+    h1 { font-size: clamp(2.4rem, 5.2vw, 4.7rem); }
+    .hero-head > div { min-width: 0; }
+
+    /* ---------- Metric chart (hero) ---------- */
+    .mrows { margin-top: 8px; }
+    .mrow { display: grid; grid-template-columns: 170px minmax(0, 1fr) 64px; gap: 14px; align-items: center; padding: 9px 0; border-top: 1px solid var(--dline); }
+    .mrow:first-child { border-top: 0; }
+    .mrow b { font-weight: 500; font-size: 0.92rem; }
+    .mtr { position: relative; height: 14px; border-radius: 99px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
+    .mtr i { position: absolute; left: 0; top: 0; bottom: 0; width: var(--w); border-radius: inherit; background: var(--c); transition: width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .mtr .chance { position: absolute; top: 0; bottom: 0; left: 50%; border-left: 1px dashed rgba(255, 255, 255, 0.45); display: none; }
+    #mchart[data-m="auc"] .chance { display: block; }
+    .mrow.base { --c: #5a7894; } .mrow.v0 { --c: var(--bad); } .mrow.cb { --c: var(--cy); }
+    .mrow.best .mtr i { background: #fff; }
+    .mrow.na .mtr { background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 6px, transparent 6px 12px); }
+    .mval { text-align: right; font: 600 0.92rem var(--mono); }
+    .mrow.na .mval { color: #5f7a93; font-weight: 400; }
+    .mnote { margin-top: 16px; }
+
+    /* ---------- Preprocessing grid ---------- */
+    .grid-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+    .gmode { min-height: 40px; padding: 0 16px; border: 1px solid var(--line); border-radius: 99px; background: #fff; color: var(--text); font: 500 0.9rem var(--sans); cursor: pointer; }
+    .gmode[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .hm { display: grid; grid-template-columns: 58px repeat(5, minmax(0, 1fr)); gap: 4px; }
+    .hm .h { padding: 0 2px 6px; color: var(--muted); font: 500 0.72rem/1.25 var(--mono); text-align: center; align-self: end; }
+    .hm .rl { align-self: center; font: 600 0.9rem var(--mono); }
+    .hm .c { display: grid; place-items: center; min-height: 54px; border-radius: 6px; font: 500 0.88rem var(--mono); transition: background 0.3s, color 0.3s; }
+    .hm .c.best { outline: 2px solid var(--ink); outline-offset: 1px; font-weight: 600; }
+    .gcap { margin: 16px 0 0; padding: 14px 18px; border-left: 3px solid var(--blue); background: #eef3f8; color: var(--text); max-width: 74ch; min-height: 3.4em; }
+    .hmleg { margin: 10px 0 0; color: var(--muted); font-size: 0.82rem; }
+
+    /* ---------- Imbalance bar, dumbbells ---------- */
+    .stack { display: flex; height: 40px; margin: 6px 0 6px; border-radius: 6px; overflow: hidden; gap: 2px; }
+    .stack span { display: grid; place-items: center; min-width: 0; color: #fff; font: 600 0.82rem var(--mono); overflow: hidden; white-space: nowrap; }
+    .stack .ch { flex: 49890; background: #1d5f9b; } .stack .mi { flex: 7523; background: #b8581d; }
+    .stack-l { display: flex; flex-wrap: wrap; gap: 4px 20px; color: var(--muted); font-size: 0.84rem; }
+    .db { display: grid; grid-template-columns: 220px minmax(0, 1fr) 150px; gap: 16px; align-items: center; padding: 11px 0; border-top: 1px solid var(--dline); --k: var(--warn); }
+    .db b { display: block; font-weight: 500; font-size: 0.92rem; }
+    .db small { color: #7f98b0; }
+    .dtrack { position: relative; height: 26px; }
+    .dtrack::before { content: ""; position: absolute; left: 0; right: 0; top: 12px; height: 2px; background: rgba(255, 255, 255, 0.08); }
+    .dtrack .seg2 { position: absolute; top: 10px; height: 6px; border-radius: 3px; left: var(--a); width: var(--wd); background: var(--k); opacity: 0.55; }
+    .dtrack .m { position: absolute; top: 4px; left: var(--x); width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; border: 2px solid var(--k); background: var(--ink); }
+    .dtrack .m.f { background: var(--k); }
+    .db.big { --k: var(--bad); }
+    .dv { font: 500 0.82rem var(--mono); color: #cfe0ef; text-align: right; white-space: nowrap; }
+    .dgroup { margin: 26px 0 4px; color: #9fb4c8; font: 500 0.82rem var(--mono); }
+    .dleg { margin: 10px 0 0; color: #7f98b0; font-size: 0.82rem; }
+    .case { display: inline-block; margin-left: 8px; padding: 1px 9px; border-radius: 99px; background: #eef3f8; color: var(--blue); font: 500 0.74rem var(--mono); vertical-align: 2px; white-space: nowrap; }
+    table.wp td.num, table.wp th.num { text-align: right; }
+    table.wp td.top { color: var(--blue); font-weight: 600; }
+    table.runs td.best { color: var(--cy); font-weight: 600; }
+    .tw { overflow-x: auto; }
+
+    @media (max-width: 980px) {
+      .hero-head { grid-template-columns: 1fr; gap: 36px; }
+      .split { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+      .split > header { position: static; }
+      .rows > div { grid-template-columns: 1fr; gap: 8px; }
+    }
+    @media (max-width: 720px) {
+      .top nav a:not(:first-child) { display: none; }
+      .sec { padding: 72px 0; }
+      .demo { padding: 20px 16px; }
+      .steps li { grid-template-columns: 28px 1fr; }
+      .steps li span { grid-column: 2; }
+      .mrow { grid-template-columns: minmax(0, 1fr) 56px; gap: 4px 12px; }
+      .mrow .mtr { grid-column: 1 / -1; order: 3; }
+      .db { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; }
+      .db .dtrack { grid-column: 1 / -1; order: 3; }
+      .hm { grid-template-columns: 40px repeat(5, minmax(0, 1fr)); gap: 3px; }
+      .hm .c { font-size: 0.74rem; min-height: 46px; }
+      .hm .h { font-size: 0.62rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: 0.01ms !important; }
+    }
+  
+/* Language switch : EN | FR, adjacent to YA */
+.identity-row{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.top .identity-row .lang-switch{position:static!important;top:auto;left:auto;right:auto;display:inline-flex!important;align-items:center;flex-direction:row!important;gap:7px!important;padding:0;background:none;border:0;white-space:nowrap}
+.top .identity-row .lang-switch a{display:inline-flex!important;align-items:center;font:600 .76rem var(--mono);text-decoration:none;color:#a9bfd2;padding:7px 2px;border:0}
+.top .identity-row .lang-switch a[aria-current="page"]{color:#fff;text-decoration:underline;text-underline-offset:4px}
+.top .identity-row .lang-switch a:hover{color:#fff}
+.lang-switch .lang-divider{color:#67839d;font-size:.8rem}
+@media(max-width:420px){.identity-row{gap:8px}.top .identity-row .lang-switch{gap:4px!important}}
+</style>
+<link href="https://younesmrc.github.io/projects/camembert-nlp.html" hreflang="en" rel="alternate"/><link href="https://younesmrc.github.io/fr/projects/camembert-nlp.html" hreflang="fr" rel="alternate"/><link href="https://younesmrc.github.io/projects/camembert-nlp.html" hreflang="x-default" rel="alternate"/></head>
+<body>
+<header class="top">
+<div class="wrap">
+<div class="identity-row"><a aria-label="Aller à l’accueil" class="brand" href="../index.html#home">YA</a><nav aria-label="Choisir la langue" class="lang-switch"><a href="../../projects/camembert-nlp.html" lang="en">EN</a><span aria-hidden="true" class="lang-divider">|</span><a aria-current="page" href="#" lang="fr">FR</a></nav></div>
+<nav aria-label="Navigation du projet">
+<a href="../index.html#projects">Tous les projets</a>
+<a href="#movie">Cinéma</a>
+<a href="#tuning">Réglages</a>
+<a href="#president">Président</a>
+<a href="#camembert">CamemBERT</a>
+<a href="#results">Résultats</a>
+<a href="#report">Rapport</a>
+</nav>
+</div>
+</header>
+<main>
+<!-- ================= HERO + METRIC DEMO ================= -->
+<section class="hero" id="top">
+<div class="wrap">
+<a class="back" href="../index.html#projects">← Retour aux projets</a>
+<div class="hero-head">
+<div>
+<h1>TAL classique<br/>contre CamemBERT</h1>
+<p class="sub">Deux tâches de classification de textes en apparence semblables, mais très différentes</p>
+</div>
+<div>
+<p class="lede">
+              Sur les critiques de films, une étude systématique des effets réels du prétraitement et de la représentation pour les modèles classiques. Sur les discours présidentiels, un déséquilibre 87/13 les met en difficulté ; le fine-tuning de CamemBERT, développé en cinq versions, atteint 82 de F1 au concours.
+            </p>
+<dl class="meta">
+<div><dt>Projet</dt><dd>M1 MIND, cours RITAL, Sorbonne Université</dd></div>
+<div><dt>Cinéma</dt><dd>Analyse des sentiments sur des critiques de films, équilibrées à 50/50</dd></div>
+<div><dt>Président</dt><dd>Chirac ou Mitterrand ? Identification du locuteur, 86,9 / 13,1</dd></div>
+<div><dt>Technologies</dt><dd>Python, scikit-learn, Hugging Face Transformers, CamemBERT</dd></div>
+</dl>
+<div class="hero-actions">
+<a class="btn btn-light" href="#results">Accéder aux résultats</a>
+<a class="btn btn-ghost" href="../../assets/projects/camembert-nlp/report.pdf" rel="noreferrer" target="_blank">Lire le rapport</a>
+</div>
+</div>
+</div>
+<div aria-labelledby="demo-title" class="demo">
+<div class="demo-intro">
+<div>
+<h2 id="demo-title">Un jeu de test, quatre façons de l'évaluer</h2>
+<p>Concours Président, mêmes sept modèles. Changez de métrique et le classement évolue : F1 au seuil de 0,5, qualité du classement des probabilités ou score de validation trop flatteur.</p>
+</div>
+<span class="chip">valeurs en %</span>
+</div>
+<div class="demo-bar">
+<div aria-label="Métrique" class="modes" role="group">
+<button aria-pressed="true" class="mode" data-m="f1" type="button">F1 du concours</button>
+<button aria-pressed="false" class="mode" data-m="auc" type="button">AUC du concours</button>
+<button aria-pressed="false" class="mode" data-m="ap" type="button">Précision moyenne</button>
+<button aria-pressed="false" class="mode" data-m="val" type="button">F1 de validation</button>
+</div>
+</div>
+<div class="mrows" data-m="f1" id="mchart"></div>
+<p aria-live="polite" class="out mnote" id="mnote"></p>
+</div>
+</div>
+</section>
+<!-- ================= MOVIE ================= -->
+<section class="sec" id="movie">
+<div class="wrap split">
+<header>
+<h2>Cinéma : quand le prétraitement aide ou nuit</h2>
+<p>Une étude contrôlée : trois configurations de prétraitement, trois modèles classiques, deux représentations, F1 macro.</p>
+</header>
+<div>
+<div class="block">
+<h3>Premiers enseignements des données</h3>
+<dl class="rows">
+<div><dt>Équilibre parfait</dt><dd>Critiques positives et négatives à 50/50 : ni pondération des classes ni rééchantillonnage nécessaires.</dd></div>
+<div><dt>La loi de Zipf se vérifie</dt><dd>La fréquence des mots suit la loi de Zipf, signe d'un corpus assez grand pour être statistiquement fiable. La courbe aide aussi à choisir un seuil de mots vides entre 10 et 50, selon les données plutôt qu'une liste générique.</dd></div>
+<div><dt>Les noms comme indices</dt><dd>Les rapports de cotes font apparaître des titres de films et des noms de réalisateurs parmi les mots les plus associés au positif ou au négatif, aux côtés de termes réellement négatifs comme « stupidity », « sucks » ou « ludicrous ». Le rapport souligne le risque qu'un modèle apprenne indirectement un réalisateur ou un film surreprésenté dans les critiques positives.</dd></div>
+</dl>
+</div>
+<div class="block">
+<h3>Protocole</h3>
+<dl class="rows">
+<div><dt>A</dt><dd>Sans prétraitement, avec un <code>CountVectorizer</code>.</dd></div>
+<div><dt>B</dt><dd>Mise en minuscules et suppression des mots vides, selon deux variantes : liste construite sur le corpus via Zipf ou liste générique de scikit-learn.</dd></div>
+<div><dt>C</dt><dd>B, puis racinisation Porter (stemming).</dd></div>
+</dl>
+<p class="note">Chaque configuration est évaluée avec la régression logistique (LR), un SVM linéaire et Naive Bayes (NB), d'abord en sac de mots (BoW), puis en TF-IDF.</p>
+</div>
+<div class="block">
+<h3>Prétraitement × modèle</h3>
+<p>F1 macro sur validation. La cellule entourée est la meilleure de chaque représentation.</p>
+<div aria-label="Représentation" class="grid-tools" role="group">
+<button aria-pressed="true" class="gmode" data-r="bow" type="button">Sac de mots</button>
+<button aria-pressed="false" class="gmode" data-r="tfidf" type="button">TF-IDF</button>
+</div>
+<div class="hm" id="hm"></div>
+<p class="hmleg">Plus la couleur est foncée, plus le score est élevé. Échelle de 0,78 à 0,86.</p>
+<p aria-live="polite" class="gcap" id="hcap"></p>
+</div>
+<div class="block">
+<h3>Ce que préfère chaque modèle</h3>
+<dl class="rows">
+<div><dt>Zipf bat la liste générique</dt><dd>Les mots vides extraits du corpus font toujours mieux que la liste scikit-learn. Fixée pour l'anglais général, celle-ci supprime des mots porteurs de sentiment dans les critiques de films.</dd></div>
+<div><dt>La racinisation n'aide jamais</dt><dd>Dans tous les modèles et les deux représentations, réduire les mots à leur racine efface des nuances. La racinisation combinée à la liste générique est la pire configuration.</dd></div>
+<div><dt>LR et SVM réagissent différemment</dt><dd>En BoW, LR est meilleure sans prétraitement (0,857), grâce à sa régularisation, tandis que SVM bénéficie du nettoyage Zipf (0,858 contre 0,840). En TF-IDF, la situation s'inverse : LR nécessite maintenant les mots vides Zipf (0,852 contre 0,827 sans nettoyage).</dd></div>
+<div><dt>NB varie peu</dt><dd>Les scores restent entre 0,805 et 0,820 en BoW, et autour de 0,80 en TF-IDF. L'hypothèse d'indépendance des variables le rend robuste aux changements de vocabulaire, mais l'empêche de progresser grâce au prétraitement.</dd></div>
+</dl>
+<p class="note">Une anomalie : NB avec racinisation et mots vides génériques (0,812) bat la même configuration sans racinisation (0,805), écart trop faible pour conclure à une tendance.</p>
+</div>
+<div class="block">
+<h3>Ici, le sac de mots bat TF-IDF</h3>
+<p>Un résultat contre-intuitif, expliqué par la tâche : en analyse des sentiments, les mots fréquents (« good », « bad », « great », « terrible ») sont souvent les plus utiles, or IDF réduit leur poids.</p>
+<div class="tw">
+<table class="wp">
+<thead><tr><th>Modèle</th><th class="num">Meilleur BoW</th><th class="num">Meilleur TF-IDF</th><th class="num">Écart</th></tr></thead>
+<tbody>
+<tr><td>LR</td><td class="num">0.857 (A)</td><td class="num">0.852 (B Zipf)</td><td class="num">−0.005</td></tr>
+<tr><td>SVM</td><td class="num">0.858 (B Zipf)</td><td class="num">0.835 (B Zipf)</td><td class="num">−0.023</td></tr>
+<tr><td>NB</td><td class="num">0.820 (A)</td><td class="num">0.802 (A)</td><td class="num">−0.018</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="block">
+<h3>Ajouter des bigrammes</h3>
+<p>Ils multiplient la taille du vocabulaire par dix : LR passe de 45 751 à 442 734 variables et SVM avec mots vides Zipf de 35 647 à 495 141.</p>
+<div class="tw">
+<table class="wp">
+<thead><tr><th>Configuration</th><th class="num">Unigrammes</th><th class="num">+ bigrammes</th><th class="num">100 k maximum</th><th class="num">50 k maximum</th></tr></thead>
+<tbody>
+<tr><td>BoW · LR</td><td class="num">0.857</td><td class="num top">0.860</td><td class="num">0.854</td><td class="num">0.852</td></tr>
+<tr><td>BoW · SVM</td><td class="num">0.858</td><td class="num">0.852</td><td class="num">0.847</td><td class="num">0.857</td></tr>
+<tr><td>TF-IDF · LR</td><td class="num">0.852</td><td class="num">0.837</td><td class="num">0.842</td><td class="num">0.847</td></tr>
+<tr><td>TF-IDF · SVM</td><td class="num">0.835</td><td class="num">0.842</td><td class="num">0.852</td><td class="num">0.845</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">LR (mots vides Zipf en TF-IDF, aucun en BoW) absorbe l'explosion grâce à la régularisation en BoW, mais se dégrade en TF-IDF. SVM se dégrade en BoW sauf avec un vocabulaire limité à 50 k, et progresse en TF-IDF à 100 k variables, où il rejoint la meilleure LR. Globalement, les gains restent marginaux : les unigrammes portent déjà l'essentiel du sentiment.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= TUNING ================= -->
+<section class="sec white" id="tuning">
+<div class="wrap split">
+<header>
+<h2>Régler les modèles sur une petite validation</h2>
+<p>Trois configurations, une par représentation et modèle, envoyées au concours pour mesurer leur généralisation réelle.</p>
+</header>
+<div>
+<div class="block">
+<h3>Rechercher, puis réviser les réglages</h3>
+<p>Le coefficient de régularisation C a été recherché sur un jeu de validation interne stratifié de 200 exemples (20 % de l'entraînement). Le rapport doute qu'un tel échantillon représente 25 000 critiques de test et ajuste les valeurs par raisonnement : plus de liberté pour LR (C ×10), pénalité bien plus forte pour SVM sur un espace de variables très large (C passant de 10 à 0,001).</p>
+<div class="tw">
+<table class="wp">
+<thead><tr><th>Configuration</th><th>C</th><th class="num">F1 de validation</th><th class="num">F1 du concours</th></tr></thead>
+<tbody>
+<tr><td rowspan="2">LR · BoW + bigrammes</td><td>100</td><td class="num">86.25</td><td class="num">76.39</td></tr>
+<tr><td>1000</td><td class="num">-</td><td class="num">76.33</td></tr>
+<tr><td rowspan="2">SVM · BoW + Zipf</td><td>10</td><td class="num">86.0</td><td class="num">74.62</td></tr>
+<tr><td>0.001</td><td class="num">-</td><td class="num">79.84</td></tr>
+<tr><td rowspan="2">LR · TF-IDF + Zipf</td><td>1</td><td class="num">85.23</td><td class="num">81.71</td></tr>
+<tr><td>10</td><td class="num">-</td><td class="num top">82.14</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">Les scores du concours sont ceux du rapport, en F1 %. Les valeurs C ajustées n'ont pas été évaluées sur la validation.</p>
+</div>
+<div class="block">
+<h3>Enseignements du concours</h3>
+<dl class="rows">
+<div><dt>LR + TF-IDF, C = 10</dt><dd>Le meilleur score, 82,14, confirme le raisonnement. Ce modèle était le moins bon des trois sur validation (85,23 contre 86,25 et 86,0) et devient le meilleur au concours : le classement s'inverse.</dd></div>
+<div><dt>SVM préfère une forte pénalité</dt><dd>C = 0,001 donne 79,84 contre 74,62 pour C = 10, un écart de cinq points.</dd></div>
+<div><dt>Les bigrammes bruts plafonnent</dt><dd>LR en BoW avec bigrammes reste autour de 76 quelle que soit la régularisation : ils généralisent mal à 25 000 critiques.</dd></div>
+</dl>
+</div>
+<div class="block">
+<h3>Uniquement des bigrammes, sans unigrammes</h3>
+<p>Le meilleur modèle (LR, TF-IDF, Zipf), réentraîné uniquement sur des paires de mots, atteint encore 79,2 de F1, trois points sous le meilleur, avec une précision de 84,2, un rappel de 74,8 et une exactitude de 80,4. Le sentiment est codé de façon redondante : les contextes voisins permettent de reconstruire une grande partie de l'information portée par les mots supprimés.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= PRESIDENT ================= -->
+<section class="sec" id="president">
+<div class="wrap split">
+<header>
+<h2>Président : un autre problème</h2>
+<p>Qui parle, Chirac ou Mitterrand, phrase par phrase ? Le déséquilibre et le contexte changent tout.</p>
+</header>
+<div>
+<div class="block">
+<h3>Un corpus à 87 / 13</h3>
+<div aria-label="49 890 phrases de Chirac, 7 523 de Mitterrand" class="stack" role="img"><span class="ch">Chirac · 49,890 · 86.9 %</span><span class="mi">13.1 %</span></div>
+<div class="stack-l"><span>Chirac : 49 890 phrases</span><span>Mitterrand : 7 523 phrases (13,1 %)</span></div>
+<p class="note" style="margin-top:14px">Zipf se vérifie ici aussi, avec une chute autour de la fréquence 50 qui sert de seuil pour les mots vides.</p>
+</div>
+<div class="block">
+<h3>Ce que révèle le texte</h3>
+<dl class="rows">
+<div><dt>Style</dt><dd>Mitterrand argumente davantage (« on peut », « bien entendu »). Chirac est plus cérémoniel (« union européenne », « mesdames messieurs »), utilise des formules collectives (« mes chers amis », « mes chers compatriotes ») et géographiques (« États-Unis d'Amérique » et « Saint-Pierre-et-Miquelon » parmi les trigrammes).</dd></div>
+<div><dt>Époque</dt><dd>Les rapports de cotes captent davantage la période que le style : mondialisation, euro et G8 du côté de Chirac, vocabulaire de la guerre froide, GATT et Maastricht chez Mitterrand. Le rapport identifie un biais temporel : le modèle risque d'apprendre une décennie plutôt qu'un locuteur.</dd></div>
+<div><dt>Importance des mots vides</dt><dd>Les nuages de mots sont dominés par « de », « la », « et ». Ils masquent les différences et satureraient une représentation vectorisée.</dd></div>
+</dl>
+</div>
+<div class="block">
+<h3>Les modèles de référence s'effondrent</h3>
+<p>TF-IDF avec SGD obtient 21,2 de F1 (5 k variables) et 16,7 (10 k) au concours. Ces modèles apprennent la répartition 86/14 et prédisent surtout Chirac, ce qui fait chuter le F1 de la classe minoritaire. Comme ils reproduisent la distribution d'entraînement, le rapport suppose que le test présente le déséquilibre inverse, avec Mitterrand majoritaire. L'objectif change alors : il ne s'agit plus d'étudier le prétraitement, mais d'apprendre le fine-tuning des Transformers et de généraliser.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= CAMEMBERT ================= -->
+<section class="sec white" id="camembert">
+<div class="wrap split">
+<header>
+<h2>CamemBERT en cinq versions</h2>
+<p>Chaque version corrige les erreurs révélées par l'analyse de la précédente.</p>
+</header>
+<div>
+<ol class="steps">
+<li><b>V0 · naïve</b><span>Découpage en blocs mélangés de 50 phrases, qui laisse fuiter des phrases voisines du même discours entre entraînement et validation. Contexte limité aux phrases précédentes, boucle AdamW manuelle sans ordonnanceur, aucun traitement du déséquilibre. Au concours : F1 10,0 et AUC 3,1, sous le hasard, ce qui montre des probabilités inversées. Le modèle prédit Chirac pour 90 % du test.</span></li>
+<li><b>V1 · pondération et contexte</b><span>Division stratifiée 80/20 conservant 86,9/13,1 dans chaque partie, entropie croisée pondérée (0,575 pour Chirac et 3,816 pour Mitterrand) dans un Trainer personnalisé, et contexte bilatéral : chaque phrase est accompagnée de ses deux voisines de chaque côté, dans le même discours. Hugging Face Trainer avec warmup, weight decay 0,01, fp16 et meilleur checkpoint selon la précision moyenne. F1 de validation de 0,917, mais l'époque 2 (0,938) bat l'époque 3 (0,916) ; une seule partition donne une estimation fragile.</span></li>
+<li><b>V2 · 5 plis</b><span>Validation croisée stratifiée à 5 plis, poids recalculés pour chaque pli, puis agrégation des probabilités prédites par les cinq modèles. Les plis obtiennent des F1 de 0,912 à 0,938, et leur moyenne atteint 0,953 (+3,6 points). Sur plusieurs plis, la meilleure époque n'est pas la dernière.</span></li>
+<li><b>V3 · arrêt anticipé</b><span>Comme V2, avec un callback d'arrêt anticipé (patience 3), trois évaluations par époque et une sélection selon le F1 pour correspondre à la métrique du concours. F1 de validation 0,970 (+1,7 point) : le levier isolé le plus efficace de la progression.</span></li>
+<li><b>V4 · davantage de contexte</b><span>Fenêtre de 3 (jusqu'à 7 phrases par entrée) et 384 tokens au lieu de 256 pour éviter de tronquer les voisins supplémentaires. F1 de validation 0,968 : aucun gain. Les longues séquences sont plus difficiles à optimiser en 3 époques, et une fenêtre de 5 phrases contient déjà les indices utiles de style.</span></li>
+</ol>
+<div class="block" style="margin-top:56px">
+<h3>Lissage gaussien : un post-traitement qui ne généralise pas</h3>
+<p>Les phrases d'un même discours partagent un locuteur ; lisser les probabilités voisines devrait limiter les décisions isolées. Le meilleur sigma a été recherché sur toutes les prédictions de validation de chaque version.</p>
+<div class="tw">
+<table class="wp">
+<thead><tr><th>Version</th><th class="num">F1 sans lissage</th><th class="num">Meilleur sigma</th><th class="num">F1 avec lissage</th></tr></thead>
+<tbody>
+<tr><td>V2</td><td class="num">0.953</td><td class="num">2.0</td><td class="num">0.961</td></tr>
+<tr><td>V3</td><td class="num">0.970</td><td class="num">2.0</td><td class="num">0.973</td></tr>
+<tr><td>V4</td><td class="num">0.968</td><td class="num">2.5</td><td class="num">0.968</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">Le lissage aide V2 et V3, mais n'apporte rien à V4, dont l'entrée contient déjà sept phrases. Sur le test, il réduit légèrement la performance : la proportion de phrases prédites comme étant de Chirac diminue, au détriment de la classe minoritaire cruciale. Le sigma ayant été ajusté sur une distribution différente de celle du test inversément déséquilibré, les soumissions finales n'utilisent pas de lissage.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= RESULTS ================= -->
+<section class="sec dark" id="results">
+<div class="wrap split">
+<header>
+<h2>Bon en validation ne signifie pas bon en test</h2>
+<p>Toutes les méthodes perdent des points entre la validation et le concours ; certaines s'effondrent.</p>
+</header>
+<div>
+<div class="block">
+<h3>Validation contre concours</h3>
+<p>F1 en %. Symboles vides : validation ; symboles pleins : concours.</p>
+<p class="dgroup">Critiques de films</p>
+<div id="db-movie"></div>
+<p class="dgroup">Président, CamemBERT</p>
+<div id="db-pres"></div>
+<p class="dleg">La validation Cinéma compte 200 exemples ; celle de Président est la partition stratifiée (V1) ou la moyenne sur 5 plis (V2 à V4).</p>
+</div>
+<div class="block">
+<h3>Concours Président : tous les modèles</h3>
+<div class="tw">
+<table class="runs">
+<thead><tr><th>Modèle</th><th>F1</th><th>AUC</th><th>AP</th></tr></thead>
+<tbody>
+<tr><td>TF-IDF 5k + SGD</td><td>21.21</td><td>15.32</td><td>7.91</td></tr>
+<tr><td>TF-IDF 10k + SGD</td><td>16.66</td><td>12.43</td><td>7.73</td></tr>
+<tr><td>CamemBERT V0</td><td>10.00</td><td>3.14</td><td>7.39</td></tr>
+<tr><td>CamemBERT V1</td><td>25.99</td><td>85.21</td><td>64.17</td></tr>
+<tr><td>CamemBERT V2</td><td>81.12</td><td>98.31</td><td class="best">95.05</td></tr>
+<tr><td>CamemBERT V3</td><td class="best">82.06</td><td class="best">98.61</td><td>94.77</td></tr>
+<tr><td>CamemBERT V4</td><td>81.70</td><td>98.58</td><td>94.98</td></tr>
+</tbody>
+</table>
+</div>
+<p class="callout">V3 est la meilleure configuration avec 82,06 de F1. L'écart à la validation (environ 0,97 contre 0,82) est attribué à un changement de distribution : le modèle apprend sur un corpus majoritairement Chirac, puis doit généraliser à un test majoritairement Mitterrand. L'AUC reste supérieure à 98 : le classement des probabilités est correct. Le rapport explique la baisse du F1 par le seuil de décision 0,5, probablement inadapté à un test dont le déséquilibre est inverse, mais ne vérifie pas cette hypothèse en balayant les seuils.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= LESSONS ================= -->
+<section class="sec" id="lessons">
+<div class="wrap split">
+<header>
+<h2>Enseignements</h2>
+<p>Deux tâches, deux séries de leçons, un même constat : la validation ne vaut que par sa ressemblance avec le test.</p>
+</header>
+<div>
+<dl class="rows">
+<div><dt>Plus ne veut pas dire mieux</dt><dd>Plus de prétraitement ne donne pas forcément de meilleurs scores. Seuls les mots vides issus du corpus apportent un gain réel ; la liste générique et la racinisation nuisent.</dd></div>
+<div><dt>Connaître son modèle</dt><dd>LR et SVM réagissent à l'opposé au prétraitement, aux bigrammes et à la taille du vocabulaire. Le bon choix dépend de la représentation : comprendre leurs mécanismes internes est donc précieux avant de les appliquer.</dd></div>
+<div><dt>Un score peut tromper</dt><dd>Sur Président, un F1 de validation supérieur à 0,9 masquait un modèle V1 obtenant 26 au concours. Déséquilibre, fuite entre blocs de partition et distribution de validation non représentative peuvent gonfler les scores.</dd></div>
+<div><dt>Les réglages peuvent surapprendre</dt><dd>Le meilleur modèle sur validation n'était pas le meilleur au concours (LR avec TF-IDF), et un sigma de lissage optimisé sur une validation différente du test a dégradé le résultat.</dd></div>
+</dl>
+<p class="note" style="margin-top:24px">Questions ouvertes dans le rapport : seulement trois époques de fine-tuning, distribution de test déduite indirectement des prédictions de référence et seuil de décision de 0,5 jamais réexaminé.</p>
+</div>
+</div>
+</section>
+<!-- ================= REPORT ================= -->
+<section class="sec" id="report" style="background: var(--ink); padding-top: 0">
+<div class="wrap">
+<div class="report">
+<div>
+<h2>Lire le rapport complet</h2>
+<p>27 pages, en français : analyse exploratoire, toutes les expériences sur les deux tâches, les cinq versions de CamemBERT et la conclusion.</p>
+</div>
+<a class="btn btn-light" href="../../assets/projects/camembert-nlp/report.pdf" rel="noreferrer" target="_blank">Ouvrir le rapport (PDF)</a>
+</div>
+</div>
+</section>
+</main>
+<footer class="foot">
+<div class="wrap">
+<span>© 2026 Younes Arjdal</span>
+<a href="../index.html#projects">Retour aux projets ↑</a>
+</div>
+</footer>
+<script>
+  (() => {
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+    /* ============ Metric chart (Président challenge) ============ */
+    const M = [
+      ['TF-IDF 5k + SGD', 'base', 21.206, 15.322, 7.908, null],
+      ['TF-IDF 10k + SGD', 'base', 16.659, 12.432, 7.731, null],
+      ['CamemBERT V0', 'v0', 9.995, 3.139, 7.385, null],
+      ['CamemBERT V1', 'cb', 25.988, 85.211, 64.173, 91.7],
+      ['CamemBERT V2', 'cb', 81.124, 98.311, 95.045, 95.3],
+      ['CamemBERT V3', 'cb', 82.061, 98.610, 94.773, 97.0],
+      ['CamemBERT V4', 'cb', 81.703, 98.578, 94.975, 96.8]
+    ];
+    const IDX = { f1: 2, auc: 3, ap: 4, val: 5 };
+    const NOTE = {
+      f1: 'Au seuil par défaut de 0,5, seuls les modèles tenant compte du déséquilibre et du contexte dépassent 80. V3 est en tête avec 82,06.',
+      auc: 'La qualité du classement raconte une autre histoire : V1 atteint déjà 85 et les versions à partir de V2 dépassent 98. V0 obtient 3,1, sous le hasard (ligne pointillée), signe de probabilités inversées.',
+      ap: 'La précision moyenne place V2 en tête (95,05), alors que V3 gagne sur le F1 : un compromis entre le seuil et le classement global.',
+      val: 'Le F1 de validation se situe entre 91,7 et 97,0 pour toutes les versions de CamemBERT : il masque l’échec de V1, qui obtient 26,0 au concours. Les modèles de référence et V0 n’ont pas de score de validation.'
+    };
+    const chart = $('#mchart');
+    chart.innerHTML = M.map(([n, k]) => `<div class="mrow ${k}"><b>${n}</b><span class="mtr"><span class="chance"></span><i style="--w:0%"></i></span><span class="mval"></span></div>`).join('');
+    function setM(m) {
+      chart.dataset.m = m;
+      $$('.mode').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.m === m)));
+      const vals = M.map((r) => r[IDX[m]]);
+      const best = Math.max(...vals.filter((v) => v != null));
+      $$('.mrow', chart).forEach((row, i) => {
+        const v = vals[i];
+        row.classList.toggle('na', v == null);
+        row.classList.toggle('best', v === best);
+        $('i', row).style.setProperty('--w', (v == null ? 0 : v) + '%');
+        $('.mval', row).textContent = v == null ? 'n.d.' : v.toFixed(1);
+      });
+      $('#mnote').textContent = NOTE[m];
+    }
+    $$('.mode').forEach((b) => b.addEventListener('click', () => setM(b.dataset.m)));
+    setM('f1');
+
+    /* ============ Preprocessing grid (Movie) ============ */
+    const COLS = ['A brut', 'B Zipf', 'B générique', 'C racines + gén.', 'C racines + Zipf'];
+    const H = {
+      bow:   { LR: [.857, .845, .825, .822, .842], SVM: [.840, .858, .827, .812, .835], NB: [.820, .815, .805, .812, .805] },
+      tfidf: { LR: [.827, .852, .810, .815, .832], SVM: [.832, .835, .817, .815, .825], NB: [.802, .800, .800, .785, .800] }
+    };
+    const HC = {
+      bow: 'En sac de mots, LR obtient son meilleur score sans prétraitement (0,857), tandis que SVM privilégie les mots vides Zipf (0,858). NB reste entre 0,805 et 0,820, et la racinisation dégrade presque tous les résultats.',
+      tfidf: 'En TF-IDF, la situation s’inverse : LR bénéficie des mots vides Zipf (0,852 contre 0,827 brut), SVM varie peu et NB reste autour de 0,800, avec un minimum pour racinisation et mots vides génériques (0,785).'
+    };
+    const lo = 0.78, hi = 0.86, c0 = [232, 239, 246], c1 = [29, 95, 155];
+    function setH(r) {
+      $$('.gmode').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.r === r)));
+      const d = H[r], all = Object.values(d).flat(), best = Math.max(...all);
+      let html = '<span></span>' + COLS.map((c) => `<span class="h">${c}</span>`).join('');
+      for (const [m, row] of Object.entries(d)) {
+        html += `<span class="rl">${m}</span>` + row.map((v) => {
+          const t = Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+          const bg = c0.map((a, i) => Math.round(a + (c1[i] - a) * t)).join(',');
+          return `<span class="c${v === best ? ' best' : ''}" style="background:rgb(${bg});color:${t > 0.55 ? '#fff' : '#12202e'}">${v.toFixed(3)}</span>`;
+        }).join('');
+      }
+      $('#hm').innerHTML = html;
+      $('#hcap').textContent = HC[r];
+    }
+    $$('.gmode').forEach((b) => b.addEventListener('click', () => setH(b.dataset.r)));
+    setH('bow');
+
+    /* ============ Dumbbells: validation vs challenge ============ */
+    const pos = (v) => v.toFixed(2) + '%';
+    const db = (rows, big) => rows.map(([n, s, a, b]) => {
+      const l = Math.min(a, b), r = Math.max(a, b);
+      return `<div class="db${big && b < 40 ? ' big' : ''}">
+        <div><b>${n}</b><small>${s}</small></div>
+        <div class="dtrack">
+          <span class="seg2" style="--a:${pos(l)};--wd:${(r - l).toFixed(2)}%"></span>
+          <span class="m" style="--x:${pos(a)}"></span>
+          <span class="m f" style="--x:${pos(b)}"></span>
+        </div>
+        <div class="dv">${a.toFixed(1)} → ${b.toFixed(1)}</div>
+      </div>`;
+    }).join('');
+    $('#db-movie').innerHTML = db([
+      ['LR · BoW + bigrammes', 'C = 100', 86.25, 76.39],
+      ['SVM · BoW + Zipf', 'C = 10', 86.0, 74.62],
+      ['LR · TF-IDF + Zipf', 'C = 1', 85.23, 81.71]
+    ]);
+    $('#db-pres').innerHTML = db([
+      ['CamemBERT V1', 'pondération + contexte bilatéral', 91.7, 25.99],
+      ['CamemBERT V2', 'agrégation sur 5 plis', 95.3, 81.12],
+      ['CamemBERT V3', '+ arrêt anticipé', 97.0, 82.06],
+      ['CamemBERT V4', 'fenêtre 3, 384 tokens', 96.8, 81.70]
+    ], true);
+  })();
+  </script>
+</body>
+</html>

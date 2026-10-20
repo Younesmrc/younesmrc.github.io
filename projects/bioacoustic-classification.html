@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html lang="en" class="no-js">
+
+<html class="no-js" lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="BirdCLEF+ 2026: multi-label audio classification of 234 Pantanal species with hand-built spectral features, One-vs-Rest CatBoost and an analysis of the focal-to-soundscape domain gap." />
-  <meta name="theme-color" content="#06121f" />
-  <title>Bioacoustic Classification — Younes Arjdal</title>
-  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <script>document.documentElement.classList.replace('no-js', 'js');</script>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="BirdCLEF+ 2026: multi-label audio classification of 234 Pantanal species with hand-built spectral features, One-vs-Rest CatBoost and an analysis of the focal-to-soundscape domain gap." name="description"/>
+<meta content="#06121f" name="theme-color"/>
+<title>Bioacoustic Classification - Younes Arjdal</title>
+<link href="../assets/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<script>document.documentElement.classList.replace('no-js', 'js');</script>
+<style>
     :root {
       --ink: #06121f; --ink-2: #0a1b2e; --paper: #f4f6f8; --text: #12202e; --muted: #566677;
       --line: #d6dee6; --dline: rgba(255, 255, 255, 0.13);
@@ -237,340 +238,328 @@
       html { scroll-behavior: auto; }
       *, *::before, *::after { transition-duration: 0.01ms !important; }
     }
-  </style>
-</head>
+  
+/* Allow the demonstration label to wrap on narrow screens. */
+@media(max-width:420px){.demo .chip{max-width:100%;white-space:normal;overflow-wrap:anywhere}}
+/* Language switch : EN | FR, adjacent to YA */
+.identity-row{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.top .identity-row .lang-switch{position:static!important;top:auto;left:auto;right:auto;display:inline-flex!important;align-items:center;flex-direction:row!important;gap:7px!important;padding:0;background:none;border:0;white-space:nowrap}
+.top .identity-row .lang-switch a{display:inline-flex!important;align-items:center;font:600 .76rem var(--mono);text-decoration:none;color:#a9bfd2;padding:7px 2px;border:0}
+.top .identity-row .lang-switch a[aria-current="page"]{color:#fff;text-decoration:underline;text-underline-offset:4px}
+.top .identity-row .lang-switch a:hover{color:#fff}
+.lang-switch .lang-divider{color:#67839d;font-size:.8rem}
+@media(max-width:420px){.identity-row{gap:8px}.top .identity-row .lang-switch{gap:4px!important}}
+</style>
+<link href="https://younesmrc.github.io/projects/bioacoustic-classification.html" hreflang="en" rel="alternate"/><link href="https://younesmrc.github.io/fr/projects/bioacoustic-classification.html" hreflang="fr" rel="alternate"/><link href="https://younesmrc.github.io/projects/bioacoustic-classification.html" hreflang="x-default" rel="alternate"/></head>
 <body>
-  <header class="top">
-    <div class="wrap">
-      <a class="brand" href="../index.html#home" aria-label="Go to home">YA</a>
-      <nav aria-label="Project navigation">
-        <a href="../index.html#projects">All projects</a>
-        <a href="#data">Data</a>
-        <a href="#v1">Version 1</a>
-        <a href="#v2">Version 2</a>
-        <a href="#results">Results</a>
-        <a href="#errors">Errors</a>
-        <a href="#report">Report</a>
-      </nav>
-    </div>
-  </header>
-
-  <main>
-    <!-- ================= HERO + DOMAIN-GAP DEMO ================= -->
-    <section class="hero" id="top">
-      <div class="wrap">
-        <a class="back" href="../index.html#projects">← Back to projects</a>
-
-        <div class="hero-head">
-          <div>
-            <h1>Bioacoustic<br />Classification</h1>
-            <p class="sub">BirdCLEF+ 2026: 234 species, classical audio features</p>
-          </div>
-          <div>
-            <p class="lede">
+<header class="top">
+<div class="wrap">
+<div class="identity-row"><a aria-label="Go to home" class="brand" href="../index.html#home">YA</a><nav aria-label="Choose language" class="lang-switch"><a aria-current="page" href="#" lang="en">EN</a><span aria-hidden="true" class="lang-divider">|</span><a href="../fr/projects/bioacoustic-classification.html" lang="fr">FR</a></nav></div>
+<nav aria-label="Project navigation">
+<a href="../index.html#projects">All projects</a>
+<a href="#data">Data</a>
+<a href="#v1">Version 1</a>
+<a href="#v2">Version 2</a>
+<a href="#results">Results</a>
+<a href="#errors">Errors</a>
+<a href="#report">Report</a>
+</nav>
+</div>
+</header>
+<main>
+<!-- ================= HERO + DOMAIN-GAP DEMO ================= -->
+<section class="hero" id="top">
+<div class="wrap">
+<a class="back" href="../index.html#projects">← Back to projects</a>
+<div class="hero-head">
+<div>
+<h1>Bioacoustic<br/>Classification</h1>
+<p class="sub">BirdCLEF+ 2026: 234 species, classical audio features</p>
+</div>
+<div>
+<p class="lede">
               A Kaggle competition: say which of 234 Pantanal species are calling in a five-second passive recording.
               The training audio is clean close-ups, the test is a noisy mixture. A hand-built feature vector and one
               CatBoost per species reach 0.737 on the leaderboard, and the report spends most of its effort on why that is
               where they stop.
             </p>
-            <dl class="meta">
-              <div><dt>Project</dt><dd>M1 MIND, Sorbonne University</dd></div>
-              <div><dt>Contest</dt><dd>BirdCLEF+ 2026 on Kaggle</dd></div>
-              <div><dt>Task</dt><dd>Multi-label, 234 classes, macro AUC-ROC</dd></div>
-              <div><dt>Stack</dt><dd>Python, librosa, scikit-learn, XGBoost, CatBoost</dd></div>
-            </dl>
-            <div class="hero-actions">
-              <a class="btn btn-light" href="#results">Jump to results</a>
-              <a class="btn btn-ghost" href="../assets/projects/bioacoustic-classification/report.pdf" target="_blank" rel="noreferrer">Read the report</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="demo" aria-labelledby="demo-title">
-          <div class="demo-intro">
-            <div>
-              <h2 id="demo-title">The same frog, two recordings</h2>
-              <p>Training clips are one species up close. The test is a passive microphone that hears about four species at once, up to ten. Add species and noise and watch how little of the signal belongs to the target.</p>
-            </div>
-            <span class="chip">synthetic signal, not real audio</span>
-          </div>
-
-          <div class="ctl">
-            <div>
-              <label for="nsp">Species in the segment <output id="nsp-o">4</output></label>
-              <input id="nsp" type="range" min="1" max="10" step="1" value="4" />
-              <small>Soundscape average in the data: 4.2</small>
-            </div>
-            <div>
-              <label for="nz">Background noise <output id="nz-o">35 %</output></label>
-              <input id="nz" type="range" min="0" max="100" step="5" value="35" />
-              <small>Wind, insects, distant calls</small>
-            </div>
-            <div>
-              <label class="switch"><input id="hl" type="checkbox" checked /><span class="knob"></span><span>Highlight the target frog</span></label>
-            </div>
-          </div>
-
-          <div class="wv">
-            <div class="wv-h"><b>Focal recording</b><span>Base 1 · one species, microphone aimed at it</span></div>
-            <svg id="w-focal" viewBox="0 0 600 96" preserveAspectRatio="none" role="img" aria-label="Waveform of a clean focal recording with three calls"></svg>
-          </div>
-          <div class="wv">
-            <div class="wv-h"><b>Soundscape segment</b><span id="w-cap">Test · 5 s, 4 species + noise</span></div>
-            <svg id="w-soup" viewBox="0 0 600 96" preserveAspectRatio="none" role="img" aria-label="Waveform of a noisy soundscape mixture"></svg>
-          </div>
-          <p class="share" id="share" aria-live="polite"></p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= DATA ================= -->
-    <section class="sec" id="data">
-      <div class="wrap split">
-        <header>
-          <h2>Three datasets that don't match</h2>
-          <p>Before any model, the report maps what exists and where the test will differ from the training data.</p>
-        </header>
-        <div>
-          <div class="block">
-            <h3>What is provided</h3>
-            <p>All audio is OGG Vorbis, mono, 32 kHz. The difficulty is not the format but how each set was recorded.</p>
-            <dl class="rows">
-              <div><dt>Base 1<br /><span style="font-weight:400;color:var(--muted)">train_audio</span></dt><dd>35,549 recordings from xeno-canto (23,043) and iNaturalist (12,506). One primary label each, variable length (0.03 s to 549 s, median 19.6 s). Covers 206 of the 234 classes.</dd></div>
-              <div><dt>Base 2<br /><span style="font-weight:400;color:var(--muted)">train_soundscapes</span></dt><dd>1,478 five-second segments from passive Pantanal recorders, with a multi-label vector. Covers 75 classes, 4.2 species per segment on average and up to 10.</dd></div>
-              <div><dt>Test</dt><dd>About 7,200 five-second segments from the same passive recorders. One probability per class, scored by the mean AUC-ROC over classes, so a rare insect counts as much as a common bird.</dd></div>
-            </dl>
-          </div>
-
-          <div class="block">
-            <h3>Who can be learned from what</h3>
-            <p>Crossing the two training sets gives four statuses for the 234 targets. Switch the training data to see what version 2 unlocks.</p>
-            <dl class="facts">
-              <div><b>47</b><span>in both bases</span></div>
-              <div><b>159</b><span>Base 1 only: lots of audio, never heard in a soundscape</span></div>
-              <div><b>28</b><span>Base 2 only: few examples, test-like</span></div>
-              <div><b>0</b><span>species with no data at all</span></div>
-            </dl>
-            <div class="grid-tools" role="group" aria-label="Training data">
-              <button type="button" class="gmode" data-g="v1" aria-pressed="true">Version 1: train on Base 1</button>
-              <button type="button" class="gmode" data-g="v2" aria-pressed="false">Version 2: Base 1 + 80 % of Base 2</button>
-            </div>
-            <div class="groups" id="groups"></div>
-            <div class="gleg">
-              <span><i style="background:#178f5b"></i>In both bases</span>
-              <span><i style="background:#1d5f9b"></i>Base 1 only</span>
-              <span><i style="background:#b87a0a"></i>Base 2 only</span>
-              <span style="color:var(--muted)">One square = one species</span>
-            </div>
-            <p class="gcap" id="gcap" aria-live="polite"></p>
-            <p class="note">Group split read from the report's coverage figure and its totals. Birds dominate with 162 of 234 species; nearly all insects (25 of 28) exist only in Base 2.</p>
-          </div>
-
-          <div class="block">
-            <h3>Three shifts between training and test</h3>
-            <dl class="rows">
-              <div><dt>Focal vs passive</dt><dd>Base 1 clips aim a microphone at one animal. The test is autonomous recorders capturing everything in range. A model that learns a clean signal is later asked to find it inside a mixture, so a validation split drawn from Base 1 would flatter it.</dd></div>
-              <div><dt>Two sources</dt><dd>xeno-canto gives a quality rating from 1 to 5 (mostly 4 or 5). iNaturalist gives none, all its files read 0, so quality cannot be filtered the same way on both. About 12 % of files, xeno-canto only, carry secondary labels.</dd></div>
-              <div><dt>World vs Pantanal</dt><dd>97 % of Base 1 was recorded outside the Pantanal. About 70 species may sing differently there, so the model can learn dialects it will not hear at test time.</dd></div>
-            </dl>
-          </div>
-
-          <div class="block">
-            <h3>Three acoustic signatures</h3>
-            <dl class="rows">
-              <div><dt>Birds</dt><dd>Short modulated syllables separated by silences. Needs dynamics, which averaging flattens.</dd></div>
-              <div><dt>Insects</dt><dd>Continuous wide-band signal with no temporal structure.</dd></div>
-              <div><dt>Amphibians</dt><dd>Continuous too, but in a narrow band. Global statistics are enough for insects and amphibians, so the features have to mix static and dynamic information.</dd></div>
-            </dl>
-            <p class="note">Most energy sits below 8 kHz, so audio can be resampled from 32 kHz to 16 kHz without losing what matters.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= VERSION 1 ================= -->
-    <section class="sec white" id="v1">
-      <div class="wrap split">
-        <header>
-          <h2>A hand-built feature vector</h2>
-          <p>Version 1 bets on analysis over model size: no neural network, only what the data called for.</p>
-        </header>
-        <div>
-          <div class="block">
-            <h3>The pipeline</h3>
-            <ol class="steps">
-              <li><b>Resample</b><span>To 16 kHz, justified by the spectral analysis.</span></li>
-              <li><b>Cut</b><span>Non-overlapping 5 s segments, capped at 20 per file so a ten-minute file does not over-represent its species. Base 1 gives 198,437 segments, Base 2 keeps its 1,478.</span></li>
-              <li><b>Describe</b><span>170 numbers per segment, mean and standard deviation of each: MFCC with delta and delta-delta, spectral centroid, bandwidth, rolloff, flatness and contrast, RMS and zero-crossing rate, chroma.</span></li>
-              <li><b>One-vs-Rest</b><span>One binary classifier per species, each outputting a probability. Positives are re-weighted automatically, with <code>scale_pos_weight</code> capped at 100.</span></li>
-              <li><b>CatBoost</b><span>Depth 6, learning rate 0.05, L2 regularisation 3 and early stopping: a robust compromise rather than a tuned optimum.</span></li>
-            </ol>
-          </div>
-
-          <div class="block">
-            <h3>Three classifiers, same protocol</h3>
-            <p>Trained on all of Base 1, evaluated on all of Base 2, macro AUC.</p>
-            <div class="tw">
-              <table class="wp">
-                <thead><tr><th>Classifier</th><th class="num">All</th><th class="num">47 shared</th><th class="num">Mammalia</th><th class="num">Aves</th><th class="num">Amphibia</th><th class="num">Time</th></tr></thead>
-                <tbody>
-                  <tr><td>SGD (linear)</td><td class="num">0.543</td><td class="num">0.569</td><td class="num">0.518</td><td class="num">0.602</td><td class="num">0.518</td><td class="num">5 min</td></tr>
-                  <tr><td>XGBoost</td><td class="num">0.609</td><td class="num">0.674</td><td class="num">0.841</td><td class="num">0.651</td><td class="num">0.653</td><td class="num">7 min</td></tr>
-                  <tr><td>CatBoost</td><td class="num top">0.652</td><td class="num top">0.742</td><td class="num">0.839</td><td class="num top">0.752</td><td class="num top">0.680</td><td class="num">2 min</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <p class="note">CatBoost wins on almost every column and is the fastest thanks to the GPU. Submitted to Kaggle it scores <b>0.728</b>, well above the 0.65 local figure.</p>
-          </div>
-
-          <div class="block">
-            <h3>What version 1 showed</h3>
-            <dl class="rows">
-              <div><dt>Learnable classes work</dt><dd>On the 47 shared classes CatBoost averages 0.742 and some species pass 0.98.</dd></div>
-              <div><dt>A ceiling by construction</dt><dd>The 28 Base-2-only classes stay at 0.5 on all three models because Base 1 holds no positives for them. They drag the macro AUC down mechanically.</dd></div>
-              <div><dt>Anti-predicted classes</dt><dd>Three classes score below 0.4 (trsowl, 116570, magant1) despite hundreds to thousands of training examples. That is the typical symptom of a strong focal to soundscape gap.</dd></div>
-              <div><dt>Uneven by group</dt><dd>Mammalia 0.84, Aves 0.75, Amphibia 0.68, Insecta 0.50, Reptilia 0.43: plain statistics do not capture the same information in every kind of signal.</dd></div>
-            </dl>
-          </div>
-
-          <div class="block">
-            <h3>A dead end: BirdNET embeddings</h3>
-            <p>BirdNET v2.4 produces a 1024-dimensional vector per 3 s and was trained largely on xeno-canto, so it looked like a natural fit. On CPU it took about two seconds per focal file, hours for Base 1 (the report later estimates over twenty), and batching and parallelism did not help. The idea was dropped to keep a pipeline that already scored well and had room to improve.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= VERSION 2 ================= -->
-    <section class="sec" id="v2">
-      <div class="wrap split">
-        <header>
-          <h2>Version 2: more signal, more data</h2>
-          <p>Three changes stacked on top of version 1, each answering something the first run exposed.</p>
-        </header>
-        <div>
-          <div class="block">
-            <h3>Three cumulative changes</h3>
-            <dl class="rows">
-              <div><dt>307 features</dt><dd>Skewness and kurtosis of the MFCCs for temporal dynamics, eight mel bands (mean and standard deviation) to separate stationary insect and amphibian signatures, and a silence rate to tell dense focal files from airy soundscapes.</dd></div>
-              <div><dt>Multi-label targets</dt><dd>Secondary labels, present in 12.2 % of Base 1 files, turn each target into a 234-dimensional binary vector, which adds positives for species that co-occur.</dd></div>
-              <div><dt>Train on both bases</dt><dd>Base 2 matches the test distribution but is tiny and easy to overfit, so it is split by soundscape file: 52 files (1,182 segments) join training, 14 files (296 segments) stay out for an honest hold-out. This unlocks the 28 Base-2-only classes, and the report counts 229 trained classes.</dd></div>
-            </dl>
-          </div>
-
-          <div class="block">
-            <h3>Same three classifiers, new split</h3>
-            <p>Early stopping on the hold-out, evaluated on its 296 segments. 42 classes have at least one positive there and can be scored.</p>
-            <div class="tw">
-              <table class="wp">
-                <thead><tr><th>Classifier</th><th class="num">Macro AUC</th><th class="num">Shared classes</th><th class="num">Base-2-only</th><th class="num">Time</th></tr></thead>
-                <tbody>
-                  <tr><td>SGD (linear)</td><td class="num">0.641</td><td class="num">0.642</td><td class="num">0.639</td><td class="num">8 min</td></tr>
-                  <tr><td>XGBoost</td><td class="num">0.749</td><td class="num">0.816</td><td class="num">0.639</td><td class="num">44 min</td></tr>
-                  <tr><td>CatBoost</td><td class="num top">0.803</td><td class="num top">0.880</td><td class="num top">0.677</td><td class="num">14 min</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <p class="note">CatBoost leads XGBoost by 0.05 and SGD by 0.16. These numbers are not comparable with version 1's table: the evaluation set shrank from 1,478 segments and 75 classes to 296 segments and 42 classes.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= RESULTS ================= -->
-    <section class="sec dark" id="results">
-      <div class="wrap split">
-        <header>
-          <h2>A small gain on Kaggle, a large change underneath</h2>
-          <p>Only the Kaggle score is comparable between versions. The hold-out shows where the gain went.</p>
-        </header>
-        <div>
-          <div class="block grow">
-            <h3>Kaggle leaderboard</h3>
-            <p>Macro AUC on the hidden test.</p>
-            <div class="kag">
-              <div><span class="lab">Version 1, 170 features, Base 1 only</span><div class="pb bm"><span class="tr"><span class="bw" style="--w:45.6%"></span></span><em>0.728</em></div></div>
-              <div><span class="lab">Version 2, 307 features, Base 1 + 80 % Base 2</span><div class="pb di"><span class="tr"><span class="bw" style="--w:47.4%"></span></span><em>0.737</em></div></div>
-            </div>
-            <p class="axisnote">Bars start at 0.5, which is chance. Gain: +0.009.</p>
-          </div>
-
-          <div class="block grow">
-            <h3>Per biological group</h3>
-            <p>CatBoost AUC on the 42 classes scored in both versions, v1 against v2 on the hold-out. Mean change +0.165, and every group improves.</p>
-            <div id="grp-pairs"></div>
-          </div>
-
-          <div class="block">
-            <h3>Class by class</h3>
-            <div class="stack" role="img" aria-label="29 classes improved, 5 stable, 8 regressed"><span class="up">29</span><span class="eq">5</span><span class="dn">8</span></div>
-            <div class="stack-l"><span>29 improved (more than +0.02)</span><span>5 stable</span><span>8 regressed</span></div>
-            <div id="dumbbells" style="margin-top:18px"></div>
-            <p class="dleg">Hollow = version 1, filled = version 2. Dashed line = 0.5, chance. The four insect sounds (son17, son21, son22, son23) all move from a forced 0.5 to between 0.97 and 1.00.</p>
-          </div>
-
-          <p class="callout">Why only +0.009 on Kaggle? Half of the newly unlocked classes stay stuck near 0.5, the insects are hard to tell apart with averaged statistics, and the 47 shared classes were already the best predicted, so their gain weighs little in a macro AUC pulled down by the hard ones. The public score also covers only part of the hidden test, so the private gap may be wider.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= ERRORS ================= -->
-    <section class="sec white" id="errors">
-      <div class="wrap split">
-        <header>
-          <h2>Where the features run out</h2>
-          <p>Three classes that version 2 does not fix, each for a different reason.</p>
-        </header>
-        <div>
-          <dl class="rows">
-            <div><dt>Two-colored oval frog<span class="case">domain gap</span><br /><span style="font-weight:400;color:var(--muted);font-size:.9rem">Amphibia, 0.85 → 0.52</span></dt><dd>The focal clip is dominated by continuous broadband noise around 2 kHz with a few low-frequency pings. The soundscape shows regular horizontal bands between 2 and 5 kHz, probably a chorus of several individuals. In version 1 the model only met soundscapes at evaluation time and found chance correlations. Once trained on soundscapes, it learned that its focal signature was far from the annotated ones.</dd></div>
-            <div><dt>Southern Spectacled Caiman<span class="case">too little data</span><br /><span style="font-weight:400;color:var(--muted);font-size:.9rem">Reptilia, 0.43 → 0.55</span></dt><dd>Its calls are short, powerful low-frequency bars, but it rarely calls: most positive soundscape segments are ambient noise with a faint signal. Base 1 holds a single focal file, so learning a decision boundary from one example is statistically impossible. The 26 positives in Base 2 lift it slightly and then it plateaus.</dd></div>
-            <div><dt>Rococo Toad<span class="case">masked by others</span><br /><span style="font-weight:400;color:var(--muted);font-size:.9rem">Amphibia, 0.87 → 0.59</span></dt><dd>A steady call around 500 to 1,000 Hz is its focal signature. In soundscapes that drone is buried under bird and amphibian transients, and statistics averaged over five seconds cannot isolate it. Version 2 exposes a problem version 1 was hiding: the features cannot separate overlapping sources.</dd></div>
-          </dl>
-          <p class="note" style="margin-top:24px">The report's reading: the pipeline copes when a species' signature stays consistent between focal and soundscape (most birds and mammals) and unlocks Base-2-only classes mechanically. It fails on rare classes, on signatures drowned by other sources, and where averaged statistics miss what is specific to a species. These are structural gaps, not tuning problems.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= NEXT ================= -->
-    <section class="sec" id="next">
-      <div class="wrap split">
-        <header>
-          <h2>What a version 3 would try</h2>
-          <p>Ranked by expected return on effort, from the report's perspectives. None of this was run.</p>
-        </header>
-        <div>
-          <ol class="steps">
-            <li><b>Pretrained embeddings</b><span>BirdNET (1024-d), Perch (1280-d) or AVES in place of the 307 statistics. They help most on the focal to soundscape transfer and on masked signals, but need GPU time or a one-off chunked extraction. Little help for the caiman, whose problem is data.</span></li>
-            <li><b>Targeted augmentation</b><span>Mix soundscape background into focal files and stack several focal clips to imitate co-occurrence. Nearly free and aimed straight at the domain gap, so it should ease the amphibian regressions.</span></li>
-            <li><b>Non-audio metadata</b><span>A geographic prior from the species' training locations against the Pantanal, a seasonal filter (the test is February to March), and a cheap test of quality against quantity: train on xeno-canto rating 3 or more plus iNaturalist.</span></li>
-            <li><b>Ensembling and tuning</b><span>A geometric mean of XGBoost and CatBoost probabilities, then a short Optuna search on the hard classes. Sure but marginal, kept for last.</span></li>
-          </ol>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= REPORT ================= -->
-    <section class="sec" id="report" style="background: var(--ink); padding-top: 0">
-      <div class="wrap">
-        <div class="report">
-          <div>
-            <h2>Read the full report</h2>
-            <p>In French, 15 pages: data analysis, both versions, error analysis with spectrograms, and perspectives.</p>
-          </div>
-          <a class="btn btn-light" href="../assets/projects/bioacoustic-classification/report.pdf" target="_blank" rel="noreferrer">Open the report (PDF)</a>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="foot">
-    <div class="wrap">
-      <span>© 2026 Younes Arjdal</span>
-      <a href="../index.html#projects">Back to projects ↑</a>
-    </div>
-  </footer>
-  <script>
+<dl class="meta">
+<div><dt>Project</dt><dd>M1 MIND, Sorbonne University</dd></div>
+<div><dt>Contest</dt><dd>BirdCLEF+ 2026 on Kaggle</dd></div>
+<div><dt>Task</dt><dd>Multi-label, 234 classes, macro AUC-ROC</dd></div>
+<div><dt>Stack</dt><dd>Python, librosa, scikit-learn, XGBoost, CatBoost</dd></div>
+</dl>
+<div class="hero-actions">
+<a class="btn btn-light" href="#results">Jump to results</a>
+<a class="btn btn-ghost" href="../assets/projects/bioacoustic-classification/report.pdf" rel="noreferrer" target="_blank">Read the report</a>
+</div>
+</div>
+</div>
+<div aria-labelledby="demo-title" class="demo">
+<div class="demo-intro">
+<div>
+<h2 id="demo-title">The same frog, two recordings</h2>
+<p>Training clips are one species up close. The test is a passive microphone that hears about four species at once, up to ten. Add species and noise and watch how little of the signal belongs to the target.</p>
+</div>
+<span class="chip">synthetic signal, not real audio</span>
+</div>
+<div class="ctl">
+<div>
+<label for="nsp">Species in the segment <output id="nsp-o">4</output></label>
+<input id="nsp" max="10" min="1" step="1" type="range" value="4"/>
+<small>Soundscape average in the data: 4.2</small>
+</div>
+<div>
+<label for="nz">Background noise <output id="nz-o">35 %</output></label>
+<input id="nz" max="100" min="0" step="5" type="range" value="35"/>
+<small>Wind, insects, distant calls</small>
+</div>
+<div>
+<label class="switch"><input checked="" id="hl" type="checkbox"/><span class="knob"></span><span>Highlight the target frog</span></label>
+</div>
+</div>
+<div class="wv">
+<div class="wv-h"><b>Focal recording</b><span>Base 1 · one species, microphone aimed at it</span></div>
+<svg aria-label="Waveform of a clean focal recording with three calls" id="w-focal" preserveaspectratio="none" role="img" viewbox="0 0 600 96"></svg>
+</div>
+<div class="wv">
+<div class="wv-h"><b>Soundscape segment</b><span id="w-cap">Test · 5 s, 4 species + noise</span></div>
+<svg aria-label="Waveform of a noisy soundscape mixture" id="w-soup" preserveaspectratio="none" role="img" viewbox="0 0 600 96"></svg>
+</div>
+<p aria-live="polite" class="share" id="share"></p>
+</div>
+</div>
+</section>
+<!-- ================= DATA ================= -->
+<section class="sec" id="data">
+<div class="wrap split">
+<header>
+<h2>Three datasets that don't match</h2>
+<p>Before any model, the report maps what exists and where the test will differ from the training data.</p>
+</header>
+<div>
+<div class="block">
+<h3>What is provided</h3>
+<p>All audio is OGG Vorbis, mono, 32 kHz. The difficulty is not the format but how each set was recorded.</p>
+<dl class="rows">
+<div><dt>Base 1<br/><span style="font-weight:400;color:var(--muted)">train_audio</span></dt><dd>35,549 recordings from xeno-canto (23,043) and iNaturalist (12,506). One primary label each, variable length (0.03 s to 549 s, median 19.6 s). Covers 206 of the 234 classes.</dd></div>
+<div><dt>Base 2<br/><span style="font-weight:400;color:var(--muted)">train_soundscapes</span></dt><dd>1,478 five-second segments from passive Pantanal recorders, with a multi-label vector. Covers 75 classes, 4.2 species per segment on average and up to 10.</dd></div>
+<div><dt>Test</dt><dd>About 7,200 five-second segments from the same passive recorders. One probability per class, scored by the mean AUC-ROC over classes, so a rare insect counts as much as a common bird.</dd></div>
+</dl>
+</div>
+<div class="block">
+<h3>Who can be learned from what</h3>
+<p>Crossing the two training sets gives four statuses for the 234 targets. Switch the training data to see what version 2 unlocks.</p>
+<dl class="facts">
+<div><b>47</b><span>in both bases</span></div>
+<div><b>159</b><span>Base 1 only: lots of audio, never heard in a soundscape</span></div>
+<div><b>28</b><span>Base 2 only: few examples, test-like</span></div>
+<div><b>0</b><span>species with no data at all</span></div>
+</dl>
+<div aria-label="Training data" class="grid-tools" role="group">
+<button aria-pressed="true" class="gmode" data-g="v1" type="button">Version 1: train on Base 1</button>
+<button aria-pressed="false" class="gmode" data-g="v2" type="button">Version 2: Base 1 + 80 % of Base 2</button>
+</div>
+<div class="groups" id="groups"></div>
+<div class="gleg">
+<span><i style="background:#178f5b"></i>In both bases</span>
+<span><i style="background:#1d5f9b"></i>Base 1 only</span>
+<span><i style="background:#b87a0a"></i>Base 2 only</span>
+<span style="color:var(--muted)">One square = one species</span>
+</div>
+<p aria-live="polite" class="gcap" id="gcap"></p>
+<p class="note">Group split read from the report's coverage figure and its totals. Birds dominate with 162 of 234 species; nearly all insects (25 of 28) exist only in Base 2.</p>
+</div>
+<div class="block">
+<h3>Three shifts between training and test</h3>
+<dl class="rows">
+<div><dt>Focal vs passive</dt><dd>Base 1 clips aim a microphone at one animal. The test is autonomous recorders capturing everything in range. A model that learns a clean signal is later asked to find it inside a mixture, so a validation split drawn from Base 1 would flatter it.</dd></div>
+<div><dt>Two sources</dt><dd>xeno-canto gives a quality rating from 1 to 5 (mostly 4 or 5). iNaturalist gives none, all its files read 0, so quality cannot be filtered the same way on both. About 12 % of files, xeno-canto only, carry secondary labels.</dd></div>
+<div><dt>World vs Pantanal</dt><dd>97 % of Base 1 was recorded outside the Pantanal. About 70 species may sing differently there, so the model can learn dialects it will not hear at test time.</dd></div>
+</dl>
+</div>
+<div class="block">
+<h3>Three acoustic signatures</h3>
+<dl class="rows">
+<div><dt>Birds</dt><dd>Short modulated syllables separated by silences. Needs dynamics, which averaging flattens.</dd></div>
+<div><dt>Insects</dt><dd>Continuous wide-band signal with no temporal structure.</dd></div>
+<div><dt>Amphibians</dt><dd>Continuous too, but in a narrow band. Global statistics are enough for insects and amphibians, so the features have to mix static and dynamic information.</dd></div>
+</dl>
+<p class="note">Most energy sits below 8 kHz, so audio can be resampled from 32 kHz to 16 kHz without losing what matters.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= VERSION 1 ================= -->
+<section class="sec white" id="v1">
+<div class="wrap split">
+<header>
+<h2>A hand-built feature vector</h2>
+<p>Version 1 bets on analysis over model size: no neural network, only what the data called for.</p>
+</header>
+<div>
+<div class="block">
+<h3>The pipeline</h3>
+<ol class="steps">
+<li><b>Resample</b><span>To 16 kHz, justified by the spectral analysis.</span></li>
+<li><b>Cut</b><span>Non-overlapping 5 s segments, capped at 20 per file so a ten-minute file does not over-represent its species. Base 1 gives 198,437 segments, Base 2 keeps its 1,478.</span></li>
+<li><b>Describe</b><span>170 numbers per segment, mean and standard deviation of each: MFCC with delta and delta-delta, spectral centroid, bandwidth, rolloff, flatness and contrast, RMS and zero-crossing rate, chroma.</span></li>
+<li><b>One-vs-Rest</b><span>One binary classifier per species, each outputting a probability. Positives are re-weighted automatically, with <code>scale_pos_weight</code> capped at 100.</span></li>
+<li><b>CatBoost</b><span>Depth 6, learning rate 0.05, L2 regularisation 3 and early stopping: a robust compromise rather than a tuned optimum.</span></li>
+</ol>
+</div>
+<div class="block">
+<h3>Three classifiers, same protocol</h3>
+<p>Trained on all of Base 1, evaluated on all of Base 2, macro AUC.</p>
+<div class="tw">
+<table class="wp">
+<thead><tr><th>Classifier</th><th class="num">All</th><th class="num">47 shared</th><th class="num">Mammalia</th><th class="num">Aves</th><th class="num">Amphibia</th><th class="num">Time</th></tr></thead>
+<tbody>
+<tr><td>SGD (linear)</td><td class="num">0.543</td><td class="num">0.569</td><td class="num">0.518</td><td class="num">0.602</td><td class="num">0.518</td><td class="num">5 min</td></tr>
+<tr><td>XGBoost</td><td class="num">0.609</td><td class="num">0.674</td><td class="num">0.841</td><td class="num">0.651</td><td class="num">0.653</td><td class="num">7 min</td></tr>
+<tr><td>CatBoost</td><td class="num top">0.652</td><td class="num top">0.742</td><td class="num">0.839</td><td class="num top">0.752</td><td class="num top">0.680</td><td class="num">2 min</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">CatBoost wins on almost every column and is the fastest thanks to the GPU. Submitted to Kaggle it scores <b>0.728</b>, well above the 0.65 local figure.</p>
+</div>
+<div class="block">
+<h3>What version 1 showed</h3>
+<dl class="rows">
+<div><dt>Learnable classes work</dt><dd>On the 47 shared classes CatBoost averages 0.742 and some species pass 0.98.</dd></div>
+<div><dt>A ceiling by construction</dt><dd>The 28 Base-2-only classes stay at 0.5 on all three models because Base 1 holds no positives for them. They drag the macro AUC down mechanically.</dd></div>
+<div><dt>Anti-predicted classes</dt><dd>Three classes score below 0.4 (trsowl, 116570, magant1) despite hundreds to thousands of training examples. That is the typical symptom of a strong focal to soundscape gap.</dd></div>
+<div><dt>Uneven by group</dt><dd>Mammalia 0.84, Aves 0.75, Amphibia 0.68, Insecta 0.50, Reptilia 0.43: plain statistics do not capture the same information in every kind of signal.</dd></div>
+</dl>
+</div>
+<div class="block">
+<h3>A dead end: BirdNET embeddings</h3>
+<p>BirdNET v2.4 produces a 1024-dimensional vector per 3 s and was trained largely on xeno-canto, so it looked like a natural fit. On CPU it took about two seconds per focal file, hours for Base 1 (the report later estimates over twenty), and batching and parallelism did not help. The idea was dropped to keep a pipeline that already scored well and had room to improve.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= VERSION 2 ================= -->
+<section class="sec" id="v2">
+<div class="wrap split">
+<header>
+<h2>Version 2: more signal, more data</h2>
+<p>Three changes stacked on top of version 1, each answering something the first run exposed.</p>
+</header>
+<div>
+<div class="block">
+<h3>Three cumulative changes</h3>
+<dl class="rows">
+<div><dt>307 features</dt><dd>Skewness and kurtosis of the MFCCs for temporal dynamics, eight mel bands (mean and standard deviation) to separate stationary insect and amphibian signatures, and a silence rate to tell dense focal files from airy soundscapes.</dd></div>
+<div><dt>Multi-label targets</dt><dd>Secondary labels, present in 12.2 % of Base 1 files, turn each target into a 234-dimensional binary vector, which adds positives for species that co-occur.</dd></div>
+<div><dt>Train on both bases</dt><dd>Base 2 matches the test distribution but is tiny and easy to overfit, so it is split by soundscape file: 52 files (1,182 segments) join training, 14 files (296 segments) stay out for an honest hold-out. This unlocks the 28 Base-2-only classes, and the report counts 229 trained classes.</dd></div>
+</dl>
+</div>
+<div class="block">
+<h3>Same three classifiers, new split</h3>
+<p>Early stopping on the hold-out, evaluated on its 296 segments. 42 classes have at least one positive there and can be scored.</p>
+<div class="tw">
+<table class="wp">
+<thead><tr><th>Classifier</th><th class="num">Macro AUC</th><th class="num">Shared classes</th><th class="num">Base-2-only</th><th class="num">Time</th></tr></thead>
+<tbody>
+<tr><td>SGD (linear)</td><td class="num">0.641</td><td class="num">0.642</td><td class="num">0.639</td><td class="num">8 min</td></tr>
+<tr><td>XGBoost</td><td class="num">0.749</td><td class="num">0.816</td><td class="num">0.639</td><td class="num">44 min</td></tr>
+<tr><td>CatBoost</td><td class="num top">0.803</td><td class="num top">0.880</td><td class="num top">0.677</td><td class="num">14 min</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">CatBoost leads XGBoost by 0.05 and SGD by 0.16. These numbers are not comparable with version 1's table: the evaluation set shrank from 1,478 segments and 75 classes to 296 segments and 42 classes.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= RESULTS ================= -->
+<section class="sec dark" id="results">
+<div class="wrap split">
+<header>
+<h2>A small gain on Kaggle, a large change underneath</h2>
+<p>Only the Kaggle score is comparable between versions. The hold-out shows where the gain went.</p>
+</header>
+<div>
+<div class="block grow">
+<h3>Kaggle leaderboard</h3>
+<p>Macro AUC on the hidden test.</p>
+<div class="kag">
+<div><span class="lab">Version 1, 170 features, Base 1 only</span><div class="pb bm"><span class="tr"><span class="bw" style="--w:45.6%"></span></span><em>0.728</em></div></div>
+<div><span class="lab">Version 2, 307 features, Base 1 + 80 % Base 2</span><div class="pb di"><span class="tr"><span class="bw" style="--w:47.4%"></span></span><em>0.737</em></div></div>
+</div>
+<p class="axisnote">Bars start at 0.5, which is chance. Gain: +0.009.</p>
+</div>
+<div class="block grow">
+<h3>Per biological group</h3>
+<p>CatBoost AUC on the 42 classes scored in both versions, v1 against v2 on the hold-out. Mean change +0.165, and every group improves.</p>
+<div id="grp-pairs"></div>
+</div>
+<div class="block">
+<h3>Class by class</h3>
+<div aria-label="29 classes improved, 5 stable, 8 regressed" class="stack" role="img"><span class="up">29</span><span class="eq">5</span><span class="dn">8</span></div>
+<div class="stack-l"><span>29 improved (more than +0.02)</span><span>5 stable</span><span>8 regressed</span></div>
+<div id="dumbbells" style="margin-top:18px"></div>
+<p class="dleg">Hollow = version 1, filled = version 2. Dashed line = 0.5, chance. The four insect sounds (son17, son21, son22, son23) all move from a forced 0.5 to between 0.97 and 1.00.</p>
+</div>
+<p class="callout">Why only +0.009 on Kaggle? Half of the newly unlocked classes stay stuck near 0.5, the insects are hard to tell apart with averaged statistics, and the 47 shared classes were already the best predicted, so their gain weighs little in a macro AUC pulled down by the hard ones. The public score also covers only part of the hidden test, so the private gap may be wider.</p>
+</div>
+</div>
+</section>
+<!-- ================= ERRORS ================= -->
+<section class="sec white" id="errors">
+<div class="wrap split">
+<header>
+<h2>Where the features run out</h2>
+<p>Three classes that version 2 does not fix, each for a different reason.</p>
+</header>
+<div>
+<dl class="rows">
+<div><dt>Two-colored oval frog<span class="case">domain gap</span><br/><span style="font-weight:400;color:var(--muted);font-size:.9rem">Amphibia, 0.85 → 0.52</span></dt><dd>The focal clip is dominated by continuous broadband noise around 2 kHz with a few low-frequency pings. The soundscape shows regular horizontal bands between 2 and 5 kHz, probably a chorus of several individuals. In version 1 the model only met soundscapes at evaluation time and found chance correlations. Once trained on soundscapes, it learned that its focal signature was far from the annotated ones.</dd></div>
+<div><dt>Southern Spectacled Caiman<span class="case">too little data</span><br/><span style="font-weight:400;color:var(--muted);font-size:.9rem">Reptilia, 0.43 → 0.55</span></dt><dd>Its calls are short, powerful low-frequency bars, but it rarely calls: most positive soundscape segments are ambient noise with a faint signal. Base 1 holds a single focal file, so learning a decision boundary from one example is statistically impossible. The 26 positives in Base 2 lift it slightly and then it plateaus.</dd></div>
+<div><dt>Rococo Toad<span class="case">masked by others</span><br/><span style="font-weight:400;color:var(--muted);font-size:.9rem">Amphibia, 0.87 → 0.59</span></dt><dd>A steady call around 500 to 1,000 Hz is its focal signature. In soundscapes that drone is buried under bird and amphibian transients, and statistics averaged over five seconds cannot isolate it. Version 2 exposes a problem version 1 was hiding: the features cannot separate overlapping sources.</dd></div>
+</dl>
+<p class="note" style="margin-top:24px">The report's reading: the pipeline copes when a species' signature stays consistent between focal and soundscape (most birds and mammals) and unlocks Base-2-only classes mechanically. It fails on rare classes, on signatures drowned by other sources, and where averaged statistics miss what is specific to a species. These are structural gaps, not tuning problems.</p>
+</div>
+</div>
+</section>
+<!-- ================= NEXT ================= -->
+<section class="sec" id="next">
+<div class="wrap split">
+<header>
+<h2>What a version 3 would try</h2>
+<p>Ranked by expected return on effort, from the report's perspectives. None of this was run.</p>
+</header>
+<div>
+<ol class="steps">
+<li><b>Pretrained embeddings</b><span>BirdNET (1024-d), Perch (1280-d) or AVES in place of the 307 statistics. They help most on the focal to soundscape transfer and on masked signals, but need GPU time or a one-off chunked extraction. Little help for the caiman, whose problem is data.</span></li>
+<li><b>Targeted augmentation</b><span>Mix soundscape background into focal files and stack several focal clips to imitate co-occurrence. Nearly free and aimed straight at the domain gap, so it should ease the amphibian regressions.</span></li>
+<li><b>Non-audio metadata</b><span>A geographic prior from the species' training locations against the Pantanal, a seasonal filter (the test is February to March), and a cheap test of quality against quantity: train on xeno-canto rating 3 or more plus iNaturalist.</span></li>
+<li><b>Ensembling and tuning</b><span>A geometric mean of XGBoost and CatBoost probabilities, then a short Optuna search on the hard classes. Sure but marginal, kept for last.</span></li>
+</ol>
+</div>
+</div>
+</section>
+<!-- ================= REPORT ================= -->
+<section class="sec" id="report" style="background: var(--ink); padding-top: 0">
+<div class="wrap">
+<div class="report">
+<div>
+<h2>Read the full report</h2>
+<p>In French, 15 pages: data analysis, both versions, error analysis with spectrograms, and perspectives.</p>
+</div>
+<a class="btn btn-light" href="../assets/projects/bioacoustic-classification/report.pdf" rel="noreferrer" target="_blank">Open the report (PDF)</a>
+</div>
+</div>
+</section>
+</main>
+<footer class="foot">
+<div class="wrap">
+<span>© 2026 Younes Arjdal</span>
+<a href="../index.html#projects">Back to projects ↑</a>
+</div>
+</footer>
+<script>
   (() => {
     const $ = (s, r = document) => r.querySelector(s);
     const $$ = (s, r = document) => [...r.querySelectorAll(s)];

@@ -1,0 +1,39 @@
+SITE BILINGUE EN / FR — CORRECTIF DU SÉLECTEUR
+
+Contenu : 12 fichiers HTML, soit 6 pages EN à la racine et dans projects/,
+et 6 pages FR dans fr/ et fr/projects/.
+
+INSTALLATION (IMPORTANT)
+1. Décompresser l'intégralité de l'archive dans :
+   C:\Users\Windows\Desktop\younesmrc.github.io\
+2. Accepter de REMPLACER index.html et les cinq pages du dossier projects/.
+   Il ne suffit pas de copier fr/ : le sélecteur EN → FR se trouve
+   précisément dans les pages anglaises qui doivent aussi être remplacées.
+3. Copier également fr/index.html et fr/projects/*.html.
+4. Garder assets/ tel quel. Les favicon, CV et rapports PDF sont partagés :
+   aucun asset ni PDF n'est inclus ou à dupliquer.
+
+FONCTIONNEMENT
+- Sur chaque page, EN | FR est placé juste à côté du logo YA.
+- Accueil anglais : FR pointe vers fr/index.html.
+- Projet anglais : FR pointe vers ../fr/projects/<nom>.html.
+- Accueil français : EN pointe vers ../index.html.
+- Projet français : EN pointe vers ../../projects/<nom>.html.
+- Le changement de langue fonctionne avec des liens HTML simples,
+  sans JavaScript supplémentaire.
+- Chaque page publie ses balises hreflang en / fr / x-default.
+
+CORRECTIONS INCLUSES
+- Affichage des DEUX liens EN et FR sur mobile dans les douze pages ;
+  correction d'une règle CSS qui cachait la deuxième langue.
+- Libellé de la démo CamemBERT : « LR · BoW + bigrammes ».
+- « Technologies » au lieu de « Stack » sur Structured Outputs FR.
+- Espacements du tableau de fonctionnalités réduits sur mobile.
+- Débordement horizontal d'un pixel corrigé sur la page bioacoustique FR.
+- Les noms des technologies, frameworks, LLMs, termes et métriques
+  techniques sont conservés.
+
+TEST LOCAL
+Dans le dossier racine : py -m http.server 8000
+Puis ouvrir : http://localhost:8000/ et http://localhost:8000/fr/index.html
+Dans les pages projets, vérifier le changement de langue avec EN | FR.

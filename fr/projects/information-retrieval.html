@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+
+<html class="no-js" lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="Reproduction de Guided Traversal (SIGIR 2022) avec BM25 et DeepImpact, et reconstruction d’un index inversé à deux scores pour 8,8 millions de passages MS MARCO." name="description"/>
+<meta content="#06121f" name="theme-color"/>
+<title>Moteur de recherche d’information - Younes Arjdal</title>
+<link href="../../assets/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<script>document.documentElement.classList.replace('no-js', 'js');</script>
+<style>
+    :root {
+      --ink: #06121f; --ink-2: #0a1b2e; --paper: #f4f6f8; --text: #12202e; --muted: #566677;
+      --line: #d6dee6; --dline: rgba(255, 255, 255, 0.13);
+      --blue: #1d5f9b; --cy: #6bb8f5; --ok: #4fd69c; --bad: #ff7a84; --warn: #f5c26b; --pub: #b79cff;
+      --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --r: 8px; --w: 1160px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+    body { margin: 0; color: var(--text); background: var(--paper); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+    code { font-family: var(--mono); }
+    .wrap { width: min(calc(100% - 40px), var(--w)); margin: 0 auto; }
+    :focus-visible { outline: 3px solid rgba(107, 184, 245, 0.7); outline-offset: 3px; }
+
+    .top { position: sticky; top: 0; z-index: 50; background: rgba(6, 18, 31, 0.84); backdrop-filter: blur(14px); border-bottom: 1px solid var(--dline); }
+    .top .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 64px; }
+    .brand { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 9px; background: #fff; color: var(--ink); font-weight: 600; letter-spacing: -0.03em; text-decoration: none; }
+    .top nav { display: flex; gap: 26px; }
+    .top nav a { color: #b4c4d4; font-size: 0.9rem; font-weight: 500; text-decoration: none; }
+    .top nav a:hover { color: #fff; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: var(--r); border: 1px solid transparent; font: 600 0.92rem var(--sans); text-decoration: none; cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.15s; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-light { background: #fff; color: var(--ink); }
+    .btn-light:hover { background: #e6eef6; }
+    .btn-ghost { background: transparent; color: #dbe7f2; border-color: rgba(255, 255, 255, 0.25); }
+    .btn-ghost:hover { border-color: rgba(255, 255, 255, 0.6); }
+    .btn[disabled] { opacity: 0.4; cursor: default; transform: none; }
+
+    /* ---------- Hero ---------- */
+    .hero { background: var(--ink); color: #fff; padding: 56px 0 88px; }
+    .back { display: inline-block; margin-bottom: 44px; color: #8fa6bb; font-size: 0.9rem; text-decoration: none; }
+    .back:hover { color: #fff; }
+    .hero-head { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); gap: 56px; align-items: end; }
+    h1 { margin: 0; font-size: clamp(2.8rem, 6.6vw, 5.8rem); line-height: 0.98; letter-spacing: -0.045em; font-weight: 600; }
+    .sub { margin: 20px 0 0; font: 400 1rem var(--mono); color: var(--cy); }
+    .lede { margin: 0 0 24px; max-width: 52ch; color: #b9c9d9; font-size: 1.06rem; }
+    .meta { display: grid; gap: 10px; margin: 0; font-size: 0.88rem; }
+    .meta div { display: grid; grid-template-columns: 92px 1fr; gap: 12px; padding-top: 10px; border-top: 1px solid var(--dline); }
+    .meta dt { color: #7f95aa; }
+    .meta dd { margin: 0; color: #dbe7f2; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+
+    /* ---------- Traversal demo ---------- */
+    .demo { margin-top: 64px; padding: 28px; border: 1px solid var(--dline); border-radius: 12px; background: var(--ink-2); }
+    .demo-intro { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 20px; }
+    .demo-intro h2 { margin: 0; font-size: 1.25rem; letter-spacing: -0.02em; font-weight: 600; }
+    .demo-intro p { margin: 6px 0 0; max-width: 66ch; color: #9fb4c8; font-size: 0.95rem; }
+    .chip { font: 500 0.82rem var(--mono); color: #d8edff; padding: 4px 10px; border: 1px solid rgba(107, 184, 245, 0.4); border-radius: 6px; background: rgba(107, 184, 245, 0.1); white-space: nowrap; }
+    .demo-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; border-top: 1px solid var(--dline); }
+    .modes { display: flex; flex-wrap: wrap; gap: 8px; }
+    .mode { min-height: 40px; padding: 0 16px; border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 99px; background: transparent; color: #dbe7f2; font: 500 0.9rem var(--sans); cursor: pointer; }
+    .mode[aria-pressed="true"] { background: #fff; border-color: #fff; color: var(--ink); }
+    .demo-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+    .trap { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--dline); border-bottom: 1px solid var(--dline); }
+    .switch { display: inline-flex; align-items: center; gap: 12px; color: #dbe7f2; font-weight: 500; cursor: pointer; }
+    .switch input { position: absolute; opacity: 0; pointer-events: none; }
+    .knob { position: relative; flex: none; width: 46px; height: 26px; border-radius: 99px; background: #2a4561; transition: background 0.2s; }
+    .knob::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+    .switch input:checked + .knob { background: var(--warn); }
+    .switch input:checked + .knob::after { transform: translateX(20px); }
+    .switch input:focus-visible + .knob { outline: 3px solid rgba(107, 184, 245, 0.7); outline-offset: 3px; }
+    .trap small { color: #7f98b0; font-size: 0.85rem; }
+
+    .lists { margin-top: 20px; }
+    .ql { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 16px; align-items: center; padding: 10px 0; border-top: 1px solid var(--dline); transition: opacity 0.3s; }
+    .ql:first-child { border-top: 0; }
+    .ql.ne { opacity: 0.42; }
+    .tn { font: 500 0.92rem var(--mono); }
+    .tn small { display: block; color: #7f98b0; font: 400 0.76rem var(--sans); }
+    .tn .tag { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; background: rgba(245, 194, 107, 0.16); color: var(--warn); font: 500 0.7rem var(--sans); }
+    .dc-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+    .dc { display: inline-grid; gap: 0; min-width: 62px; padding: 3px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.06); font: 500 0.78rem var(--mono); text-align: center; line-height: 1.35; }
+    .dc small { color: #8fa6bb; font-size: 0.68rem; }
+    .dc.hot { background: rgba(255, 122, 132, 0.16); box-shadow: inset 0 0 0 1px rgba(255, 122, 132, 0.5); }
+    .legend-line { margin: 4px 0 0; color: #7f98b0; font-size: 0.8rem; }
+
+    .status { display: flex; flex-wrap: wrap; gap: 28px; margin: 22px 0 6px; }
+    .status > div { min-width: 150px; }
+    .status b { display: block; color: #7f98b0; font: 500 0.78rem var(--sans); }
+    .status span { font: 600 1.1rem var(--mono); }
+    .dtable { width: 100%; margin-top: 14px; border-collapse: collapse; font-size: 0.88rem; }
+    .dtable th { padding: 8px 10px; border-bottom: 1px solid var(--dline); color: #7189a1; font-size: 0.78rem; font-weight: 500; text-align: left; }
+    .dtable td { padding: 8px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); vertical-align: top; }
+    .dtable td.n { font-family: var(--mono); text-align: right; white-space: nowrap; }
+    .dtable tr.wait td { color: #4a6580; }
+    .dtable tr.cur td { background: rgba(107, 184, 245, 0.08); }
+    .dec { display: inline-block; padding: 1px 9px; border-radius: 99px; font-size: 0.78rem; font-weight: 600; }
+    .dec.scored { background: rgba(79, 214, 156, 0.16); color: var(--ok); }
+    .dec.skipped { background: rgba(245, 194, 107, 0.16); color: var(--warn); }
+    .dec.never { background: rgba(255, 255, 255, 0.08); color: #9fb4c8; }
+    .why { display: block; margin-top: 2px; color: #7f98b0; font: 400 0.76rem var(--mono); }
+    .out { margin-top: 18px; padding: 16px 18px; border-left: 3px solid var(--cy); background: rgba(107, 184, 245, 0.07); color: #cfe0ef; min-height: 3.2em; }
+    .out.diff { border-color: var(--warn); background: rgba(245, 194, 107, 0.08); }
+    .tw { overflow-x: auto; }
+
+    /* ---------- Sections ---------- */
+    .sec { padding: 104px 0; }
+    .sec.white { background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .sec.dark { background: var(--ink); color: #fff; }
+    .split { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 72px; }
+    .split > * { min-width: 0; }
+    .split > header { align-self: start; position: sticky; top: 96px; }
+    h2 { margin: 0 0 16px; font-size: clamp(1.9rem, 3.4vw, 2.8rem); line-height: 1.1; letter-spacing: -0.035em; font-weight: 600; }
+    .split > header p { max-width: 34ch; margin: 0; color: var(--muted); }
+    .dark .split > header p { color: #9fb4c8; }
+    h3 { margin: 0; font-size: 1.15rem; letter-spacing: -0.02em; font-weight: 600; }
+    p { margin-top: 0; }
+    .block + .block { margin-top: 64px; }
+    .block > h3 { margin-bottom: 8px; font-size: 1.5rem; letter-spacing: -0.03em; }
+    .block > p { max-width: 64ch; margin-bottom: 20px; color: var(--muted); }
+    .dark .block > p { color: #a9bccd; }
+    .note { margin: 14px 0 0; color: var(--muted); font-size: 0.85rem; max-width: 72ch; }
+    .dark .note { color: #8097ac; }
+
+    .rows { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .rows > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 32px; padding: 22px 0; border-bottom: 1px solid var(--line); }
+    .rows dt { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; }
+    .rows dd { margin: 0; color: var(--muted); }
+    .rows dd code { color: var(--text); font-size: 0.86em; }
+    .formula { display: block; margin-top: 8px; padding: 10px 12px; border-radius: 6px; background: #eef3f8; color: var(--text); font: 500 0.82rem var(--mono); overflow-x: auto; white-space: nowrap; }
+
+    .steps { counter-reset: s; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .steps li { display: grid; grid-template-columns: 36px 150px 1fr; gap: 16px; align-items: baseline; padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .steps li::before { counter-increment: s; content: counter(s); color: var(--blue); font: 500 0.9rem var(--mono); }
+    .steps b { font-size: 1.1rem; letter-spacing: -0.02em; font-weight: 600; }
+    .steps span { color: var(--muted); }
+
+    .facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; margin: 0 0 12px; }
+    .facts div { padding-top: 12px; border-top: 3px solid var(--ink); }
+    .facts b { display: block; font: 600 1.35rem var(--mono); letter-spacing: -0.03em; }
+    .facts span { color: var(--muted); font-size: 0.85rem; }
+
+    /* byte layouts */
+    .bytes { display: grid; gap: 20px; }
+    .brow-h { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9rem; }
+    .brow-h code { font-weight: 500; }
+    .brow-h span { color: var(--muted); font: 400 0.82rem var(--mono); }
+    .brow { display: flex; gap: 2px; }
+    .seg { flex: var(--b); min-width: 0; padding: 7px 4px; border-radius: 4px; background: var(--c); color: #fff; text-align: center; font: 500 0.74rem/1.3 var(--mono); overflow: hidden; }
+    .seg small { display: block; font-size: 0.66rem; opacity: 0.8; }
+    .seg.k1 { --c: #1d5f9b; } .seg.k2 { --c: #6d4fe0; } .seg.k3 { --c: #178f5b; } .seg.k4 { --c: #b87a0a; }
+
+    /* bugs */
+    pre.diff { margin: 0; padding: 14px 16px; border-radius: 8px; background: var(--ink); color: #dbe7f2; font: 500 0.82rem/1.7 var(--mono); overflow-x: auto; }
+    pre.diff .m { color: var(--bad); } pre.diff .p { color: var(--ok); } pre.diff .c { color: #7f98b0; }
+    table.wp { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .wp th { padding: 10px; border-bottom: 2px solid var(--ink); font-size: 0.82rem; font-weight: 600; text-align: left; }
+    .wp td { padding: 9px 10px; border-bottom: 1px solid var(--line); font: 500 0.84rem var(--mono); }
+    .wp td.bad { color: #c0303c; } .wp td.good { color: #178f5b; font-weight: 600; }
+    .toks { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 18px; }
+    .toks span { padding: 3px 8px; border-radius: 5px; background: #eef3f8; font: 500 0.8rem var(--mono); }
+    .toks span i { display: block; color: var(--muted); font: 400 0.68rem var(--mono); font-style: normal; text-align: center; }
+
+    /* results */
+    .pair { display: grid; grid-template-columns: 190px minmax(0, 1fr) 96px; gap: 16px; align-items: center; padding: 14px 0; border-top: 1px solid var(--dline); }
+    .pair b { display: block; font-weight: 600; }
+    .pair small { color: #8097ac; }
+    .pbars { display: grid; gap: 6px; }
+    .pb { display: flex; align-items: center; gap: 10px; }
+    .pb .tr { flex: 1; height: 12px; border-radius: 99px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
+    .pb .bw { display: block; width: var(--w); height: 100%; border-radius: inherit; background: var(--c); transition: width 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .js .grow:not(.on) .bw { width: 0; }
+    .pb em { min-width: 76px; color: #9fb4c8; font: 500 0.78rem var(--mono); font-style: normal; }
+    .pb.bm { --c: #5a7894; } .pb.di { --c: var(--cy); } .pb.pu { --c: var(--pub); }
+    .gain { text-align: right; color: var(--ok); font: 600 1.15rem var(--mono); letter-spacing: -0.03em; }
+    .tag-pub { display: inline-block; margin-bottom: 14px; padding: 3px 10px; border: 1px solid rgba(183, 156, 255, 0.5); border-radius: 6px; background: rgba(183, 156, 255, 0.1); color: var(--pub); font: 500 0.78rem var(--mono); }
+    .callout { margin: 20px 0 0; padding: 14px 18px; border-left: 3px solid var(--warn); background: rgba(245, 194, 107, 0.08); color: #e6d6b4; max-width: 74ch; }
+    .rows > div > *, .rows dd { min-width: 0; }
+    .formula { max-width: 100%; }
+    @media (max-width: 760px) { table.runs { display: block; overflow-x: auto; } }
+    table.runs { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 0.9rem; }
+    .runs th { padding: 10px; border-bottom: 1px solid var(--dline); color: #9fb4c8; font-size: 0.8rem; font-weight: 500; text-align: right; white-space: nowrap; }
+    .runs th:first-child, .runs th:nth-child(2) { text-align: left; }
+    .runs td { padding: 9px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.07); text-align: right; font: 500 0.84rem var(--mono); }
+    .runs td:first-child, .runs td:nth-child(2) { text-align: left; font-family: var(--sans); font-weight: 400; }
+    .runs td.best { color: var(--cy); font-weight: 600; }
+
+    .report { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 32px; padding-top: 72px; border-top: 1px solid var(--dline); }
+    .report h2 { max-width: 20ch; color: #fff; }
+    .report p { max-width: 56ch; margin: 0 0 20px; color: #a9bccd; }
+    footer.foot { padding: 30px 0 42px; color: var(--muted); font-size: 0.88rem; }
+    footer.foot .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+    footer.foot a { text-decoration: none; font-weight: 500; color: var(--blue); }
+
+    @media (max-width: 980px) {
+      .hero-head { grid-template-columns: 1fr; gap: 36px; }
+      .split { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+      .split > header { position: static; }
+      .rows > div { grid-template-columns: 1fr; gap: 8px; }
+      .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 720px) {
+      .top nav a:not(:first-child) { display: none; }
+      .sec { padding: 72px 0; }
+      .demo { padding: 20px 16px; }
+      .ql { grid-template-columns: 1fr; gap: 6px; }
+      .steps li { grid-template-columns: 28px 1fr; }
+      .steps li span { grid-column: 2; }
+      .pair { grid-template-columns: 1fr 76px; gap: 8px 12px; }
+      .pair > div:first-child { grid-column: 1 / -1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: 0.01ms !important; }
+    }
+  
+/* Language switch : EN | FR, adjacent to YA */
+.identity-row{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.top .identity-row .lang-switch{position:static!important;top:auto;left:auto;right:auto;display:inline-flex!important;align-items:center;flex-direction:row!important;gap:7px!important;padding:0;background:none;border:0;white-space:nowrap}
+.top .identity-row .lang-switch a{display:inline-flex!important;align-items:center;font:600 .76rem var(--mono);text-decoration:none;color:#a9bfd2;padding:7px 2px;border:0}
+.top .identity-row .lang-switch a[aria-current="page"]{color:#fff;text-decoration:underline;text-underline-offset:4px}
+.top .identity-row .lang-switch a:hover{color:#fff}
+.lang-switch .lang-divider{color:#67839d;font-size:.8rem}
+@media(max-width:420px){.identity-row{gap:8px}.top .identity-row .lang-switch{gap:4px!important}}
+</style>
+<link href="https://younesmrc.github.io/projects/information-retrieval.html" hreflang="en" rel="alternate"/><link href="https://younesmrc.github.io/fr/projects/information-retrieval.html" hreflang="fr" rel="alternate"/><link href="https://younesmrc.github.io/projects/information-retrieval.html" hreflang="x-default" rel="alternate"/></head>
+<body>
+<header class="top">
+<div class="wrap">
+<div class="identity-row"><a aria-label="Aller à l’accueil" class="brand" href="../index.html#home">YA</a><nav aria-label="Choisir la langue" class="lang-switch"><a href="../../projects/information-retrieval.html" lang="en">EN</a><span aria-hidden="true" class="lang-divider">|</span><a aria-current="page" href="#" lang="fr">FR</a></nav></div>
+<nav aria-label="Navigation du projet">
+<a href="../index.html#projects">Tous les projets</a>
+<a href="#method">Méthode</a>
+<a href="#index">Index</a>
+<a href="#bugs">Bugs</a>
+<a href="#results">Résultats</a>
+<a href="#limits">Limites</a>
+<a href="#paper">Article</a>
+</nav>
+</div>
+</header>
+<main>
+<!-- ================= HERO + TRAVERSAL DEMO ================= -->
+<section class="hero" id="top">
+<div class="wrap">
+<a class="back" href="../index.html#projects">← Retour aux projets</a>
+<div class="hero-head">
+<div>
+<h1>Recherche<br/>d'information</h1>
+<p class="sub">BM25, DeepImpact et Guided Traversal sur MS MARCO</p>
+</div>
+<div>
+<p class="lede">
+              La recherche parcimonieuse apprise classe mieux les résultats que BM25, mais elle rend l'élagage plus difficile. Nous avons reproduit un article de SIGIR 2022 qui laisse BM25 guider la recherche tandis que DeepImpact note les documents rencontrés, et reconstruit l'index à deux scores nécessaire, l'original n'étant plus disponible.
+            </p>
+<dl class="meta">
+<div><dt>Projet</dt><dd>M1 MIND, cours RITAL (4IN0813), Sorbonne Université, 2025–2026</dd></div>
+<div><dt>Article</dt><dd>Mallia et al., Faster Learned Sparse Retrieval with Guided Traversal, SIGIR 2022</dd></div>
+<div><dt>Données</dt><dd>MS MARCO Passage enrichi par DocT5Query (8 841 823 passages), TREC Deep Learning 2019 et 2020</dd></div>
+<div><dt>Technologies</dt><dd>Python, PyTorch, NumPy, C++</dd></div>
+</dl>
+<div class="hero-actions">
+<a class="btn btn-light" href="#results">Accéder aux résultats</a>
+<a class="btn btn-ghost" href="https://doi.org/10.1145/3477495.3531774" rel="noreferrer" target="_blank">Lire l'article</a>
+</div>
+</div>
+</div>
+<div class="demo" id="gt-demo">
+<div class="demo-intro">
+<div>
+<h2>Évaluer moins de documents sans perdre les meilleurs résultats</h2>
+<p>Un petit index fictif avec trois termes et huit documents. Parcourez-le pas à pas en cherchant les deux meilleurs résultats. Les chiffres sont inventés, mais la logique est celle de l'article.</p>
+</div>
+<code class="chip">requête : cheap flights paris</code>
+</div>
+<div class="demo-bar">
+<div aria-label="Stratégie de recherche" class="modes" role="group">
+<button aria-pressed="false" class="mode" data-mode="exh" type="button">Tout évaluer avec DeepImpact</button>
+<button aria-pressed="true" class="mode" data-mode="gt" type="button">Guided Traversal</button>
+<button aria-pressed="false" class="mode" data-mode="gti" type="button">GT avec interpolation</button>
+</div>
+<div class="demo-btns">
+<button class="btn btn-light" id="gt-next" type="button">Document suivant</button>
+<button class="btn btn-ghost" id="gt-all" type="button">Tout exécuter</button>
+<button class="btn btn-ghost" id="gt-reset" type="button">Réinitialiser</button>
+</div>
+</div>
+<div class="trap">
+<label class="switch">
+<input id="gt-trap" role="switch" type="checkbox"/>
+<span class="knob"></span>
+<span>Masquer un bon document pour BM25</span>
+</label>
+<small>d3 reçoit un poids DeepImpact très élevé pour « cheap », mais un score BM25 faible.</small>
+</div>
+<div aria-label="Listes de postings avec les poids BM25 et DeepImpact de chaque document" class="lists" id="gt-lists"></div>
+<p class="legend-line">Chaque vignette présente le document, puis ses poids BM25 et DeepImpact pour ce terme.</p>
+<div aria-live="polite" class="status">
+<div><b>Seuil θ (deuxième meilleur score BM25 à cet instant)</b><span id="gt-theta">–</span></div>
+<div><b>Tas BM25</b><span id="gt-hb">–</span></div>
+<div><b id="gt-rl">Tas des résultats</b><span id="gt-hs">–</span></div>
+</div>
+<div class="tw">
+<table class="dtable">
+<thead><tr><th scope="col">Document</th><th scope="col">Décision</th><th scope="col" style="text-align:right">BM25</th><th scope="col" style="text-align:right">DeepImpact</th></tr></thead>
+<tbody id="gt-body"></tbody>
+</table>
+</div>
+<noscript><p class="note">Activez JavaScript pour utiliser cette démonstration.</p></noscript>
+<p aria-live="polite" class="out" id="gt-out"></p>
+</div>
+</div>
+</section>
+<!-- ================= METHOD ================= -->
+<section class="sec" id="method">
+<div class="wrap split">
+<header>
+<h2>Laisser BM25 guider et DeepImpact évaluer</h2>
+<p>DeepImpact classe mieux les résultats, mais sa distribution de scores limite l'efficacité de l'élagage. L'article sépare le signal qui guide la recherche de celui qui classe les résultats.</p>
+</header>
+<dl class="rows">
+<div>
+<dt>Bornes supérieures</dt>
+<dd>Chaque posting conserve un poids BM25 et un poids DeepImpact. Pour un terme, <code>UB_BM25</code> est son meilleur score BM25 dans la collection ; il permet de majorer le score possible d'un document sans parcourir tous ses postings.</dd>
+</div>
+<div>
+<dt>MaxScore</dt>
+<dd>Trie les termes de la requête selon leur borne supérieure. Lorsque la somme des bornes de certains termes est inférieure au seuil courant du top-k, ces termes deviennent non essentiels : ils ne peuvent pas, seuls, faire entrer un document dans le top-k. La recherche ne les utilise donc plus comme points de départ.</dd>
+</div>
+<div>
+<dt>Guided Traversal</dt>
+<dd>Parcourt l'index à l'aide des bornes BM25, mais évalue les documents visités avec DeepImpact. Deux tas sont utilisés : BM25 fixe le seuil et DeepImpact classe les résultats. Un document élagué par BM25 ne peut pas réapparaître ; la méthode est donc une heuristique du classement DeepImpact.</dd>
+</div>
+<div>
+<dt>Avec interpolation</dt>
+<dd>Classe les documents visités avec la somme non pondérée des scores BM25 et DeepImpact. Aucun appel à BERT n'a lieu à la requête : les poids DeepImpact sont calculés une fois, lors de l'indexation.</dd>
+</div>
+</dl>
+</div>
+</section>
+<!-- ================= INDEX ================= -->
+<section class="sec white" id="index">
+<div class="wrap split">
+<header>
+<h2>Reconstruire un index devenu indisponible</h2>
+<p>Impossible de récupérer l'index à deux scores de l'article ; le README précise que les chercheurs ont été contactés. Nous en avons donc construit un à l'échelle de MS MARCO.</p>
+</header>
+<div>
+<div class="block">
+<div class="facts">
+<div><b>8,841,823</b><span>passages indexés</span></div>
+<div><b>≈3.5 M</b><span>termes</span></div>
+<div><b>≈620 M</b><span>postings</span></div>
+<div><b>≈15 h</b><span>de calcul GPU</span></div>
+</div>
+<p class="note" style="margin: 0 0 28px">Le nombre de passages provient du script d'indexation. Les trois autres chiffres sont des estimations de l'équipe issues de la présentation, pas de journaux d'exécution.</p>
+<ol class="steps">
+<li><b>Par document</b><span>Chaque passage est nettoyé et tokenisé, ses termes sont comptés, puis un lot passe dans DeepImpact. Pour chaque terme conservé, le script écrit un enregistrement binaire : terme, document, fréquence normalisée et score DeepImpact. Traiter les documents un par un évite de reparcourir la collection pour chaque terme.</span></li>
+<li><b>Par terme</b><span>Les enregistrements bruts sont chargés, triés par terme puis par document, regroupés en listes de postings et associés à un IDF. Deux fichiers binaires compacts en sortent, lisibles par le moteur C++.</span></li>
+</ol>
+</div>
+<div class="block">
+<h3>Compact sur disque</h3>
+<p>Les deux scores sont stockés en flottants de 16 bits. Le lecteur retrouve la liste d'un terme par son offset et sa longueur dans le dictionnaire, sans parcourir le fichier.</p>
+<div class="bytes">
+<div>
+<div class="brow-h"><code>postings_raw.bin</code><span>16 octets par enregistrement</span></div>
+<div class="brow" style="width: 80%">
+<div class="seg k1" style="--b: 4">term_id<small>u32</small></div><div class="seg k2" style="--b: 4">doc_id<small>u32</small></div><div class="seg k3" style="--b: 4">tf_norm<small>f32</small></div><div class="seg k4" style="--b: 4">DI<small>f32</small></div>
+</div>
+</div>
+<div>
+<div class="brow-h"><code>term_meta.bin</code><span>20 octets par terme</span></div>
+<div class="brow">
+<div class="seg k1" style="--b: 4">term_id<small>u32</small></div><div class="seg k3" style="--b: 4">UB_BM25<small>f32</small></div><div class="seg k2" style="--b: 8">offset<small>u64</small></div><div class="seg k4" style="--b: 4">count<small>u32</small></div>
+</div>
+</div>
+<div>
+<div class="brow-h"><code>term_doc_scores.bin</code><span>8 octets par posting</span></div>
+<div class="brow" style="width: 40%">
+<div class="seg k2" style="--b: 4">doc_id<small>u32</small></div><div class="seg k3" style="--b: 2">BM25<small>f16</small></div><div class="seg k4" style="--b: 2">DI<small>f16</small></div>
+</div>
+</div>
+</div>
+<p class="note">La largeur des barres est proportionnelle au nombre d'octets.</p>
+</div>
+<dl class="rows" style="margin-top: 48px">
+<div>
+<dt>Calcul des scores</dt>
+<dd>k1 = 0,82, b = 0,68 et longueur moyenne de 89,3 dans la collection enrichie. Pour les termes répétés, le script conserve le score DeepImpact le plus élevé.
+                <span class="formula">BM25(t,d) = IDF(t) · tf(k1+1) / [tf + k1(1 − b + b·dl/AVGDL)]</span>
+<span class="formula">IDF(t) = ln[1 + (N − df + 0.5) / (df + 0.5)]</span></dd>
+</div>
+<div>
+<dt>Traitement par lots sur GPU</dt>
+<dd>512 passages par lot sous CUDA lorsque disponible, avec des entrées limitées à 300 tokens BERT.</dd>
+</div>
+<div>
+<dt>Résistance aux interruptions</dt>
+<dd>Un point de reprise toutes les quatre heures conserve le dernier document validé et la taille du fichier brut. Au redémarrage, ce fichier est tronqué jusqu'à ce point, évitant de dupliquer les postings après un plantage.</dd>
+</div>
+<div>
+<dt>Mémoire</dt>
+<dd>Les postings sont écrits progressivement sur disque pendant l'inférence. Le tri NumPy final sur place demande malgré tout beaucoup de RAM.</dd>
+</div>
+</dl>
+</div>
+</div>
+</section>
+<!-- ================= BUGS ================= -->
+<section class="sec" id="bugs">
+<div class="wrap split">
+<header>
+<h2>Deux bugs produisant des chiffres plausibles</h2>
+<p>Les deux généraient des scores apparemment corrects, mais associés aux mauvais éléments.</p>
+</header>
+<div>
+<div class="block">
+<h3>Des couches incompatibles dans le checkpoint</h3>
+<p>Les dernières couches du checkpoint DeepImpact portaient des noms différents de celles de notre code. Un chargement avec <code>strict=False</code> les ignorait silencieusement : la tête de calcul des scores n'était donc jamais chargée et tous les impacts étaient faussés. Nous avons remappé les clés et rendu le chargement strict.</p>
+<pre class="diff"><span class="c"># clé du checkpoint  →  clé du modèle local</span>
+pre_classifier  →  impact_score_encoder.0
+classifier      →  impact_score_encoder.3
+
+<span class="m">- load_state_dict(state, strict=False)</span>
+<span class="p">+ load_state_dict(state, strict=True)</span></pre>
+</div>
+<div class="block">
+<h3>Les positions des mots ne sont pas celles des WordPieces</h3>
+<p>La méthode <code>index()</code> attend des positions de sous-tokens BERT. Notre première version transmettait les indices de mots produits par <code>split()</code>. Dès qu'un mot est découpé en plusieurs morceaux, tous les suivants sont décalés. La correction reconstruit les positions à partir du premier sous-token de chaque mot, ajoute l'offset <code>[CLS]</code> et respecte la troncature.</p>
+<div aria-label="Exemple de séquence WordPiece" class="toks">
+<span>[CLS]<i>0</i></span><span>the<i>1</i></span><span>em<i>2</i></span><span>##bed<i>3</i></span><span>##ding<i>4</i></span><span>##s<i>5</i></span><span>are<i>6</i></span><span>cached<i>7</i></span>
+</div>
+<div class="tw">
+<table class="wp">
+<thead><tr><th scope="col">Mot</th><th scope="col">Indice issu de split()</th><th scope="col">Correspond à</th><th scope="col">Position correcte</th></tr></thead>
+<tbody>
+<tr><td>the</td><td>0</td><td class="bad">[CLS]</td><td class="good">1</td></tr>
+<tr><td>embeddings</td><td>1</td><td class="bad">the</td><td class="good">2</td></tr>
+<tr><td>are</td><td>2</td><td class="bad">em</td><td class="good">6</td></tr>
+<tr><td>cached</td><td>3</td><td class="bad">##bed</td><td class="good">7</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">Découpage illustratif d'une phrase inventée, et non de données du projet. Ce décalage produit tout de même des chiffres crédibles, mais pour les mauvais termes.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= RESULTS ================= -->
+<section class="sec dark" id="results">
+<div class="wrap split">
+<header>
+<h2>DeepImpact classe mieux, pour un coût similaire ici</h2>
+<p>Sorties de notebooks conservées pour les deux méthodes de référence. Elles montrent un gain de qualité du classement, pas une accélération grâce à Guided Traversal.</p>
+</header>
+<div>
+<div class="block">
+<h3>Qualité du classement : DeepImpact contre BM25</h3>
+<p>Chaque jeu de requêtes est associé à sa métrique principale : MRR@10 pour MS MARCO, NDCG@10 pour TREC.</p>
+<div class="grow" id="rank"></div>
+<div class="tw">
+<table class="runs">
+<thead><tr><th scope="col">Jeu de requêtes</th><th scope="col">Méthode</th><th scope="col">Latence moyenne (ms)</th><th scope="col">P99 (ms)</th><th scope="col">MRR@10</th><th scope="col">NDCG@10</th></tr></thead>
+<tbody id="runs-body"></tbody>
+</table>
+</div>
+<p class="callout">Les latences diffèrent d'au plus 3,3 ms (175,4 contre 172,1 ms sur MS MARCO Dev). Les deux méthodes lisent les mêmes postings et agrègent les deux colonnes de scores ; ces chiffres ne permettent donc pas de démontrer un avantage de vitesse pour Guided Traversal.</p>
+</div>
+<div class="block">
+<span class="tag-pub">Chiffres publiés, pas notre exécution</span>
+<h3>Résultats rapportés dans l'article</h3>
+<p>Sur MS MARCO Dev, Guided Traversal est environ quatre fois plus rapide que DeepImpact (de 19,5 à 4,8 ms) pour le même RR@10, et la version interpolée obtient un meilleur score. Nos latences de notebook ne sont pas comparables : matériel, logiciel, agrégation et gestion des candidats diffèrent, et l'article utilisait un serveur de 512 Gio avec un parcours mono-thread.</p>
+<div class="grow" id="paper-chart"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= LIMITS ================= -->
+<section class="sec" id="limits">
+<div class="wrap split">
+<header>
+<h2>Ce que ces chiffres ne permettent pas de conclure</h2>
+<p>L'index et le gain en qualité de classement sont établis. Les performances de vitesse proviennent de l'article.</p>
+</header>
+<dl class="rows">
+<div>
+<dt>Aucune mesure de temps GT ou GTI issue de notre moteur</dt>
+<dd>Le moteur C++ implémente MaxScore, Guided Traversal et sa version interpolée ; notre présentation évoquait des résultats favorables. Les sorties conservées ne contiennent cependant aucun chiffre permettant de quantifier l'accélération.</dd>
+</div>
+<div>
+<dt>Les latences de référence ne constituent pas un test de vitesse</dt>
+<dd>Dans notre notebook, BM25 et DeepImpact parcourent les mêmes postings : ils prennent donc un temps similaire, très supérieur aux 5 à 20 ms de l'article.</dd>
+</div>
+<div>
+<dt>Un index proche de celui de l'article, mais non identique</dt>
+<dd>La taille de notre vocabulaire et le nombre de postings diffèrent légèrement de ceux de l'article. La tokenisation, la normalisation ou le filtrage des termes sont des causes possibles, sans étude d'ablation pour les vérifier.</dd>
+</div>
+<div>
+<dt>Deux métriques distinctes</dt>
+<dd>MRR@10 récompense le rang du premier passage pertinent (MS MARCO). NDCG@10 utilise des degrés de pertinence (TREC). On ne peut pas les comparer directement.</dd>
+</div>
+</dl>
+</div>
+</section>
+<!-- ================= NEXT ================= -->
+<section class="sec white" id="next">
+<div class="wrap split">
+<header>
+<h2>Prochaines étapes</h2>
+<p>Pistes indiquées dans la documentation du projet.</p>
+</header>
+<dl class="rows">
+<div>
+<dt>Conserver les résultats du moteur</dt>
+<dd>Enregistrer le top-k, le nombre de requêtes, la latence moyenne, médiane et P99 et la métrique de classement pour BM25, DeepImpact, GT et GTI.</dd>
+</div>
+<div>
+<dt>Vérifier la couverture de l'index</dt>
+<dd>Examiner un échantillon de l'index avec Python et C++ : couverture des postings et scores non nuls.</dd>
+</div>
+<div>
+<dt>Figer les versions, séparer les temps</dt>
+<dd>Documenter les versions exactes du tokenizer et du modèle, mesurer la sensibilité aux paramètres et distinguer les temps d'indexation, de chargement et de recherche.</dd>
+</div>
+<div>
+<dt>Réentraîner DeepImpact</dt>
+<dd>Vérifier, ou réentraîner, DeepImpact sur la collection enrichie après avoir étudié les modèles et l'entraînement d'origine.</dd>
+</div>
+</dl>
+</div>
+</section>
+<!-- ================= PAPER ================= -->
+<section class="sec" id="paper" style="background: var(--ink); padding-top: 0">
+<div class="wrap">
+<div class="report">
+<div>
+<h2>Consulter l'article original</h2>
+<p>Méthode reproduite dans ce projet : Mallia, Mackenzie, Suel et Tonellotto, SIGIR 2022.</p>
+</div>
+<a class="btn btn-light" href="https://doi.org/10.1145/3477495.3531774" rel="noreferrer" target="_blank">Ouvrir l'article</a>
+</div>
+</div>
+</section>
+</main>
+<footer class="foot">
+<div class="wrap">
+<span>© 2026 Younes Arjdal</span>
+<a href="../index.html#projects">Retour aux projets ↑</a>
+</div>
+</footer>
+<script>
+  (() => {
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+    const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+    /* ============ Traversal demo (toy index, real logic) ============ */
+    const TERMS = [
+      { t: 'cheap',   ub: 1.4, p: { 1: [1.0, 2.0], 3: [1.4, 1.0], 4: [0.9, 1.5], 6: [1.2, 0.6], 7: [0.8, 0.5], 8: [1.1, 1.2] } },
+      { t: 'flights', ub: 3.5, p: { 1: [2.0, 3.1], 2: [3.5, 2.8], 4: [1.8, 3.9], 6: [2.7, 1.9], 8: [3.0, 3.3] } },
+      { t: 'paris',   ub: 6.0, p: { 2: [5.1, 7.9], 4: [6.0, 6.5], 5: [3.2, 2.1], 8: [4.4, 5.0] } }
+    ];
+    const DOCS = [1, 2, 3, 4, 5, 6, 7, 8], K = 2;
+    const MODES = { exh: 'Tas des résultats (DeepImpact)', gt: 'Tas des résultats (DeepImpact)', gti: 'Tas des résultats (BM25 + DeepImpact)' };
+    const demo = { mode: 'gt', trap: false, shown: 0 };
+
+    const termsFor = (trap) => TERMS.map((x) => ({ ...x, p: { ...x.p } })).map((x) => { if (trap && x.t === 'cheap') x.p[3] = [1.4, 11.2]; return x; });
+    const top = (h) => [...h].sort((a, b) => b.s - a.s).slice(0, K);
+
+    function run(mode, trap) {
+      const terms = termsFor(trap);
+      const full = (d) => terms.reduce((a, x) => (x.p[d] ? [a[0] + x.p[d][0], a[1] + x.p[d][1]] : a), [0, 0]);
+      const hB = [], hS = [], rows = [];
+      for (const d of DOCS) {
+        const row = { d };
+        const full_ = hB.length >= K;
+        const theta = full_ ? top(hB)[K - 1].s : null;
+        row.theta = theta;
+        if (mode === 'exh') {
+          const [b, di] = full(d); hS.push({ d, s: di });
+          Object.assign(row, { st: 'scored', b, di, why: 'sans élagage : chaque document est évalué' });
+        } else {
+          let cum = 0; const nonEss = new Set();
+          if (full_) for (const x of [...terms].sort((a, b) => a.ub - b.ub)) { if (cum + x.ub <= theta) { cum += x.ub; nonEss.add(x.t); } else break; }
+          row.nonEss = [...nonEss];
+          const ess = terms.filter((x) => !nonEss.has(x.t));
+          if (!ess.some((x) => x.p[d])) {
+            Object.assign(row, { st: 'never', why: 'ne correspond qu’à des termes non essentiels' });
+          } else {
+            const essB = ess.reduce((a, x) => a + (x.p[d] ? x.p[d][0] : 0), 0);
+            const ub = essB + terms.filter((x) => nonEss.has(x.t)).reduce((a, x) => a + x.ub, 0);
+            if (full_ && ub <= theta) {
+              Object.assign(row, { st: 'skipped', why: `borne ${ub.toFixed(1)} ≤ θ ${theta.toFixed(1)}` });
+            } else {
+              const [b, di] = full(d);
+              hB.push({ d, s: b }); hS.push({ d, s: mode === 'gti' ? b + di : di });
+              Object.assign(row, { st: 'scored', b, di, why: full_ ? `borne ${ub.toFixed(1)} > θ ${theta.toFixed(1)}` : 'le tas n’est pas encore rempli' });
+            }
+          }
+        }
+        row.hb = top(hB); row.hs = top(hS);
+        row.thetaAfter = hB.length >= K ? top(hB)[K - 1].s : null;
+        rows.push(row);
+      }
+      return rows;
+    }
+
+    const fmtHeap = (h) => (h && h.length ? h.map((x) => `d${x.d} ${x.s.toFixed(1)}`).join(', ') : '–');
+    const decText = { scored: 'évalué', skipped: 'ignoré', never: 'jamais visité' };
+
+    function render() {
+      const rows = run(demo.mode, demo.trap);
+      const last = demo.shown > 0 ? rows[demo.shown - 1] : null;
+      const nextRow = demo.shown < rows.length ? rows[demo.shown] : null;
+      const neNow = demo.mode === 'exh' ? [] : ((demo.shown >= rows.length ? last : nextRow || last) || {}).nonEss || [];
+      // posting lists
+      const terms = termsFor(demo.trap);
+      $('#gt-lists').innerHTML = terms.map((x) => {
+        const chips = Object.keys(x.p).map((d) => {
+          const [b, di] = x.p[d];
+          const hot = demo.trap && x.t === 'cheap' && d === '3';
+          return `<span class="dc${hot ? ' hot' : ''}" title="d${d}: BM25 ${b}, DeepImpact ${di}">d${d}<small>${b.toFixed(1)} · ${di.toFixed(1)}</small></span>`;
+        }).join('');
+        const ne = neNow.includes(x.t);
+        return `<div class="ql${ne ? ' ne' : ''}"><div class="tn">${x.t}${ne ? '<span class="tag">non essentiel</span>' : ''}<small>borne supérieure ${x.ub.toFixed(1)}</small></div><div class="dc-wrap">${chips}</div></div>`;
+      }).join('');
+      // status
+      $('#gt-theta').textContent = demo.mode === 'exh' ? 'non utilisé' : (last && last.thetaAfter != null ? last.thetaAfter.toFixed(1) : '–');
+      $('#gt-hb').textContent = demo.mode === 'exh' ? 'non utilisé' : fmtHeap(last && last.hb);
+      $('#gt-hs').textContent = fmtHeap(last && last.hs);
+      $('#gt-rl').textContent = MODES[demo.mode];
+      // table
+      $('#gt-body').innerHTML = rows.map((r, i) => {
+        if (i >= demo.shown) return `<tr class="wait"><td class="n" style="text-align:left">d${r.d}</td><td>en attente</td><td class="n">·</td><td class="n">·</td></tr>`;
+        const cur = i === demo.shown - 1 ? ' cur' : '';
+        return `<tr class="${cur.trim()}"><td class="n" style="text-align:left">d${r.d}</td>
+          <td><span class="dec ${r.st}">${decText[r.st]}</span><span class="why">${esc(r.why)}</span></td>
+          <td class="n">${r.st === 'scored' ? r.b.toFixed(1) : '·'}</td><td class="n">${r.st === 'scored' ? r.di.toFixed(1) : '·'}</td></tr>`;
+      }).join('');
+      // outcome
+      const done = demo.shown >= rows.length;
+      const out = $('#gt-out'); out.classList.remove('diff');
+      if (!demo.shown) out.textContent = 'Cliquez sur « Document suivant » pour traiter les documents dans l’ordre, ou sur « Tout exécuter ».';
+      else if (!done) out.textContent = `${demo.shown} document(s) traité(s) sur ${rows.length}.`;
+      else {
+        const scored = rows.filter((r) => r.st === 'scored').length;
+        const ids = rows[rows.length - 1].hs.map((x) => 'd' + x.d);
+        const ref = run('exh', demo.trap)[rows.length - 1].hs.map((x) => 'd' + x.d);
+        const same = ids.join() === ref.join();
+        let txt = `Documents évalués : ${scored} sur ${rows.length}. Top ${K} : ${ids.join(' et ')}.`;
+        if (demo.mode === 'exh') txt += ' C’est le classement de référence : chaque document a été évalué.';
+        else if (same) txt += ` Même top ${K} que lorsque tous les documents sont évalués avec DeepImpact (${ref.join(' et ')}).`;
+        else { txt += ` En évaluant tout, on obtient ${ref.join(' et ')}. Un document élagué selon BM25 n’est jamais évalué et ne peut donc pas réapparaître.`; out.classList.add('diff'); }
+        out.textContent = txt;
+      }
+      $('#gt-next').disabled = done; $('#gt-all').disabled = done;
+      $$('.mode').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === demo.mode)));
+    }
+    $('#gt-next').addEventListener('click', () => { demo.shown = Math.min(DOCS.length, demo.shown + 1); render(); });
+    $('#gt-all').addEventListener('click', () => { demo.shown = DOCS.length; render(); });
+    $('#gt-reset').addEventListener('click', () => { demo.shown = 0; render(); });
+    $('#gt-trap').addEventListener('change', (e) => { demo.trap = e.target.checked; demo.shown = 0; render(); });
+    $$('.mode').forEach((b) => b.addEventListener('click', () => { demo.mode = b.dataset.mode; demo.shown = 0; render(); }));
+    render();
+
+    /* ============ Ranking quality chart + table ============ */
+    const RANK = [
+      ['MS MARCO Dev', 'MRR@10', .2035, .2942],
+      ['TREC 2019', 'NDCG@10', .5227, .6541],
+      ['TREC 2020', 'NDCG@10', .5457, .6166]
+    ];
+    const MAXV = .75;
+    $('#rank').innerHTML = RANK.map(([set, metric, bm, di]) => {
+      const gain = ((di - bm) / bm * 100).toFixed(1);
+      return `<div class="pair"><div><b>${set}</b><small>${metric}</small></div>
+        <div class="pbars">
+          <div class="pb bm"><div class="tr"><span class="bw" style="--w:${bm / MAXV * 100}%"></span></div><em>BM25 ${bm.toFixed(4)}</em></div>
+          <div class="pb di"><div class="tr"><span class="bw" style="--w:${di / MAXV * 100}%"></span></div><em>DI ${di.toFixed(4)}</em></div>
+        </div><div class="gain">+${gain}%</div></div>`;
+    }).join('');
+    const RUNS = [
+      ['MS MARCO Dev', 'BM25', 175.4, 425.6, .2035, .2535], ['MS MARCO Dev', 'DeepImpact', 172.1, 402.2, .2942, .3484],
+      ['TREC 2019', 'BM25', 159.4, 321.3, .7851, .5227], ['TREC 2019', 'DeepImpact', 156.7, 316.5, .8826, .6541],
+      ['TREC 2020', 'BM25', 159.2, 446.1, .8365, .5457], ['TREC 2020', 'DeepImpact', 157.3, 403.7, .8637, .6166]
+    ];
+    $('#runs-body').innerHTML = RUNS.map((r, i) => {
+      const better = i % 2 === 1;
+      return `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2].toFixed(1)}</td><td>${r[3].toFixed(1)}</td><td class="${better ? 'best' : ''}">${r[4].toFixed(4)}</td><td class="${better ? 'best' : ''}">${r[5].toFixed(4)}</td></tr>`;
+    }).join('');
+
+    /* ============ Paper figures ============ */
+    const PAPER = [['BM25', 5.7, .187], ['DeepImpact', 19.5, .326], ['DeepImpact-GT', 4.8, .326], ['DeepImpact-GTI', 5.0, .341]];
+    $('#paper-chart').innerHTML = PAPER.map(([n, ms, rr]) =>
+      `<div class="pair"><div><b>${n}</b><small>RR@10 ${rr.toFixed(3)}</small></div>
+        <div class="pbars"><div class="pb pu"><div class="tr"><span class="bw" style="--w:${ms / 20 * 100}%"></span></div><em>${ms.toFixed(1)} ms</em></div></div><div></div></div>`).join('');
+
+    /* ============ Reveal bars on scroll ============ */
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('on'); io.unobserve(e.target); } });
+      }, { threshold: 0.2 });
+      $$('.grow').forEach((s) => io.observe(s));
+    } else { $$('.grow').forEach((s) => s.classList.add('on')); }
+  })();
+  </script>
+</body>
+</html>

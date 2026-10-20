@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html lang="en" class="no-js">
+
+<html class="no-js" lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Structured Outputs for LLMs: reproducing JSONSchemaBench with Outlines and Guidance to see where constrained decoding holds and where it fails." />
-  <meta name="theme-color" content="#06121f" />
-  <title>Structured Outputs for LLMs — Younes Arjdal</title>
-  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <script>document.documentElement.classList.replace('no-js', 'js');</script>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="Structured Outputs for LLMs: reproducing JSONSchemaBench with Outlines and Guidance to see where constrained decoding holds and where it fails." name="description"/>
+<meta content="#06121f" name="theme-color"/>
+<title>Structured Outputs for LLMs - Younes Arjdal</title>
+<link href="../assets/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<script>document.documentElement.classList.replace('no-js', 'js');</script>
+<style>
     :root {
       --ink: #06121f;
       --ink-2: #0a1b2e;
@@ -292,284 +293,281 @@
       html { scroll-behavior: auto; }
       *, *::before, *::after { transition-duration: 0.01ms !important; }
     }
-  </style>
-</head>
+  
+/* Feature table: fit the four headers comfortably on narrow screens */
+@media(max-width:420px){
+  .hm th{padding:8px 4px;font-size:.75rem}
+  .hm td.f{padding:8px 4px;font-size:.76rem}
+  .hm td.v span{font-size:.76rem}
+}
+/* Language switch : EN | FR, adjacent to YA */
+.identity-row{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.top .identity-row .lang-switch{position:static!important;top:auto;left:auto;right:auto;display:inline-flex!important;align-items:center;flex-direction:row!important;gap:7px!important;padding:0;background:none;border:0;white-space:nowrap}
+.top .identity-row .lang-switch a{display:inline-flex!important;align-items:center;font:600 .76rem var(--mono);text-decoration:none;color:#a9bfd2;padding:7px 2px;border:0}
+.top .identity-row .lang-switch a[aria-current="page"]{color:#fff;text-decoration:underline;text-underline-offset:4px}
+.top .identity-row .lang-switch a:hover{color:#fff}
+.lang-switch .lang-divider{color:#67839d;font-size:.8rem}
+@media(max-width:420px){.identity-row{gap:8px}.top .identity-row .lang-switch{gap:4px!important}}
+</style>
+<link href="https://younesmrc.github.io/projects/structured-outputs.html" hreflang="en" rel="alternate"/><link href="https://younesmrc.github.io/fr/projects/structured-outputs.html" hreflang="fr" rel="alternate"/><link href="https://younesmrc.github.io/projects/structured-outputs.html" hreflang="x-default" rel="alternate"/></head>
 <body>
-  <header class="top">
-    <div class="wrap">
-      <a class="brand" href="../index.html#home" aria-label="Go to home">YA</a>
-      <nav aria-label="Project navigation">
-        <a href="../index.html#projects">All projects</a>
-        <a href="#approach">Approach</a>
-        <a href="#results">Results</a>
-        <a href="#failures">Failures</a>
-        <a href="#features">Features</a>
-        <a href="#report">Report</a>
-      </nav>
-    </div>
-  </header>
-
-  <main>
-    <!-- ================= HERO + LIVE DEMO ================= -->
-    <section class="hero" id="top">
-      <div class="wrap">
-        <a class="back" href="../index.html#projects">← Back to projects</a>
-
-        <div class="hero-head">
-          <div>
-            <h1>Structured Outputs<br />for LLMs</h1>
-            <p class="sub">JSON Schema and constrained decoding</p>
-          </div>
-          <div>
-            <p class="lede">
+<header class="top">
+<div class="wrap">
+<div class="identity-row"><a aria-label="Go to home" class="brand" href="../index.html#home">YA</a><nav aria-label="Choose language" class="lang-switch"><a aria-current="page" href="#" lang="en">EN</a><span aria-hidden="true" class="lang-divider">|</span><a href="../fr/projects/structured-outputs.html" lang="fr">FR</a></nav></div>
+<nav aria-label="Project navigation">
+<a href="../index.html#projects">All projects</a>
+<a href="#approach">Approach</a>
+<a href="#results">Results</a>
+<a href="#failures">Failures</a>
+<a href="#features">Features</a>
+<a href="#report">Report</a>
+</nav>
+</div>
+</header>
+<main>
+<!-- ================= HERO + LIVE DEMO ================= -->
+<section class="hero" id="top">
+<div class="wrap">
+<a class="back" href="../index.html#projects">← Back to projects</a>
+<div class="hero-head">
+<div>
+<h1>Structured Outputs<br/>for LLMs</h1>
+<p class="sub">JSON Schema and constrained decoding</p>
+</div>
+<div>
+<p class="lede">
               A model asked for JSON can still break the schema your code depends on. Constrained decoding blocks the
               illegal tokens while the model writes. We reproduced JSONSchemaBench on 9,558 real schemas to see where
               that works and where it fails.
             </p>
-            <dl class="meta">
-              <div><dt>Project</dt><dd>M1 MIND research project, Sorbonne University / LIP6, 2026</dd></div>
-              <div><dt>Team</dt><dd>Younes Arjdal and Samy Mancer</dd></div>
-              <div><dt>Supervisors</dt><dd>Mohamed-Amine Baazizi, Nour ElHouda Ben Ali</dd></div>
-              <div><dt>Stack</dt><dd>Llama-3.1-1B-Instruct, Outlines, Guidance, Python</dd></div>
-            </dl>
-            <div class="hero-actions">
-              <a class="btn btn-light" href="../assets/projects/structured-outputs/report.pdf" target="_blank" rel="noreferrer">Read the report (PDF, French)</a>
-              <a class="btn btn-ghost" href="#results">Jump to results</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="demo" id="demo-app">
-          <div class="demo-intro">
-            <div>
-              <h2>Step through one generation</h2>
-              <p>The model scores every candidate token. The constraint adds −∞ to each token that can’t legally continue the output, then softmax renormalises. Switch it on and off to compare.</p>
-            </div>
-            <code class="schema-chip">{ "nom": "Alice" | "Bob" }</code>
-          </div>
-
-          <div class="demo-bar">
-            <label class="switch">
-              <input type="checkbox" id="demo-toggle" role="switch" />
-              <span class="knob"></span>
-              <span>Constrained decoding: <b id="demo-state">off</b></span>
-            </label>
-            <div class="demo-btns">
-              <button class="btn btn-light" id="demo-next" type="button">Next token</button>
-              <button class="btn btn-ghost" id="demo-auto" type="button">Auto-play</button>
-              <button class="btn btn-ghost" id="demo-reset" type="button">Reset</button>
-            </div>
-          </div>
-
-          <div class="fsm" id="demo-fsm" aria-label="Finite state machine compiled from the schema"></div>
-          <p class="fsm-note" id="demo-fsm-note"></p>
-          <div id="demo-table" aria-live="polite"></div>
-
-          <div class="out">
-            <span class="out-label">Output</span>
-            <code id="demo-out"></code>
-            <span class="verdict" id="demo-verdict" hidden></span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= APPROACH ================= -->
-    <section class="sec" id="approach">
-      <div class="wrap split">
-        <header>
-          <h2>Follow every schema to the stage where it fails</h2>
-          <p>A single success rate hides where things go wrong. We logged each schema’s outcome at every step.</p>
-        </header>
-        <div>
-          <ol class="steps">
-            <li><b>Schema</b><span>Take a JSON Schema from JSONSchemaBench: GitHub, Kubernetes, Snowplow, function calling and more.</span></li>
-            <li><b>Compile</b><span>Turn it into constraints with Outlines (finite state machine) or Guidance (interleaved generation).</span></li>
-            <li><b>Generate</b><span>Run constrained decoding with Llama-3.1-1B-Instruct.</span></li>
-            <li><b>Validate</b><span>Check the output with an external validator, <code>jsonschema</code>.</span></li>
-          </ol>
-
-          <div class="tests">
-            <div class="test">
-              <h3>Pipeline A: end to end</h3>
-              <p>The full stack on all 9,558 schemas. Each schema ends in exactly one outcome.</p>
-              <ul>
-                <li class="k-compile">Compilation error</li>
-                <li class="k-gen">Generation error (timeout, out of memory)</li>
-                <li class="k-val">Validation error</li>
-                <li class="k-ok">Valid instance</li>
-              </ul>
-            </div>
-            <div class="test">
-              <h3>Pipeline B: no LLM</h3>
-              <p>Tokenise valid and invalid instances from the JSON Schema Test Suite and run them through each compiled grammar, feature by feature.</p>
-              <ul>
-                <li>Rejects a valid instance: overconstrained</li>
-                <li>Accepts an invalid one: underconstrained</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= RESULTS ================= -->
-    <section class="sec dark" id="results">
-      <div class="wrap split">
-        <header>
-          <h2>Guidance scores higher because it accepts more schemas</h2>
-          <p>Once a schema compiles, the two frameworks succeed about equally often. They fail in different ways.</p>
-        </header>
-        <div>
-          <div class="res-block">
-            <h3>Where the 9,558 schemas end up</h3>
-            <p>Without a framework, 39 schemas produce a valid instance. Outlines reaches 54%, Guidance about 80%.</p>
-            <div class="stack-group" id="chart-all"></div>
-            <div class="legend">
-              <span class="k-ok">Valid</span><span class="k-val">Invalid output</span><span class="k-gen">Generation failed</span><span class="k-compile">Compilation failed</span>
-            </div>
-          </div>
-
-          <div class="res-block">
-            <h3>Among schemas that compiled, it’s a tie</h3>
-            <p>Outlines compiled 5,827 schemas and Guidance 8,549. After that step, 88.6% and 89.5% succeed. What differs is how the rest fail: Outlines mostly returns invalid output, Guidance mostly times out.</p>
-            <div class="stack-group" id="chart-compiled"></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= FAILURES ================= -->
-    <section class="sec" id="failures">
-      <div class="wrap split">
-        <header>
-          <h2>The two frameworks fail in different places</h2>
-          <p>Counts from our run on the full benchmark, split by the stage where each schema stopped.</p>
-        </header>
-        <div>
-          <div class="tabs" role="tablist" aria-label="Framework">
-            <button class="tab" role="tab" data-fa="outlines" aria-selected="true">Outlines</button>
-            <button class="tab" role="tab" data-fa="guidance" aria-selected="false">Guidance</button>
-            <button class="tab" role="tab" data-fa="free" aria-selected="false">No framework</button>
-          </div>
-          <div id="fa-panel" role="tabpanel"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= FEATURES ================= -->
-    <section class="sec white" id="features">
-      <div class="wrap">
-        <div class="split" style="margin-bottom: 0">
-          <header>
-            <h2>Feature by feature, support is patchy</h2>
-            <p>Pipeline B, no LLM: the share of test-suite instances each compiled grammar handles correctly.</p>
-          </header>
-          <div class="insights" style="grid-template-columns: 1fr; gap: 24px; margin-bottom: 0">
-            <div>
-              <h3>Outlines is conservative</h3>
-              <p>It handles local checks such as <code>type</code>, <code>enum</code> and <code>default</code>, and drops to zero on global ones like <code>if-then-else</code>, <code>contains</code> and <code>dependentRequired</code>.</p>
-            </div>
-            <div>
-              <h3>Guidance is broader but version-dependent</h3>
-              <p>It scores well on <code>anyOf</code>, <code>items</code>, <code>required</code> and numeric bounds. Several scores moved between the paper’s version and ours.</p>
-            </div>
-            <div>
-              <h3>A positive score can mean nothing</h3>
-              <p>Some test groups contain no valid instance at all, so a dummy that rejects everything scores above zero there. That’s the baseline column.</p>
-            </div>
-          </div>
-        </div>
-
-        <div style="margin-top: 56px">
-          <div class="hm-tools" role="group" aria-label="Table options">
-            <button class="tab" id="hm-gap" aria-pressed="true">Largest gap first</button>
-            <button class="tab" id="hm-az" aria-pressed="false">A to Z</button>
-            <button class="tab" id="hm-more" type="button">Show all</button>
-          </div>
-          <table class="hm">
-            <thead><tr><th scope="col">Feature</th><th scope="col">Reject-all baseline</th><th scope="col">Outlines</th><th scope="col">Guidance</th></tr></thead>
-            <tbody id="hm-body"></tbody>
-          </table>
-          <p class="hm-note">1.00 means every valid instance is accepted and every invalid one rejected. Our reproduction, JSON Schema Test Suite.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= LIMITS ================= -->
-    <section class="sec" id="limits">
-      <div class="wrap split">
-        <header>
-          <h2>What limits these numbers</h2>
-          <p>This is a partial reproduction under real constraints, so it measures failure causes better than speed.</p>
-        </header>
-        <dl class="rows">
-          <div>
-            <dt>60-second compile timeout</dt>
-            <dd>Our pipeline gives each schema 60 seconds to compile, which penalises Outlines by design. In production a grammar is usually compiled once and reused, which would remove much of that gap. These numbers describe this setup, not a universal ranking.</dd>
-          </div>
-          <div>
-            <dt>A 1B model with a 2,048-token prompt</dt>
-            <dd>We used Llama-3.1-1B-Instruct for stability. Large schemas overflowed its prompt window, which alone accounts for 1,355 of the baseline failures.</dd>
-          </div>
-          <div>
-            <dt>Shared GPUs</dt>
-            <dd>Runs went through Sorbonne’s shared PPTI machines (Tesla V100), often with about 30% of the VRAM free. Out-of-memory crashes and timeouts forced a watchdog to restart runs, and a stable latency benchmark (GCT, TTFT, TPOT) wasn’t possible.</dd>
-          </div>
-          <div>
-            <dt>Library versions drift</dt>
-            <dd>
+<dl class="meta">
+<div><dt>Project</dt><dd>M1 MIND research project, Sorbonne University / LIP6, 2026</dd></div>
+<div><dt>Team</dt><dd>Younes Arjdal and Samy Mancer</dd></div>
+<div><dt>Supervisors</dt><dd>Mohamed-Amine Baazizi, Nour ElHouda Ben Ali</dd></div>
+<div><dt>Stack</dt><dd>Llama-3.1-1B-Instruct, Outlines, Guidance, Python</dd></div>
+</dl>
+<div class="hero-actions">
+<a class="btn btn-light" href="../assets/projects/structured-outputs/report.pdf" rel="noreferrer" target="_blank">Read the report (PDF, French)</a>
+<a class="btn btn-ghost" href="#results">Jump to results</a>
+</div>
+</div>
+</div>
+<div class="demo" id="demo-app">
+<div class="demo-intro">
+<div>
+<h2>Step through one generation</h2>
+<p>The model scores every candidate token. The constraint adds −∞ to each token that can’t legally continue the output, then softmax renormalises. Switch it on and off to compare.</p>
+</div>
+<code class="schema-chip">{ "nom": "Alice" | "Bob" }</code>
+</div>
+<div class="demo-bar">
+<label class="switch">
+<input id="demo-toggle" role="switch" type="checkbox"/>
+<span class="knob"></span>
+<span>Constrained decoding: <b id="demo-state">off</b></span>
+</label>
+<div class="demo-btns">
+<button class="btn btn-light" id="demo-next" type="button">Next token</button>
+<button class="btn btn-ghost" id="demo-auto" type="button">Auto-play</button>
+<button class="btn btn-ghost" id="demo-reset" type="button">Reset</button>
+</div>
+</div>
+<div aria-label="Finite state machine compiled from the schema" class="fsm" id="demo-fsm"></div>
+<p class="fsm-note" id="demo-fsm-note"></p>
+<div aria-live="polite" id="demo-table"></div>
+<div class="out">
+<span class="out-label">Output</span>
+<code id="demo-out"></code>
+<span class="verdict" hidden="" id="demo-verdict"></span>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= APPROACH ================= -->
+<section class="sec" id="approach">
+<div class="wrap split">
+<header>
+<h2>Follow every schema to the stage where it fails</h2>
+<p>A single success rate hides where things go wrong. We logged each schema’s outcome at every step.</p>
+</header>
+<div>
+<ol class="steps">
+<li><b>Schema</b><span>Take a JSON Schema from JSONSchemaBench: GitHub, Kubernetes, Snowplow, function calling and more.</span></li>
+<li><b>Compile</b><span>Turn it into constraints with Outlines (finite state machine) or Guidance (interleaved generation).</span></li>
+<li><b>Generate</b><span>Run constrained decoding with Llama-3.1-1B-Instruct.</span></li>
+<li><b>Validate</b><span>Check the output with an external validator, <code>jsonschema</code>.</span></li>
+</ol>
+<div class="tests">
+<div class="test">
+<h3>Pipeline A: end to end</h3>
+<p>The full stack on all 9,558 schemas. Each schema ends in exactly one outcome.</p>
+<ul>
+<li class="k-compile">Compilation error</li>
+<li class="k-gen">Generation error (timeout, out of memory)</li>
+<li class="k-val">Validation error</li>
+<li class="k-ok">Valid instance</li>
+</ul>
+</div>
+<div class="test">
+<h3>Pipeline B: no LLM</h3>
+<p>Tokenise valid and invalid instances from the JSON Schema Test Suite and run them through each compiled grammar, feature by feature.</p>
+<ul>
+<li>Rejects a valid instance: overconstrained</li>
+<li>Accepts an invalid one: underconstrained</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= RESULTS ================= -->
+<section class="sec dark" id="results">
+<div class="wrap split">
+<header>
+<h2>Guidance scores higher because it accepts more schemas</h2>
+<p>Once a schema compiles, the two frameworks succeed about equally often. They fail in different ways.</p>
+</header>
+<div>
+<div class="res-block">
+<h3>Where the 9,558 schemas end up</h3>
+<p>Without a framework, 39 schemas produce a valid instance. Outlines reaches 54%, Guidance about 80%.</p>
+<div class="stack-group" id="chart-all"></div>
+<div class="legend">
+<span class="k-ok">Valid</span><span class="k-val">Invalid output</span><span class="k-gen">Generation failed</span><span class="k-compile">Compilation failed</span>
+</div>
+</div>
+<div class="res-block">
+<h3>Among schemas that compiled, it’s a tie</h3>
+<p>Outlines compiled 5,827 schemas and Guidance 8,549. After that step, 88.6% and 89.5% succeed. What differs is how the rest fail: Outlines mostly returns invalid output, Guidance mostly times out.</p>
+<div class="stack-group" id="chart-compiled"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= FAILURES ================= -->
+<section class="sec" id="failures">
+<div class="wrap split">
+<header>
+<h2>The two frameworks fail in different places</h2>
+<p>Counts from our run on the full benchmark, split by the stage where each schema stopped.</p>
+</header>
+<div>
+<div aria-label="Framework" class="tabs" role="tablist">
+<button aria-selected="true" class="tab" data-fa="outlines" role="tab">Outlines</button>
+<button aria-selected="false" class="tab" data-fa="guidance" role="tab">Guidance</button>
+<button aria-selected="false" class="tab" data-fa="free" role="tab">No framework</button>
+</div>
+<div id="fa-panel" role="tabpanel"></div>
+</div>
+</div>
+</section>
+<!-- ================= FEATURES ================= -->
+<section class="sec white" id="features">
+<div class="wrap">
+<div class="split" style="margin-bottom: 0">
+<header>
+<h2>Feature by feature, support is patchy</h2>
+<p>Pipeline B, no LLM: the share of test-suite instances each compiled grammar handles correctly.</p>
+</header>
+<div class="insights" style="grid-template-columns: 1fr; gap: 24px; margin-bottom: 0">
+<div>
+<h3>Outlines is conservative</h3>
+<p>It handles local checks such as <code>type</code>, <code>enum</code> and <code>default</code>, and drops to zero on global ones like <code>if-then-else</code>, <code>contains</code> and <code>dependentRequired</code>.</p>
+</div>
+<div>
+<h3>Guidance is broader but version-dependent</h3>
+<p>It scores well on <code>anyOf</code>, <code>items</code>, <code>required</code> and numeric bounds. Several scores moved between the paper’s version and ours.</p>
+</div>
+<div>
+<h3>A positive score can mean nothing</h3>
+<p>Some test groups contain no valid instance at all, so a dummy that rejects everything scores above zero there. That’s the baseline column.</p>
+</div>
+</div>
+</div>
+<div style="margin-top: 56px">
+<div aria-label="Table options" class="hm-tools" role="group">
+<button aria-pressed="true" class="tab" id="hm-gap">Largest gap first</button>
+<button aria-pressed="false" class="tab" id="hm-az">A to Z</button>
+<button class="tab" id="hm-more" type="button">Show all</button>
+</div>
+<table class="hm">
+<thead><tr><th scope="col">Feature</th><th scope="col">Reject-all baseline</th><th scope="col">Outlines</th><th scope="col">Guidance</th></tr></thead>
+<tbody id="hm-body"></tbody>
+</table>
+<p class="hm-note">1.00 means every valid instance is accepted and every invalid one rejected. Our reproduction, JSON Schema Test Suite.</p>
+</div>
+</div>
+</section>
+<!-- ================= LIMITS ================= -->
+<section class="sec" id="limits">
+<div class="wrap split">
+<header>
+<h2>What limits these numbers</h2>
+<p>This is a partial reproduction under real constraints, so it measures failure causes better than speed.</p>
+</header>
+<dl class="rows">
+<div>
+<dt>60-second compile timeout</dt>
+<dd>Our pipeline gives each schema 60 seconds to compile, which penalises Outlines by design. In production a grammar is usually compiled once and reused, which would remove much of that gap. These numbers describe this setup, not a universal ranking.</dd>
+</div>
+<div>
+<dt>A 1B model with a 2,048-token prompt</dt>
+<dd>We used Llama-3.1-1B-Instruct for stability. Large schemas overflowed its prompt window, which alone accounts for 1,355 of the baseline failures.</dd>
+</div>
+<div>
+<dt>Shared GPUs</dt>
+<dd>Runs went through Sorbonne’s shared PPTI machines (Tesla V100), often with about 30% of the VRAM free. Out-of-memory crashes and timeouts forced a watchdog to restart runs, and a stable latency benchmark (GCT, TTFT, TPOT) wasn’t possible.</dd>
+</div>
+<div>
+<dt>Library versions drift</dt>
+<dd>
               We used Outlines v0.1.8 and Guidance v0.3. Against the paper’s scores, some features improved quietly and others regressed.
               <div class="drift">
-                <span>Guidance maxProperties 0.00 → 0.67</span>
-                <span>Guidance multipleOf 0.20 → 0.60</span>
-                <span>Guidance exclusiveMinimum 1.00 → 0.00</span>
-                <span>Guidance pattern 1.00 → 0.67</span>
-              </div>
-            </dd>
-          </div>
-        </dl>
-      </div>
-    </section>
-
-    <!-- ================= NEXT ================= -->
-    <section class="sec dark" id="next">
-      <div class="wrap split">
-        <header>
-          <h2>What we didn’t get to</h2>
-          <p>Directions we documented in the report for future work.</p>
-        </header>
-        <ul class="rows">
-          <li><h3>Add XGrammar</h3><p>Compare all three frameworks on the full benchmark, especially the Hard and Ultra schemas, to see whether its latency advantage holds.</p></li>
-          <li><h3>Measure latency properly</h3><p>Use a dedicated GPU and CUDA events to get reliable compile time, time to first token and time per token against schema complexity.</p></li>
-          <li><h3>Model why schemas fail</h3><p>Describe each schema by size, nesting depth and keywords used, then fit an interpretable model (decision tree, XGBoost) on the outcomes to find which features predict failure.</p></li>
-          <li><h3>Constrain whole sequences with diffusion</h3><p>Token-level masks can’t express rules like <code>uniqueItems</code> or <code>not</code>. Discrete diffusion models refine the full sequence, so those rules could be applied as projections at each step.</p></li>
-        </ul>
-      </div>
-    </section>
-
-    <!-- ================= REPORT ================= -->
-    <section class="sec" id="report" style="background: var(--ink); padding-top: 0">
-      <div class="wrap">
-        <div class="report" style="padding-top: 72px; border-top: 1px solid var(--dline)">
-          <div>
-            <h2 style="color: #fff">The full report has the details</h2>
-            <p>Constrained-decoding formalisation, JSON Schema examples, both pipelines, the full feature table and failure charts. It’s 34 pages, written in French.</p>
-          </div>
-          <a class="btn btn-light" href="../assets/projects/structured-outputs/report.pdf" target="_blank" rel="noreferrer">Open the PDF</a>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="foot">
-    <div class="wrap">
-      <span>© 2026 Younes Arjdal</span>
-      <a href="../index.html#projects">Back to projects ↑</a>
-    </div>
-  </footer>
-
-  <script>
+<span>Guidance maxProperties 0.00 → 0.67</span>
+<span>Guidance multipleOf 0.20 → 0.60</span>
+<span>Guidance exclusiveMinimum 1.00 → 0.00</span>
+<span>Guidance pattern 1.00 → 0.67</span>
+</div>
+</dd>
+</div>
+</dl>
+</div>
+</section>
+<!-- ================= NEXT ================= -->
+<section class="sec dark" id="next">
+<div class="wrap split">
+<header>
+<h2>What we didn’t get to</h2>
+<p>Directions we documented in the report for future work.</p>
+</header>
+<ul class="rows">
+<li><h3>Add XGrammar</h3><p>Compare all three frameworks on the full benchmark, especially the Hard and Ultra schemas, to see whether its latency advantage holds.</p></li>
+<li><h3>Measure latency properly</h3><p>Use a dedicated GPU and CUDA events to get reliable compile time, time to first token and time per token against schema complexity.</p></li>
+<li><h3>Model why schemas fail</h3><p>Describe each schema by size, nesting depth and keywords used, then fit an interpretable model (decision tree, XGBoost) on the outcomes to find which features predict failure.</p></li>
+<li><h3>Constrain whole sequences with diffusion</h3><p>Token-level masks can’t express rules like <code>uniqueItems</code> or <code>not</code>. Discrete diffusion models refine the full sequence, so those rules could be applied as projections at each step.</p></li>
+</ul>
+</div>
+</section>
+<!-- ================= REPORT ================= -->
+<section class="sec" id="report" style="background: var(--ink); padding-top: 0">
+<div class="wrap">
+<div class="report" style="padding-top: 72px; border-top: 1px solid var(--dline)">
+<div>
+<h2 style="color: #fff">The full report has the details</h2>
+<p>Constrained-decoding formalisation, JSON Schema examples, both pipelines, the full feature table and failure charts. It’s 34 pages, written in French.</p>
+</div>
+<a class="btn btn-light" href="../assets/projects/structured-outputs/report.pdf" rel="noreferrer" target="_blank">Open the PDF</a>
+</div>
+</div>
+</section>
+</main>
+<footer class="foot">
+<div class="wrap">
+<span>© 2026 Younes Arjdal</span>
+<a href="../index.html#projects">Back to projects ↑</a>
+</div>
+</footer>
+<script>
   (() => {
     const $ = (s, r = document) => r.querySelector(s);
     const $$ = (s, r = document) => [...r.querySelectorAll(s)];

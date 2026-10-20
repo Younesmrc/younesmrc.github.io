@@ -1,285 +1,398 @@
 <!DOCTYPE html>
-<html lang="en">
+
+<html class="no-js" lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Younes Arjdal — M2 MIND student at Sorbonne University, focused on Machine Learning, AI and Data." />
-  <meta name="theme-color" content="#0b1f3a" />
-  <title>Younes Arjdal — Machine Learning, AI & Data</title>
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="style.css" />
-</head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="Younes Arjdal - M2 MIND student at Sorbonne University, focused on Machine Learning, AI and Data." name="description"/>
+<meta content="#06121f" name="theme-color"/>
+<title>Younes Arjdal - Machine Learning, AI &amp; Data</title>
+<link href="assets/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<script>document.documentElement.classList.replace('no-js', 'js');</script>
+<style>
+    :root {
+      --ink: #06121f; --ink-2: #0a1b2e; --paper: #f4f6f8; --text: #12202e; --muted: #566677;
+      --line: #d6dee6; --dline: rgba(255, 255, 255, 0.13);
+      --blue: #1d5f9b; --cy: #6bb8f5; --ok: #4fd69c; --bad: #ff7a84; --warn: #f5c26b; --pub: #b79cff;
+      --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --r: 8px; --w: 1160px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+    body { margin: 0; color: var(--text); background: var(--paper); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+    code { font-family: var(--mono); }
+    .wrap { width: min(calc(100% - 40px), var(--w)); margin: 0 auto; }
+    :focus-visible { outline: 3px solid rgba(107, 184, 245, 0.7); outline-offset: 3px; }
+
+    .top { position: sticky; top: 0; z-index: 50; background: rgba(6, 18, 31, 0.84); backdrop-filter: blur(14px); border-bottom: 1px solid var(--dline); }
+    .top .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 64px; }
+    .brand { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 9px; background: #fff; color: var(--ink); font-weight: 600; letter-spacing: -0.03em; text-decoration: none; }
+    .top nav { display: flex; gap: 26px; }
+    .top nav a { color: #b4c4d4; font-size: 0.9rem; font-weight: 500; text-decoration: none; }
+    .top nav a:hover { color: #fff; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: var(--r); border: 1px solid transparent; font: 600 0.92rem var(--sans); text-decoration: none; cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.15s; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-light { background: #fff; color: var(--ink); }
+    .btn-light:hover { background: #e6eef6; }
+    .btn-ghost { background: transparent; color: #dbe7f2; border-color: rgba(255, 255, 255, 0.25); }
+    .btn-ghost:hover { border-color: rgba(255, 255, 255, 0.6); }
+    .btn[disabled] { opacity: 0.4; cursor: default; transform: none; }
+
+    /* ---------- Hero ---------- */
+    .hero { background: var(--ink); color: #fff; padding: 56px 0 88px; }
+    .back { display: inline-block; margin-bottom: 44px; color: #8fa6bb; font-size: 0.9rem; text-decoration: none; }
+    .back:hover { color: #fff; }
+    .hero-head { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); gap: 56px; align-items: end; }
+    h1 { margin: 0; font-size: clamp(2.8rem, 6.6vw, 5.8rem); line-height: 0.98; letter-spacing: -0.045em; font-weight: 600; }
+    .sub { margin: 20px 0 0; font: 400 1rem var(--mono); color: var(--cy); }
+    .lede { margin: 0 0 24px; max-width: 52ch; color: #b9c9d9; font-size: 1.06rem; }
+    .meta { display: grid; gap: 10px; margin: 0; font-size: 0.88rem; }
+    .meta div { display: grid; grid-template-columns: 92px 1fr; gap: 12px; padding-top: 10px; border-top: 1px solid var(--dline); }
+    .meta dt { color: #7f95aa; }
+    .meta dd { margin: 0; color: #dbe7f2; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+
+    /* ---------- Sections ---------- */
+    .sec { padding: 104px 0; }
+    .sec.white { background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .sec.dark { background: var(--ink); color: #fff; }
+    .split { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 72px; }
+    .split > * { min-width: 0; }
+    .split > header { align-self: start; position: sticky; top: 96px; }
+    h2 { margin: 0 0 16px; font-size: clamp(1.9rem, 3.4vw, 2.8rem); line-height: 1.1; letter-spacing: -0.035em; font-weight: 600; }
+    .split > header p { max-width: 34ch; margin: 0; color: var(--muted); }
+    .dark .split > header p { color: #9fb4c8; }
+    h3 { margin: 0; font-size: 1.15rem; letter-spacing: -0.02em; font-weight: 600; }
+    p { margin-top: 0; }
+    .block + .block { margin-top: 64px; }
+    .block > h3 { margin-bottom: 8px; font-size: 1.5rem; letter-spacing: -0.03em; }
+    .block > p { max-width: 64ch; margin-bottom: 20px; color: var(--muted); }
+    .dark .block > p { color: #a9bccd; }
+    .note { margin: 14px 0 0; color: var(--muted); font-size: 0.85rem; max-width: 72ch; }
+    .dark .note { color: #8097ac; }
+
+    .rows { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .rows > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 32px; padding: 22px 0; border-bottom: 1px solid var(--line); }
+    .rows dt { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; }
+    .rows dd { margin: 0; color: var(--muted); }
+    .rows dd code { color: var(--text); font-size: 0.86em; }
+    .formula { display: block; margin-top: 8px; padding: 10px 12px; border-radius: 6px; background: #eef3f8; color: var(--text); font: 500 0.82rem var(--mono); overflow-x: auto; white-space: nowrap; }
+    .report { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 32px; padding-top: 72px; border-top: 1px solid var(--dline); }
+    .report h2 { max-width: 20ch; color: #fff; }
+    .report p { max-width: 56ch; margin: 0 0 20px; color: #a9bccd; }
+    footer.foot { padding: 30px 0 42px; color: var(--muted); font-size: 0.88rem; }
+    footer.foot .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+    footer.foot a { text-decoration: none; font-weight: 500; color: var(--blue); }
+    h1 { font-size: clamp(3.2rem, 8vw, 7rem); }
+    .hero { padding: 72px 0 0; }
+    .hero-head { padding-bottom: 72px; }
+    .eyebrow { margin: 0 0 18px; color: var(--cy); font: 500 0.82rem var(--mono); letter-spacing: 0.04em; text-transform: uppercase; }
+    .sec .eyebrow { color: var(--blue); }
+    .dark .eyebrow { color: var(--cy); }
+    .role { margin: 24px 0 0; font-size: 1.2rem; line-height: 1.4; color: #dbe7f2; }
+    .status { display: inline-flex; align-items: center; gap: 10px; margin: 24px 0 0; padding: 7px 14px; border: 1px solid rgba(79, 214, 156, 0.4); border-radius: 99px; background: rgba(79, 214, 156, 0.08); color: #c9f3e0; font-size: 0.9rem; }
+    .status i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 4px rgba(79, 214, 156, 0.2); }
+    .hero .lede { margin: 22px 0 26px; }
+    .hero .meta { margin-top: 0; }
+    .hero-actions { margin-top: 28px; }
+
+    .nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--dline); }
+    .nums a { display: block; padding: 26px 24px 30px 0; text-decoration: none; transition: background 0.2s; }
+    .nums a + a { padding-left: 24px; border-left: 1px solid var(--dline); }
+    .nums b { display: block; font: 600 clamp(1.8rem, 3.4vw, 2.6rem) var(--mono); letter-spacing: -0.04em; color: #fff; }
+    .nums span { display: block; margin-top: 2px; color: #9fb4c8; font-size: 0.9rem; }
+    .nums small { display: block; margin-top: 8px; color: var(--cy); font: 500 0.78rem var(--mono); }
+    .nums a:hover b { color: var(--cy); }
+
+    .top .menu { display: none; }
+
+    /* ---------- Projects ---------- */
+    .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 22px; }
+    .chipb { min-height: 40px; padding: 0 16px; border: 1px solid var(--line); border-radius: 99px; background: #fff; color: var(--text); font: 500 0.9rem var(--sans); cursor: pointer; }
+    .chipb[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .count { margin-left: auto; color: var(--muted); font: 400 0.82rem var(--mono); }
+    .plist { border-top: 1px solid var(--line); }
+    .proj { display: grid; grid-template-columns: 56px minmax(0, 1fr) 40px; gap: 18px; padding: 34px 0; border-bottom: 1px solid var(--line); text-decoration: none; color: inherit; transition: background 0.2s, padding 0.2s; }
+    .proj[hidden] { display: none; }
+    .pn { color: var(--blue); font: 500 0.9rem var(--mono); padding-top: 6px; }
+    .pm { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-bottom: 8px; color: var(--muted); font: 400 0.82rem var(--mono); }
+    .proj h3 { font-size: clamp(1.25rem, 2.2vw, 1.7rem); letter-spacing: -0.03em; line-height: 1.2; transition: color 0.2s; }
+    .proj p { max-width: 70ch; margin: 12px 0 16px; color: var(--muted); }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tags span { padding: 3px 10px; border: 1px solid var(--line); border-radius: 99px; color: var(--text); font-size: 0.8rem; background: #fff; }
+    .parrow { align-self: center; justify-self: end; font-size: 1.5rem; color: var(--muted); transition: transform 0.2s, color 0.2s; }
+    .proj:hover h3 { color: var(--blue); }
+    .proj:hover .parrow { transform: translateX(6px); color: var(--blue); }
+
+    .when { color: var(--blue); font: 500 0.88rem var(--mono); }
+    .rows dd b { color: var(--text); font-weight: 600; font-size: 1.05rem; letter-spacing: -0.02em; }
+    .rows dd span { display: block; }
+    .lang b { font: 600 1.35rem var(--sans); letter-spacing: -0.03em; }
+    .contact { padding: 8px 0; }
+    .contact h2 { font-size: clamp(2.2rem, 5vw, 4rem); color: #fff; }
+    .contact .lede { max-width: 48ch; }
+    .clinks { display: grid; align-content: end; }
+    .clinks a { display: flex; justify-content: space-between; gap: 16px; padding: 18px 0; border-top: 1px solid var(--dline); color: #dbe7f2; font-size: 1.1rem; text-decoration: none; transition: color 0.2s, padding 0.2s; }
+    .clinks a:last-child { border-bottom: 1px solid var(--dline); }
+    .clinks a::after { content: "↗"; color: var(--cy); }
+    .clinks a:hover { color: #fff; padding-left: 8px; }
+
+    @media (max-width: 980px) {
+      .hero-head { grid-template-columns: 1fr; gap: 36px; }
+      .split { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+      .split > header { position: static; }
+      .rows > div { grid-template-columns: 1fr; gap: 8px; }
+      .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 720px) {
+      .top .menu { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--dline); border-radius: 8px; background: transparent; color: #fff; font-size: 1.2rem; cursor: pointer; }
+      .top nav { display: none; position: absolute; top: 64px; left: 0; right: 0; flex-direction: column; gap: 0; padding: 8px 20px 16px; background: rgba(6, 18, 31, 0.97); border-bottom: 1px solid var(--dline); }
+      .top nav.open { display: flex; }
+      .top nav a { padding: 12px 0; font-size: 1rem; border-top: 1px solid var(--dline); }
+      .top nav a:first-child { border-top: 0; }
+      .sec { padding: 72px 0; }
+      .nums { grid-template-columns: 1fr; }
+      .nums a, .nums a + a { padding: 20px 0; border-left: 0; border-top: 1px solid var(--dline); }
+      .nums a:first-child { border-top: 0; }
+      .proj { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 26px 0; }
+      .pn { padding: 0; }
+      .parrow { display: none; }
+      .count { margin-left: 0; width: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: 0.01ms !important; }
+    }
+  
+/* Language switch : EN | FR, adjacent to YA */
+.identity-row{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.top .identity-row .lang-switch{position:static!important;top:auto;left:auto;right:auto;display:inline-flex!important;align-items:center;flex-direction:row!important;gap:7px!important;padding:0;background:none;border:0;white-space:nowrap}
+.top .identity-row .lang-switch a{display:inline-flex!important;align-items:center;font:600 .76rem var(--mono);text-decoration:none;color:#a9bfd2;padding:7px 2px;border:0}
+.top .identity-row .lang-switch a[aria-current="page"]{color:#fff;text-decoration:underline;text-underline-offset:4px}
+.top .identity-row .lang-switch a:hover{color:#fff}
+.lang-switch .lang-divider{color:#67839d;font-size:.8rem}
+@media(max-width:420px){.identity-row{gap:8px}.top .identity-row .lang-switch{gap:4px!important}}
+</style>
+<link href="https://younesmrc.github.io/index.html" hreflang="en" rel="alternate"/><link href="https://younesmrc.github.io/fr/index.html" hreflang="fr" rel="alternate"/><link href="https://younesmrc.github.io/index.html" hreflang="x-default" rel="alternate"/></head>
 <body>
-  <header class="site-header">
-    <div class="container nav-wrap">
-      <a class="brand" href="#home" aria-label="Go to home">YA</a>
-
-      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open navigation">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-
-      <nav id="site-nav" class="site-nav" aria-label="Primary navigation">
-        <a href="#projects">Projects</a>
-        <a href="#skills">Skills</a>
-        <a href="#education">Education</a>
-        <a href="#languages">Languages</a>
-        <a href="#contact">Contact</a>
-      </nav>
-    </div>
-  </header>
-
-  <main>
-    <section id="home" class="hero section">
-      <div class="container hero-grid">
-        <div>
-          <p class="eyebrow">Machine Learning · Artificial Intelligence · Data</p>
-          <h1>Younes Arjdal</h1>
-          <p class="hero-role">M2 MIND — Machine Learning, AI & Data<br />Sorbonne University</p>
-          <p class="hero-status">Looking for a final-year internship starting March 2027.</p>
-          <p class="hero-copy">
-            Second-year Master’s student in MIND at Sorbonne University. My projects span machine learning,
-            NLP, information retrieval, LLMs and data-oriented problems, with a particular interest in
-            experimentation, model evaluation and end-to-end workflows.
-          </p>
-
-          <div class="hero-actions" aria-label="Main links">
-            <a class="button button-primary" href="https://github.com/younesmrc" target="_blank" rel="noreferrer">GitHub</a>
-            <a class="button button-secondary" href="https://linkedin.com/in/younes-arjdal-1906b8231" target="_blank" rel="noreferrer">LinkedIn</a>
-            <a class="button button-secondary" href="assets/Younes-Arjdal-CV.pdf" target="_blank" rel="noreferrer">CV</a>
-          </div>
-        </div>
-
-        <aside class="hero-card" aria-label="Profile summary">
-          <div class="hero-card-topline"></div>
-          <p class="hero-card-label">Current</p>
-          <h2>M2 MIND</h2>
-          <p>Sorbonne University<br />2026–2027</p>
-          <div class="hero-card-divider"></div>
-          <p class="hero-card-label">Focus</p>
-          <p>ML · NLP · LLMs · Retrieval · Data</p>
-          <div class="hero-card-divider"></div>
-          <p class="hero-card-label">Based in</p>
-          <p>Paris, France</p>
-        </aside>
-      </div>
-    </section>
-
-    <section id="projects" class="section section-alt">
-      <div class="container">
-        <div class="section-heading">
-          <p class="eyebrow">Selected work</p>
-          <h2>Projects</h2>
-          <p>Selected projects covering LLMs, information retrieval, machine learning, NLP and data engineering.</p>
-        </div>
-
-        <div class="project-grid">
-          <a class="project-card project-featured project-card-link" href="projects/structured-outputs.html" aria-label="View Structured Outputs for LLMs project">
-            <div class="project-meta">
-              <span>2026</span>
-              <span>M1 MIND Research Project · Sorbonne University / LIP6</span>
-            </div>
-            <h3>Structured Outputs for LLMs: JSON Schema & Constrained Decoding</h3>
-            <p>
-              Experimental pipeline for improving the reliability of structured output generation with LLMs.
-              Integrated constrained decoding with Llama-3.1, validated outputs with JSON Schema, and analyzed
-              complex-schema limitations, timeouts and compliance errors.
+<header class="top">
+<div class="wrap">
+<div class="identity-row"><a aria-label="Go to home" class="brand" href="#home">YA</a><nav aria-label="Choose language" class="lang-switch"><a aria-current="page" href="#" lang="en">EN</a><span aria-hidden="true" class="lang-divider">|</span><a href="fr/index.html" lang="fr">FR</a></nav></div>
+<button aria-controls="site-nav" aria-expanded="false" aria-label="Open navigation" class="menu" type="button">☰</button>
+<nav aria-label="Primary navigation" id="site-nav">
+<a href="#projects">Projects</a>
+<a href="#skills">Skills</a>
+<a href="#education">Education</a>
+<a href="#languages">Languages</a>
+<a href="#contact">Contact</a>
+</nav>
+</div>
+</header>
+<main>
+<!-- ================= HERO ================= -->
+<section class="hero" id="home">
+<div class="wrap">
+<div class="hero-head">
+<div>
+<p class="eyebrow">Machine Learning · Artificial Intelligence · Data</p>
+<h1>Younes<br/>Arjdal</h1>
+<p class="role">M2 MIND - Machine Learning, AI &amp; Data<br/>Sorbonne University</p>
+<p class="status"><i aria-hidden="true"></i>Looking for a final-year internship starting March 2027</p>
+</div>
+<div>
+<p class="lede">
+              Second-year Master’s student in MIND at Sorbonne University. My projects span machine learning, NLP,
+              information retrieval, LLMs and data-oriented problems, with a particular interest in experimentation,
+              model evaluation and end-to-end workflows.
             </p>
-            <div class="tags" aria-label="Project keywords">
-              <span>LLMs</span><span>Llama-3.1</span><span>Outlines</span><span>Guidance</span><span>JSON Schema</span>
-            </div>
-          </a>
+<dl class="meta">
+<div><dt>Current</dt><dd>M2 MIND, Sorbonne University, 2026–2027</dd></div>
+<div><dt>Focus</dt><dd>ML · NLP · LLMs · Retrieval · Data</dd></div>
+<div><dt>Based in</dt><dd>Paris, France</dd></div>
+</dl>
+<div aria-label="Main links" class="hero-actions">
+<a class="btn btn-light" href="https://github.com/younesmrc" rel="noreferrer" target="_blank">GitHub</a>
+<a class="btn btn-ghost" href="https://linkedin.com/in/younes-arjdal-1906b8231" rel="noreferrer" target="_blank">LinkedIn</a>
+<a class="btn btn-ghost" href="assets/Younes-Arjdal-CV.pdf" rel="noreferrer" target="_blank">CV</a>
+</div>
+</div>
+</div>
+<div aria-label="Numbers from the projects" class="nums">
+<a href="projects/information-retrieval.html"><b>8.8 M</b><span>passages in a rebuilt dual-score index</span><small>Information Retrieval →</small></a>
+<a href="projects/bioacoustic-classification.html"><b>234</b><span>species to identify from Pantanal soundscapes</span><small>Bioacoustic Classification →</small></a>
+<a href="projects/camembert-nlp.html"><b>82.1</b><span>F1 on the challenge with fine-tuned CamemBERT</span><small>Classical NLP &amp; CamemBERT →</small></a>
+</div>
+</div>
+</section>
+<!-- ================= PROJECTS ================= -->
+<section class="sec" id="projects">
+<div class="wrap">
+<header style="margin-bottom:40px">
+<p class="eyebrow">Selected work</p>
+<h2>Projects</h2>
+<p style="max-width:56ch;color:var(--muted);margin:0">Selected projects covering LLMs, information retrieval, machine learning, NLP and data engineering. Each one opens a case study.</p>
+</header>
+<div aria-label="Filter projects by topic" class="filters" role="group">
+<button aria-pressed="true" class="chipb" data-f="all" type="button">All</button>
+<button aria-pressed="false" class="chipb" data-f="llms" type="button">LLMs</button>
+<button aria-pressed="false" class="chipb" data-f="nlp" type="button">NLP</button>
+<button aria-pressed="false" class="chipb" data-f="retrieval" type="button">Retrieval</button>
+<button aria-pressed="false" class="chipb" data-f="ml" type="button">ML &amp; Data</button>
+<span aria-live="polite" class="count" id="count"></span>
+</div>
+<div class="plist">
+<a aria-label="View Structured Outputs for LLMs project" class="proj" data-topics="llms nlp" href="projects/structured-outputs.html">
+<span class="pn">01</span>
+<div>
+<div class="pm"><span>2026</span><span>M1 MIND Research Project · Sorbonne University / LIP6</span></div>
+<h3>Structured Outputs for LLMs: JSON Schema &amp; Constrained Decoding</h3>
+<p>Experimental pipeline for improving the reliability of structured output generation with LLMs. Integrated constrained decoding with Llama-3.1, validated outputs with JSON Schema, and analyzed complex-schema limitations, timeouts and compliance errors.</p>
+<div aria-label="Project keywords" class="tags"><span>LLMs</span><span>Llama-3.1</span><span>Outlines</span><span>Guidance</span><span>JSON Schema</span></div>
+</div>
+<span aria-hidden="true" class="parrow">→</span>
+</a>
+<a aria-label="View Information Retrieval Engine project" class="proj" data-topics="retrieval nlp" href="projects/information-retrieval.html">
+<span class="pn">02</span>
+<div>
+<div class="pm"><span>2025</span><span>M1 MIND · Information Retrieval</span></div>
+<h3>Information Retrieval Engine: BM25 &amp; Guided Traversal</h3>
+<p>Reimplemented a sparse search engine inspired by a SIGIR paper, including an inverted index, BM25 scoring, neural scores and Guided Traversal. Worked on posting lists, top-K retrieval, query-document scoring and efficiency-relevance trade-offs.</p>
+<div class="tags"><span>Information Retrieval</span><span>BM25</span><span>Guided Traversal</span><span>Top-K Retrieval</span></div>
+</div>
+<span aria-hidden="true" class="parrow">→</span>
+</a>
+<a aria-label="View Road Accident Severity project" class="proj" data-topics="ml" href="projects/road-accident-severity.html">
+<span class="pn">03</span>
+<div>
+<div class="pm"><span>2025</span><span>M1 MIND · DALAS</span></div>
+<h3>Road Accident Severity: Data Enrichment &amp; Interpretable ML</h3>
+<p>Built a pipeline to study how weather conditions relate to road accident severity. Combined open accident data with historical weather data, automated collection with Selenium, processed data with PostgreSQL/PostGIS, then performed modeling and interpretability analysis.</p>
+<div class="tags"><span>Interpretable ML</span><span>PostgreSQL</span><span>PostGIS</span><span>Selenium</span><span>Geospatial Data</span></div>
+</div>
+<span aria-hidden="true" class="parrow">→</span>
+</a>
+<a aria-label="View Bioacoustic Classification project" class="proj" data-topics="ml" href="projects/bioacoustic-classification.html">
+<span class="pn">04</span>
+<div>
+<div class="pm"><span>2026</span><span>M1 MIND · Kaggle Competition</span></div>
+<h3>Bioacoustic Classification: Multi-label Audio ML</h3>
+<p>Designed a multi-label audio classification pipeline for species identification from Pantanal soundscapes. Extracted classical audio descriptors, trained One-vs-Rest models across 234 classes, handled label imbalance and analyzed the focal-recording / test-data domain gap.</p>
+<div class="tags"><span>Audio ML</span><span>Multi-label</span><span>MFCC</span><span>Librosa</span><span>One-vs-Rest</span></div>
+</div>
+<span aria-hidden="true" class="parrow">→</span>
+</a>
+<a aria-label="View Classical NLP and CamemBERT project" class="proj" data-topics="nlp" href="projects/camembert-nlp.html">
+<span class="pn">05</span>
+<div>
+<div class="pm"><span>2025</span><span>M1 MIND · RITAL</span></div>
+<h3>Classical NLP &amp; CamemBERT Fine-tuning</h3>
+<p>Compared classical NLP approaches with CamemBERT fine-tuning for text classification and speaker identification tasks on imbalanced datasets.</p>
+<div class="tags"><span>NLP</span><span>CamemBERT</span><span>Fine-tuning</span><span>Text Classification</span></div>
+</div>
+<span aria-hidden="true" class="parrow">→</span>
+</a>
+</div>
+</div>
+</section>
+<!-- ================= SKILLS ================= -->
+<section class="sec white" id="skills">
+<div class="wrap split">
+<header>
+<p class="eyebrow">Toolkit</p>
+<h2>Skills</h2>
+<p>What I reach for, from fundamentals to the libraries used in the projects above.</p>
+</header>
+<dl class="rows">
+<div><dt>Programming</dt><dd>Python, SQL, C, JavaScript, Bash, Linux, Git</dd></div>
+<div><dt>Machine Learning / AI</dt><dd>Supervised and unsupervised learning, ensemble learning, probabilistic models, dimensionality reduction, recommender systems, fundamentals of reinforcement learning</dd></div>
+<div><dt>NLP / LLMs / Retrieval</dt><dd>Text classification, fine-tuning, structured outputs, constrained decoding, information retrieval</dd></div>
+<div><dt>Libraries / Frameworks</dt><dd>NumPy, Pandas, scikit-learn, PyTorch, Hugging Face Transformers, CatBoost, XGBoost, Librosa</dd></div>
+<div><dt>Data</dt><dd>PostgreSQL/PostGIS, Selenium, web scraping, preprocessing, feature engineering, geospatial and audio data</dd></div>
+</dl>
+</div>
+</section>
+<!-- ================= EDUCATION ================= -->
+<section class="sec" id="education">
+<div class="wrap split">
+<header>
+<p class="eyebrow">Academic background</p>
+<h2>Education</h2>
+</header>
+<dl class="rows">
+<div><dt class="when">2026–2027</dt><dd><b>M2 MIND - Machine Learning, AI &amp; Data</b><span>Sorbonne University</span></dd></div>
+<div><dt class="when">2025–2026</dt><dd><b>M1 MIND - Machine Learning, AI &amp; Data</b><span>Sorbonne University</span></dd></div>
+<div><dt class="when">Fall 2024</dt><dd><b>International Exchange Semester</b><span>Université de Montréal (UdeM), Canada</span></dd></div>
+<div><dt class="when">2022–2025</dt><dd><b>Bachelor’s Degree in Computer Science</b><span>Sorbonne University</span></dd></div>
+</dl>
+</div>
+</section>
+<!-- ================= LANGUAGES ================= -->
+<section class="sec white" id="languages">
+<div class="wrap split">
+<header>
+<p class="eyebrow">Spoken</p>
+<h2>Languages</h2>
+</header>
+<dl class="facts lang" style="align-self:center">
+<div><b>French</b><span>Native</span></div>
+<div><b>Berber</b><span>Native</span></div>
+<div><b>English</b><span>B2</span></div>
+<div><b>German</b><span>B1</span></div>
+</dl>
+</div>
+</section>
+<!-- ================= CONTACT ================= -->
+<section class="sec dark" id="contact">
+<div class="wrap split contact">
+<div>
+<p class="eyebrow">Contact</p>
+<h2>Let’s connect.</h2>
+<p class="lede" style="color:#a9bccd">I am currently seeking a final-year internship starting March 2027.</p>
+</div>
+<div class="clinks">
+<a href="mailto:younesarjdal@yahoo.com">younesarjdal@yahoo.com</a>
+<a href="https://github.com/younesmrc" rel="noreferrer" target="_blank">github.com/younesmrc</a>
+<a href="https://linkedin.com/in/younes-arjdal-1906b8231" rel="noreferrer" target="_blank">LinkedIn</a>
+</div>
+</div>
+</section>
+</main>
+<footer class="foot">
+<div class="wrap">
+<span>© <span id="current-year">2026</span> Younes Arjdal</span>
+<a href="#home">Back to top ↑</a>
+</div>
+</footer>
+<script>
+  (() => {
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
-          <a class="project-card project-card-link" href="projects/information-retrieval.html" aria-label="View Information Retrieval Engine project">
-            <div class="project-meta">
-              <span>2025</span>
-              <span>M1 MIND · Information Retrieval</span>
-            </div>
-            <h3>Information Retrieval Engine: BM25 & Guided Traversal</h3>
-            <p>
-              Reimplemented a sparse search engine inspired by a SIGIR paper, including an inverted index,
-              BM25 scoring, neural scores and Guided Traversal. Worked on posting lists, top-K retrieval,
-              query-document scoring and efficiency-relevance trade-offs.
-            </p>
-            <div class="tags">
-              <span>Information Retrieval</span><span>BM25</span><span>Guided Traversal</span><span>Top-K Retrieval</span>
-            </div>
-          </a>
+    $('#current-year').textContent = new Date().getFullYear();
 
-          <a class="project-card project-card-link" href="projects/road-accident-severity.html" aria-label="View Road Accident Severity project">
-            <div class="project-meta">
-              <span>2025</span>
-              <span>M1 MIND · DALAS</span>
-            </div>
-            <h3>Road Accident Severity: Data Enrichment & Interpretable ML</h3>
-            <p>
-              Built a pipeline to study how weather conditions relate to road accident severity. Combined open
-              accident data with historical weather data, automated collection with Selenium, processed data with
-              PostgreSQL/PostGIS, then performed modeling and interpretability analysis.
-            </p>
-            <div class="tags">
-              <span>Interpretable ML</span><span>PostgreSQL</span><span>PostGIS</span><span>Selenium</span><span>Geospatial Data</span>
-            </div>
-          </a>
+    /* mobile menu */
+    const btn = $('.menu'), nav = $('#site-nav');
+    const setMenu = (open) => { nav.classList.toggle('open', open); btn.setAttribute('aria-expanded', String(open)); btn.textContent = open ? '✕' : '☰'; };
+    btn.addEventListener('click', () => setMenu(!nav.classList.contains('open')));
+    $$('a', nav).forEach((a) => a.addEventListener('click', () => setMenu(false)));
 
-          <a class="project-card project-card-link" href="projects/bioacoustic-classification.html" aria-label="View Bioacoustic Classification project">
-            <div class="project-meta">
-              <span>2026</span>
-              <span>M1 MIND · Kaggle Competition</span>
-            </div>
-            <h3>Bioacoustic Classification: Multi-label Audio ML</h3>
-            <p>
-              Designed a multi-label audio classification pipeline for species identification from Pantanal
-              soundscapes. Extracted classical audio descriptors, trained One-vs-Rest models across 234 classes,
-              handled label imbalance and analyzed the focal-recording / test-data domain gap.
-            </p>
-            <div class="tags">
-              <span>Audio ML</span><span>Multi-label</span><span>MFCC</span><span>Librosa</span><span>One-vs-Rest</span>
-            </div>
-          </a>
-
-          <a class="project-card project-card-link" href="projects/camembert-nlp.html" aria-label="View Classical NLP and CamemBERT project">
-            <div class="project-meta">
-              <span>2025</span>
-              <span>M1 MIND · RITAL</span>
-            </div>
-            <h3>Classical NLP & CamemBERT Fine-tuning</h3>
-            <p>
-              Compared classical NLP approaches with CamemBERT fine-tuning for text classification and speaker
-              identification tasks on imbalanced datasets.
-            </p>
-            <div class="tags">
-              <span>NLP</span><span>CamemBERT</span><span>Fine-tuning</span><span>Text Classification</span>
-            </div>
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <section id="skills" class="section">
-      <div class="container">
-        <div class="section-heading">
-          <p class="eyebrow">Toolkit</p>
-          <h2>Skills</h2>
-        </div>
-
-        <div class="skills-grid">
-          <article class="skill-card">
-            <h3>Programming</h3>
-            <p>Python, SQL, C, JavaScript, Bash, Linux, Git</p>
-          </article>
-
-          <article class="skill-card">
-            <h3>Machine Learning / AI</h3>
-            <p>Supervised and unsupervised learning, ensemble learning, probabilistic models, dimensionality reduction, recommender systems, fundamentals of reinforcement learning</p>
-          </article>
-
-          <article class="skill-card">
-            <h3>NLP / LLMs / Retrieval</h3>
-            <p>Text classification, fine-tuning, structured outputs, constrained decoding, information retrieval</p>
-          </article>
-
-          <article class="skill-card">
-            <h3>Libraries / Frameworks</h3>
-            <p>NumPy, Pandas, scikit-learn, PyTorch, Hugging Face Transformers, CatBoost, XGBoost, Librosa</p>
-          </article>
-
-          <article class="skill-card">
-            <h3>Data</h3>
-            <p>PostgreSQL/PostGIS, Selenium, web scraping, preprocessing, feature engineering, geospatial and audio data</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section id="education" class="section section-alt">
-      <div class="container">
-        <div class="section-heading">
-          <p class="eyebrow">Academic background</p>
-          <h2>Education</h2>
-        </div>
-
-        <div class="timeline">
-          <article class="timeline-item">
-            <div class="timeline-marker" aria-hidden="true"></div>
-            <div>
-              <p class="timeline-date">2026–2027</p>
-              <h3>M2 MIND — Machine Learning, AI & Data</h3>
-              <p>Sorbonne University</p>
-            </div>
-          </article>
-
-          <article class="timeline-item">
-            <div class="timeline-marker" aria-hidden="true"></div>
-            <div>
-              <p class="timeline-date">2025–2026</p>
-              <h3>M1 MIND — Machine Learning, AI & Data</h3>
-              <p>Sorbonne University</p>
-            </div>
-          </article>
-
-          <article class="timeline-item">
-            <div class="timeline-marker" aria-hidden="true"></div>
-            <div>
-              <p class="timeline-date">Fall 2024</p>
-              <h3>International Exchange Semester</h3>
-              <p>Université de Montréal (UdeM), Canada</p>
-            </div>
-          </article>
-
-          <article class="timeline-item">
-            <div class="timeline-marker" aria-hidden="true"></div>
-            <div>
-              <p class="timeline-date">2022–2025</p>
-              <h3>Bachelor’s Degree in Computer Science</h3>
-              <p>Sorbonne University</p>
-            </div>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section id="languages" class="section">
-      <div class="container">
-        <div class="section-heading">
-          <p class="eyebrow">Languages</p>
-          <h2>Languages</h2>
-        </div>
-
-        <div class="language-grid">
-          <div class="language-card"><strong>French</strong><span>Native</span></div>
-          <div class="language-card"><strong>Berber</strong><span>Native</span></div>
-          <div class="language-card"><strong>English</strong><span>B2</span></div>
-          <div class="language-card"><strong>German</strong><span>B1</span></div>
-        </div>
-      </div>
-    </section>
-
-    <section id="contact" class="section contact-section">
-      <div class="container contact-card">
-        <div>
-          <p class="eyebrow">Contact</p>
-          <h2>Let’s connect.</h2>
-          <p>I am currently seeking a final-year internship starting March 2027.</p>
-        </div>
-
-        <div class="contact-links">
-          <a href="mailto:younesarjdal@yahoo.com">younesarjdal@yahoo.com</a>
-          <a href="https://github.com/younesmrc" target="_blank" rel="noreferrer">github.com/younesmrc</a>
-          <a href="https://linkedin.com/in/younes-arjdal-1906b8231" target="_blank" rel="noreferrer">LinkedIn</a>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <div class="container footer-wrap">
-      <p>© <span id="current-year">2026</span> Younes Arjdal</p>
-      <a href="#home">Back to top ↑</a>
-    </div>
-  </footer>
-
-  <script src="script.js"></script>
+    /* project filter */
+    const items = $$('.proj'), count = $('#count');
+    function filter(f) {
+      let n = 0;
+      items.forEach((it) => { const show = f === 'all' || it.dataset.topics.split(' ').includes(f); it.hidden = !show; if (show) n++; });
+      $$('.chipb').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.f === f)));
+      count.textContent = n + ' of ' + items.length + ' projects';
+    }
+    $$('.chipb').forEach((b) => b.addEventListener('click', () => filter(b.dataset.f)));
+    filter('all');
+  })();
+  </script>
 </body>
 </html>

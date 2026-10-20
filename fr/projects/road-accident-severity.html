@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+
+<html class="no-js" lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="Enrichissement des données d’accidents français avec la météo historique et modèles interprétables pour mesurer l’apport météorologique à la prédiction de gravité." name="description"/>
+<meta content="#06121f" name="theme-color"/>
+<title>Gravité des accidents de la route - Younes Arjdal</title>
+<link href="../../assets/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<script>document.documentElement.classList.replace('no-js', 'js');</script>
+<style>
+    :root {
+      --ink: #06121f;
+      --ink-2: #0a1b2e;
+      --paper: #f4f6f8;
+      --text: #12202e;
+      --muted: #566677;
+      --line: #d6dee6;
+      --dline: rgba(255, 255, 255, 0.13);
+      --blue: #1d5f9b;
+      --cy: #6bb8f5;
+      --ok: #4fd69c;
+      --bad: #ff7a84;
+      --wx: #1b8fe0;
+      --g-users: #c98a12;
+      --g-time: #7a62d8;
+      --g-veh: #2e9e78;
+      --g-road: #6b7b8c;
+      --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --r: 8px;
+      --w: 1160px;
+    }
+    .g-users { --g: var(--g-users); } .g-time { --g: var(--g-time); } .g-veh { --g: var(--g-veh); }
+    .g-road { --g: var(--g-road); } .g-wx { --g: var(--wx); }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+    body { margin: 0; color: var(--text); background: var(--paper); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+    code { font-family: var(--mono); }
+    .wrap { width: min(calc(100% - 40px), var(--w)); margin: 0 auto; }
+    :focus-visible { outline: 3px solid rgba(107, 184, 245, 0.7); outline-offset: 3px; }
+    .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+    /* ---------- Header ---------- */
+    .top { position: sticky; top: 0; z-index: 50; background: rgba(6, 18, 31, 0.84); backdrop-filter: blur(14px); border-bottom: 1px solid var(--dline); }
+    .top .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 64px; }
+    .brand { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 9px; background: #fff; color: var(--ink); font-weight: 600; letter-spacing: -0.03em; text-decoration: none; }
+    .top nav { display: flex; gap: 26px; }
+    .top nav a { color: #b4c4d4; font-size: 0.9rem; font-weight: 500; text-decoration: none; }
+    .top nav a:hover { color: #fff; }
+
+    /* ---------- Buttons ---------- */
+    .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: var(--r); border: 1px solid transparent; font: 600 0.92rem var(--sans); text-decoration: none; cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.15s; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-light { background: #fff; color: var(--ink); }
+    .btn-light:hover { background: #e6eef6; }
+    .btn-ghost { background: transparent; color: #dbe7f2; border-color: rgba(255, 255, 255, 0.25); }
+    .btn-ghost:hover { border-color: rgba(255, 255, 255, 0.6); }
+
+    /* ---------- Hero ---------- */
+    .hero { background: var(--ink); color: #fff; padding: 56px 0 88px; }
+    .back { display: inline-block; margin-bottom: 44px; color: #8fa6bb; font-size: 0.9rem; text-decoration: none; }
+    .back:hover { color: #fff; }
+    .hero-head { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); gap: 56px; align-items: end; }
+    h1 { margin: 0; font-size: clamp(2.8rem, 6.6vw, 5.8rem); line-height: 0.98; letter-spacing: -0.045em; font-weight: 600; }
+    .sub { margin: 20px 0 0; font: 400 1rem var(--mono); color: var(--cy); }
+    .lede { margin: 0 0 24px; max-width: 52ch; color: #b9c9d9; font-size: 1.06rem; }
+    .meta { display: grid; gap: 10px; margin: 0; font-size: 0.88rem; }
+    .meta div { display: grid; grid-template-columns: 92px 1fr; gap: 12px; padding-top: 10px; border-top: 1px solid var(--dline); }
+    .meta dt { color: #7f95aa; }
+    .meta dd { margin: 0; color: #dbe7f2; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+
+    /* ---------- Weather demo ---------- */
+    .demo { margin-top: 64px; padding: 28px; border: 1px solid var(--dline); border-radius: 12px; background: var(--ink-2); }
+    .demo-intro { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 20px; }
+    .demo-intro h2 { margin: 0; font-size: 1.25rem; letter-spacing: -0.02em; font-weight: 600; }
+    .demo-intro p { margin: 6px 0 0; max-width: 64ch; color: #9fb4c8; font-size: 0.95rem; }
+    .chip { font: 500 0.82rem var(--mono); color: #d8edff; padding: 4px 10px; border: 1px solid rgba(107, 184, 245, 0.4); border-radius: 6px; background: rgba(107, 184, 245, 0.1); white-space: nowrap; }
+    .demo-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; border-top: 1px solid var(--dline); border-bottom: 1px solid var(--dline); }
+    .switch { display: inline-flex; align-items: center; gap: 12px; color: #dbe7f2; font-weight: 500; cursor: pointer; }
+    .switch input { position: absolute; opacity: 0; pointer-events: none; }
+    .knob { position: relative; width: 46px; height: 26px; border-radius: 99px; background: #2a4561; transition: background 0.2s; }
+    .knob::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+    .switch input:checked + .knob { background: var(--wx); }
+    .switch input:checked + .knob::after { transform: translateX(20px); }
+    .switch input:focus-visible + .knob { outline: 3px solid rgba(107, 184, 245, 0.7); outline-offset: 3px; }
+    .switch b { font-family: var(--mono); font-weight: 600; }
+    .demo-hint { color: #7f98b0; font-size: 0.85rem; }
+
+    .wx-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 40px; }
+    .wx-grid h3 { margin: 22px 0 8px; color: #9fb4c8; font-size: 0.92rem; font-weight: 500; letter-spacing: 0; }
+    .mrow { display: grid; grid-template-columns: 128px minmax(0, 1fr) 52px 66px; gap: 12px; align-items: center; padding: 7px 0; }
+    .mlabel { color: #dbe7f2; font-size: 0.9rem; }
+    .mbar { position: relative; height: 10px; border-radius: 99px; background: rgba(255, 255, 255, 0.08); }
+    .mbar .fill { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: #5a7894; transition: width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.3s; }
+    .on-wx .mbar .fill { background: var(--cy); }
+    .mbar .tick { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: #fff; opacity: 0; transition: opacity 0.3s; }
+    .on-wx .mbar .tick { opacity: 0.9; }
+    .mval { font: 500 0.85rem var(--mono); text-align: right; color: #e8f1f8; }
+    .mdelta { min-height: 1em; font: 500 0.78rem var(--mono); text-align: right; white-space: nowrap; }
+    .mdelta.up { color: var(--ok); } .mdelta.down { color: var(--bad); } .mdelta.flat { color: #7f98b0; }
+    .cblock { padding: 8px 0 4px; border-top: 1px solid var(--dline); }
+    .cblock:first-of-type { border-top: 0; }
+    .chead { display: flex; justify-content: space-between; align-items: baseline; }
+    .chead b { font-weight: 600; }
+    .chead span { color: #7f98b0; font-size: 0.8rem; }
+    .fine { margin: 18px 0 0; color: #7f98b0; font-size: 0.82rem; max-width: 80ch; }
+    .verdict { margin: 18px 0 0; padding: 16px 18px; border-left: 3px solid var(--cy); background: rgba(107, 184, 245, 0.07); color: #cfe0ef; }
+
+    /* ---------- Sections ---------- */
+    .sec { padding: 104px 0; }
+    .sec.white { background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .sec.dark { background: var(--ink); color: #fff; }
+    .split { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 72px; }
+    .split > * { min-width: 0; }
+    .split > header { align-self: start; position: sticky; top: 96px; }
+    h2 { margin: 0 0 16px; font-size: clamp(1.9rem, 3.4vw, 2.8rem); line-height: 1.1; letter-spacing: -0.035em; font-weight: 600; }
+    .split > header p { max-width: 34ch; margin: 0; color: var(--muted); }
+    .dark .split > header p { color: #9fb4c8; }
+    h3 { margin: 0; font-size: 1.15rem; letter-spacing: -0.02em; font-weight: 600; }
+    p { margin-top: 0; }
+    .block + .block { margin-top: 72px; }
+    .block > h3 { margin-bottom: 8px; font-size: 1.5rem; letter-spacing: -0.03em; }
+    .block > p { max-width: 64ch; margin-bottom: 20px; color: var(--muted); }
+    .dark .block > p { color: #a9bccd; }
+    .note { margin: 14px 0 0; color: var(--muted); font-size: 0.85rem; max-width: 72ch; }
+    .dark .note { color: #8097ac; }
+
+    /* Steps + rows */
+    .steps { counter-reset: s; margin: 0 0 56px; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .steps li { display: grid; grid-template-columns: 36px 130px 1fr; gap: 16px; align-items: baseline; padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .steps li::before { counter-increment: s; content: counter(s); color: var(--blue); font: 500 0.9rem var(--mono); }
+    .steps b { font-size: 1.15rem; letter-spacing: -0.02em; font-weight: 600; }
+    .steps span { color: var(--muted); }
+    .rows { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .rows > div, .rows > li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 32px; padding: 22px 0; border-bottom: 1px solid var(--line); }
+    .rows dt { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; }
+    .rows dd { margin: 0; color: var(--muted); }
+    .dark .rows, .dark .rows > div { border-color: var(--dline); }
+    .dark .rows dd { color: #a9bccd; }
+    .dark .rows dt { color: #fff; }
+
+    /* Missing values */
+    .miss { display: grid; gap: 2px; }
+    .mi { display: grid; grid-template-columns: 190px minmax(0, 1fr) 128px; gap: 16px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+    .mi code { font-size: 0.85rem; font-weight: 500; }
+    .mi small { display: block; color: var(--muted); font-family: var(--sans); font-size: 0.78rem; }
+    .mi .tr { height: 10px; border-radius: 99px; background: #e6ecf2; overflow: hidden; }
+    .mi .bw { display: block; width: var(--w); height: 100%; border-radius: inherit; background: var(--g); transition: width 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .js .grow:not(.on) .bw { width: 0; }
+    .mi .v { text-align: right; font: 500 0.82rem var(--mono); }
+    .mi .v small { display: inline; font-family: var(--mono); }
+
+    /* Class proportion */
+    .prop { display: flex; height: 44px; border-radius: 6px; overflow: hidden; gap: 2px; }
+    .prop span { display: block; min-width: 4px; }
+    .p-slight { background: #5a7894; } .p-hosp { background: var(--cy); } .p-fatal { background: var(--bad); }
+    .plegend { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin-top: 18px; }
+    .plegend div { padding-top: 12px; border-top: 3px solid var(--c); }
+    .plegend b { display: block; font-weight: 600; }
+    .plegend span { color: #a9bccd; font: 400 0.88rem var(--mono); }
+    .defs { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+    .defs div { padding-top: 14px; border-top: 3px solid #fff; }
+    .defs h4 { margin: 0 0 6px; font-size: 1.02rem; font-weight: 600; }
+    .defs p { margin: 0; color: #a9bccd; font-size: 0.95rem; }
+
+    /* Tabs / toggles */
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .tab { min-height: 40px; padding: 0 16px; border: 1px solid var(--line); border-radius: 99px; background: #fff; color: var(--text); font: 500 0.92rem var(--sans); cursor: pointer; }
+    .tab[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+    /* Scatter */
+    .legend-row { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; margin: 0 0 8px; color: var(--muted); font-size: 0.85rem; }
+    .legend-row i { display: inline-block; width: 11px; height: 11px; margin-right: 7px; border-radius: 50%; vertical-align: -1px; }
+    .legend-row .ring { background: #fff; border: 2px solid var(--muted); width: 12px; height: 12px; }
+    .scatter svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .scatter .gl { stroke: #e3e9ef; stroke-width: 1; }
+    .scatter .ax { fill: var(--muted); font: 400 11px var(--mono); }
+    .scatter .at { fill: var(--text); font: 500 12px var(--sans); }
+    .scatter .pl { fill: var(--text); font: 500 11px var(--mono); }
+    .scatter .pt { cursor: pointer; outline: none; }
+    .scatter .pt:focus-visible circle, .scatter .pt:hover circle { stroke-width: 3; }
+    .scatter.wx-off .wxel { display: none; }
+    .readout { min-height: 3em; margin: 6px 0 0; padding: 10px 14px; border-left: 3px solid var(--blue); background: #eef3f8; font-size: 0.92rem; }
+
+    /* Runs table */
+    .tw { overflow-x: auto; margin-top: 36px; }
+    table.runs, table.perm, table.depth { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .runs th, .perm th, .depth th { padding: 10px 10px; border-bottom: 2px solid var(--ink); font-size: 0.82rem; font-weight: 600; text-align: right; white-space: nowrap; }
+    .runs th:first-child, .perm th:first-child, .depth th:first-child { text-align: left; }
+    .runs td, .depth td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: right; font: 500 0.84rem var(--mono); }
+    .runs td:first-child, .depth td:first-child { text-align: left; font-family: var(--sans); font-weight: 400; }
+    .runs td.best { font-weight: 600; color: var(--blue); }
+    .runs tr.grp th { padding-top: 18px; border-bottom: 1px solid var(--line); color: var(--muted); font-weight: 500; text-align: left; }
+
+    /* Importance */
+    .imp-legend { display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 18px 0 14px; color: var(--muted); font-size: 0.85rem; }
+    .imp-legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 8px; border-radius: 2px; background: var(--g); }
+    .imp { --rh: 30px; position: relative; height: calc(20 * var(--rh)); }
+    .irow { position: absolute; top: 0; left: 0; right: 0; height: var(--rh); display: grid; grid-template-columns: 26px 200px minmax(0, 1fr); gap: 10px; align-items: center; transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s; }
+    .irow.gone { opacity: 0; pointer-events: none; }
+    .irank { color: var(--muted); font: 400 0.76rem var(--mono); text-align: right; }
+    .iname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8rem; font-weight: 500; }
+    .irow.g-wx .iname { color: var(--wx); font-weight: 600; }
+    .itrack { height: 14px; border-radius: 3px; background: #eef2f6; }
+    .ifill { display: block; height: 100%; border-radius: 3px; background: var(--g); transition: width 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .imp-note { margin: 18px 0 0; padding: 12px 16px; border-left: 3px solid var(--wx); background: #eef5fc; font-size: 0.95rem; max-width: 72ch; }
+
+    /* Tree */
+    .tree { overflow-x: auto; margin: 22px 0 18px; padding: 8px 0; }
+    .tree svg { display: block; min-width: 700px; width: 100%; height: auto; }
+    .tree .n { fill: #fff; stroke: var(--g); stroke-width: 2; }
+    .tree text { fill: var(--text); font: 500 11px var(--mono); }
+    .tree .e { stroke: #b7c4d1; stroke-width: 1.4; fill: none; }
+    .tree .el { fill: var(--muted); font: 400 10px var(--mono); }
+    .tree .leaf { fill: #f4f7fa; stroke: var(--wx); stroke-width: 1.4; stroke-dasharray: 3 3; }
+    .tree .cut { stroke: var(--wx); stroke-width: 1; stroke-dasharray: 5 4; }
+    .tree .cap { fill: var(--wx); font: 500 11px var(--sans); }
+    table.depth { max-width: 560px; }
+
+    /* Permutation */
+    table.perm td { padding: 0; border-bottom: 1px solid var(--line); }
+    table.perm td.f { padding: 9px 10px; font: 500 0.84rem var(--mono); }
+    table.perm td.c span { display: block; padding: 9px 0; text-align: center; font: 500 0.84rem var(--mono); background: rgba(27, 143, 224, calc(var(--v) * 0.85)); color: var(--text); }
+    table.perm td.c.hi span { color: #fff; }
+    table.perm th:not(:first-child) { text-align: center; }
+
+    /* Report */
+    .report { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 32px; padding-top: 72px; border-top: 1px solid var(--dline); }
+    .report h2 { max-width: 20ch; color: #fff; }
+    .report p { max-width: 56ch; margin: 0 0 20px; color: #a9bccd; }
+    footer.foot { padding: 30px 0 42px; color: var(--muted); font-size: 0.88rem; }
+    footer.foot .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+    footer.foot a { text-decoration: none; font-weight: 500; color: var(--blue); }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 980px) {
+      .hero-head { grid-template-columns: 1fr; gap: 36px; }
+      .split { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+      .split > header { position: static; }
+      .rows > div, .rows > li { grid-template-columns: 1fr; gap: 8px; }
+      .wx-grid { grid-template-columns: 1fr; gap: 0; }
+      .defs { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      .top nav a:not(:first-child) { display: none; }
+      .sec { padding: 72px 0; }
+      .demo { padding: 20px 16px; }
+      .mrow { grid-template-columns: 92px minmax(0, 1fr) 44px 58px; gap: 8px; }
+      .steps li { grid-template-columns: 28px 1fr; }
+      .steps li span { grid-column: 2; }
+      .mi { grid-template-columns: 1fr 100px; gap: 6px 12px; }
+      .mi .tr { grid-column: 1 / -1; grid-row: 2; }
+      .plegend { grid-template-columns: 1fr; gap: 14px; }
+      .irow { grid-template-columns: 22px 150px minmax(0, 1fr); gap: 8px; }
+      .iname { font-size: 0.72rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: 0.01ms !important; }
+    }
+  
+/* Language switch : EN | FR, adjacent to YA */
+.identity-row{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.top .identity-row .lang-switch{position:static!important;top:auto;left:auto;right:auto;display:inline-flex!important;align-items:center;flex-direction:row!important;gap:7px!important;padding:0;background:none;border:0;white-space:nowrap}
+.top .identity-row .lang-switch a{display:inline-flex!important;align-items:center;font:600 .76rem var(--mono);text-decoration:none;color:#a9bfd2;padding:7px 2px;border:0}
+.top .identity-row .lang-switch a[aria-current="page"]{color:#fff;text-decoration:underline;text-underline-offset:4px}
+.top .identity-row .lang-switch a:hover{color:#fff}
+.lang-switch .lang-divider{color:#67839d;font-size:.8rem}
+@media(max-width:420px){.identity-row{gap:8px}.top .identity-row .lang-switch{gap:4px!important}}
+</style>
+<link href="https://younesmrc.github.io/projects/road-accident-severity.html" hreflang="en" rel="alternate"/><link href="https://younesmrc.github.io/fr/projects/road-accident-severity.html" hreflang="fr" rel="alternate"/><link href="https://younesmrc.github.io/projects/road-accident-severity.html" hreflang="x-default" rel="alternate"/></head>
+<body>
+<header class="top">
+<div class="wrap">
+<div class="identity-row"><a aria-label="Aller à l’accueil" class="brand" href="../index.html#home">YA</a><nav aria-label="Choisir la langue" class="lang-switch"><a href="../../projects/road-accident-severity.html" lang="en">EN</a><span aria-hidden="true" class="lang-divider">|</span><a aria-current="page" href="#" lang="fr">FR</a></nav></div>
+<nav aria-label="Navigation du projet">
+<a href="../index.html#projects">Tous les projets</a>
+<a href="#data">Données</a>
+<a href="#models">Modèles</a>
+<a href="#interpretability">Interprétabilité</a>
+<a href="#conclusion">Conclusion</a>
+<a href="#report">Rapport</a>
+</nav>
+</div>
+</header>
+<main>
+<!-- ================= HERO + WEATHER DEMO ================= -->
+<section class="hero" id="top">
+<div class="wrap">
+<a class="back" href="../index.html#projects">← Retour aux projets</a>
+<div class="hero-head">
+<div>
+<h1>Gravité des accidents<br/>de la route</h1>
+<p class="sub">Enrichissement des données et machine learning interprétable</p>
+</div>
+<div>
+<p class="lede">
+              Les fichiers d'accidents français indiquent qui est impliqué et où, mais pas les conditions météorologiques. Nous avons associé les observations météo historiques à 110 124 accidents et mesuré leur apport à la prédiction de la gravité.
+            </p>
+<dl class="meta">
+<div><dt>Projet</dt><dd>M1 MIND, cours DALAS, Sorbonne Université, 2025</dd></div>
+<div><dt>Équipe</dt><dd>Younes Arjdal et Haidar Fico Ramadhan Aryputra</dd></div>
+<div><dt>Données</dt><dd>Fichiers BAAC 2022–2023, Weather Underground, données météo publiques françaises</dd></div>
+<div><dt>Technologies</dt><dd>Python, Selenium, PostgreSQL/PostGIS, scikit-learn, CatBoost</dd></div>
+</dl>
+<div class="hero-actions">
+<a class="btn btn-light" href="../../assets/projects/road-accident-severity/report.pdf" rel="noreferrer" target="_blank">Lire le rapport (PDF)</a>
+<a class="btn btn-ghost" href="#conclusion">Aller à la conclusion</a>
+</div>
+</div>
+</div>
+<div class="demo" id="wx-demo">
+<div class="demo-intro">
+<div>
+<h2>Ajouter la météo pour voir ce qui change</h2>
+<p>Comparaison de la meilleure forêt aléatoire sans météo avec la meilleure forêt intégrant la météo. Même famille de modèles, mêmes recherches d'hyperparamètres et mêmes graines aléatoires. Les repères blancs indiquent la référence sans météo.</p>
+</div>
+<code class="chip">Forêt aléatoire · 110 124 accidents</code>
+</div>
+<div class="demo-bar">
+<label class="switch">
+<input id="wx-toggle" role="switch" type="checkbox"/>
+<span class="knob"></span>
+<span>Variables météo : <b id="wx-state">désactivées</b></span>
+</label>
+<span class="demo-hint">Cible : la blessure la plus grave dans chaque accident</span>
+</div>
+<div class="wx-grid">
+<div><h3>Résultat global</h3><div id="wx-overall"></div></div>
+<div><h3>Par classe de gravité</h3><div id="wx-classes"></div></div>
+</div>
+<noscript><p class="fine">Activez JavaScript pour utiliser cette comparaison. Les mêmes résultats figurent dans le tableau de la section Modèles.</p></noscript>
+<p class="fine">Précision : parmi les accidents attribués à une classe par le modèle, quelle proportion en fait réellement partie. Rappel : parmi les accidents de cette classe, quelle proportion est identifiée par le modèle.</p>
+<p aria-live="polite" class="verdict" id="wx-verdict"></p>
+</div>
+</div>
+</section>
+<!-- ================= DATA ================= -->
+<section class="sec" id="data">
+<div class="wrap split">
+<header>
+<h2>Trois sources, une ligne par accident</h2>
+<p>Le fichier d'accidents ne contient aucune donnée météorologique. Il a fallu extraire les informations d'une première source, puis combler ses lacunes avec une seconde.</p>
+</header>
+<div>
+<ol class="steps">
+<li><b>Accidents</b><span>Fichiers BAAC de 2022 et 2023 sur data.gouv.fr : caractéristiques, lieux, véhicules et usagers. Fusion en une ligne par accident, avec ajout du nombre d'usagers et de véhicules. Résultat : 110 124 accidents et 33 colonnes.</span></li>
+<li><b>Extraction web</b><span>Selenium sur Weather Underground. Les coordonnées de chaque accident ont été converties en ville via une API REST, puis en URL d'une page à la date et à l'heure correspondantes. Plus de 100 000 enregistrements ont été obtenus avec peu de blocages, mais de nombreuses stations ne renseignent ni la visibilité ni l'état du sol.</span></li>
+<li><b>Données ouvertes</b><span>Des fichiers météo horaires de l'État français complètent les valeurs manquantes. Plus de 2 Go compressés et 20 Go décompressés ont été importés dans PostgreSQL/PostGIS, faisant passer les requêtes spatiales et temporelles de plusieurs minutes à quelques millisecondes.</span></li>
+</ol>
+<div class="block">
+<h3>Où les valeurs météo manquent-elles ?</h3>
+<p>Les colonnes incomplètes concernent la météo. Près de trois accidents sur dix n'ont aucune valeur de visibilité.</p>
+<div class="miss grow" id="miss"></div>
+<p class="note">Proportion des 110 124 accidents, calculée à partir des effectifs du rapport.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= PREPARATION ================= -->
+<section class="sec white" id="prep">
+<div class="wrap split">
+<header>
+<h2>Nettoyer sans supprimer d'accidents</h2>
+<p>Les lignes sont conservées. Les valeurs extrêmes sont bornées et les inconnues ont leur propre catégorie.</p>
+</header>
+<dl class="rows">
+<div>
+<dt>Codes manquants ou invalides</dt>
+<dd>La source utilise <code>-1</code>pour signaler l'inconnu. Ces codes sont devenus des NaN. Dans les colonnes catégorielles, les NaN ont été remplacés par une catégorie explicite <code>inconnu</code> , afin que l'incertitude reste visible pour le modèle. Les limitations de vitesse manquantes ont été remplacées par la médiane de leur catégorie de route.</dd>
+</div>
+<div>
+<dt>Valeurs aberrantes</dt>
+<dd>Bornes de quantiles par variable (âge moyen, nombre d'usagers, nombre de véhicules, limitation de vitesse), comparées aux 95e, 97e, 98e et 99e percentiles et vérifiées selon les connaissances métier. Les valeurs dépassant une borne ont été remplacées par la médiane de la queue de distribution, sans supprimer de ligne.</dd>
+</div>
+<div>
+<dt>Des codes aux libellés</dt>
+<dd>Les codes numériques BAAC ont été convertis en catégories lisibles et les catégories proches regroupées. L'état de la chaussée passe de sept valeurs à quatre : normal, mouillé, glissant, dégradé.</dd>
+</div>
+<div>
+<dt>Variable cible</dt>
+<dd><code>grav_max</code> désigne la blessure la plus grave parmi les personnes impliquées : mortelle, hospitalisation ou légère.</dd>
+</div>
+</dl>
+</div>
+</section>
+<!-- ================= TARGET ================= -->
+<section class="sec dark" id="target">
+<div class="wrap split">
+<header>
+<h2>Les accidents mortels représentent 4 % des données</h2>
+<p>L'exactitude globale est donc trompeuse : les modèles sont comparés au moyen du F1 macro et examinés classe par classe.</p>
+</header>
+<div>
+<div class="block">
+<h3>110 124 accidents selon la gravité maximale</h3>
+<p>Un modèle répondant toujours « blessure légère » aurait raison environ sept fois sur dix, mais manquerait tous les accidents mortels.</p>
+<div aria-label="77 621 accidents légers, 27 889 avec hospitalisation et 4 614 mortels" class="prop" role="img">
+<span class="p-slight" style="flex: 77621"></span>
+<span class="p-hosp" style="flex: 27889"></span>
+<span class="p-fatal" style="flex: 4614"></span>
+</div>
+<div class="plegend">
+<div style="--c: #5a7894"><b>Blessure légère</b><span>77,621 · 70.5%</span></div>
+<div style="--c: var(--cy)"><b>Hospitalisation</b><span>27,889 · 25.3%</span></div>
+<div style="--c: var(--bad)"><b>Mortel</b><span>4,614 · 4.2%</span></div>
+</div>
+</div>
+<div class="block">
+<div class="defs">
+<div>
+<h4>F1 macro</h4>
+<p>Moyenne des scores F1 de chaque classe. La classe mortelle (4,2 %) compte autant que celle des blessures légères (70,5 %).</p>
+</div>
+<div>
+<h4>Précision et rappel, par classe</h4>
+<p>Précision : parmi les accidents signalés mortels, combien le sont. Rappel : parmi les accidents réellement mortels, combien sont détectés.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= MODELS ================= -->
+<section class="sec" id="models">
+<div class="wrap split">
+<header>
+<h2>Détecter les accidents mortels impose un compromis</h2>
+<p>Détecter davantage d'accidents mortels multiplie les fausses alertes. Rendre les alertes plus fiables en fait manquer davantage.</p>
+</header>
+<div>
+<p class="note" style="margin: 0 0 24px; font-size: 1rem; color: var(--text)">
+            Les arbres de décision et les forêts aléatoires acceptent les variables numériques et catégorielles et permettent une inspection a posteriori. Chacun a fait l'objet d'une recherche d'hyperparamètres, optimisée une fois sur l'exactitude et une fois sur le F1 macro. La recherche simple sur les forêts ajuste le nombre d'arbres, leur profondeur et la taille des feuilles ; la recherche complexe ajoute la taille des divisions et les variables par division. Les exécutions avec météo réutilisent les mêmes recherches et graines : seules les colonnes changent.
+          </p>
+<div class="tabs">
+<button aria-pressed="true" class="tab" id="sc-wx" type="button">Afficher les exécutions avec météo</button>
+</div>
+<div aria-hidden="true" class="legend-row">
+<span><i style="background: var(--g-users)"></i>Arbre de décision</span>
+<span><i style="background: var(--blue)"></i>Forêt aléatoire</span>
+<span><i style="background: var(--muted)"></i>Sans météo</span>
+<span><i class="ring"></i>Avec météo</span>
+</div>
+<div class="scatter" id="scatter"></div>
+<p aria-live="polite" class="readout" id="sc-readout">Survolez un point ou placez-y le focus pour lire ses valeurs.</p>
+<div class="tw">
+<table class="runs">
+<thead><tr><th scope="col">Modèle</th><th scope="col">Exactitude</th><th scope="col">F1 macro</th><th scope="col">Précision - mortels</th><th scope="col">Rappel - mortels</th></tr></thead>
+<tbody id="runs-body"></tbody>
+</table>
+</div>
+<dl class="rows" style="margin-top: 40px">
+<div>
+<dt>Les forêts dominent globalement</dt>
+<dd>Meilleure forêt : exactitude 0,672 et F1 macro 0,504. Meilleur arbre : 0,623 et 0,447. Les forêts progressent surtout sur les accidents avec hospitalisation (F1 autour de 0,45), entre légers et mortels.</dd>
+</div>
+<div>
+<dt>Les arbres alertent davantage, les forêts sont plus prudentes</dt>
+<dd>L'arbre optimisé sur l'exactitude repère 59 % des accidents mortels, mais seules 12 % de ses alertes sont justes. La forêt optimisée sur le F1 macro en repère 34 %, avec 22 % d'alertes correctes.</dd>
+</div>
+<div>
+<dt>La météo rend les forêts plus prudentes</dt>
+<dd>Avec la météo, les forêts détectent 27 à 28 % des accidents mortels avec une précision de 22 % : moins d'alertes, une fiabilité similaire et de faibles gains sur les deux autres classes.</dd>
+</div>
+</dl>
+</div>
+</div>
+</section>
+<!-- ================= INTERPRETABILITY ================= -->
+<section class="sec white" id="interpretability">
+<div class="wrap split">
+<header>
+<h2>Les personnes et le moment comptent d'abord, puis la météo</h2>
+<p>Trois façons d'examiner les variables utilisées par les modèles et l'effet de leur permutation aléatoire.</p>
+</header>
+<div>
+<div class="block">
+<h3>Les variables importantes pour la forêt</h3>
+<p>L'âge moyen des personnes impliquées arrive en tête dans les deux cas, suivi du jour, de l'heure et du nombre d'usagers. Avec la météo, la pression monte à la deuxième place, la température à la quatrième et la vitesse du vent à la septième. Les variables continues sont souvent favorisées par cette mesure : les vérifications suivantes restent nécessaires.</p>
+<div aria-label="Exécution de la forêt aléatoire" class="tabs" role="group">
+<button aria-pressed="true" class="tab" data-imp="no" type="button">Sans météo</button>
+<button aria-pressed="false" class="tab" data-imp="wx" type="button">Avec météo</button>
+</div>
+<div aria-hidden="true" class="imp-legend">
+<span class="g-users">Personnes impliquées</span><span class="g-time">Temps</span><span class="g-veh">Véhicules et collisions</span><span class="g-road">Route et environnement</span><span class="g-wx">Météo</span>
+</div>
+<div aria-label="Les 20 principales variables de la forêt aléatoire. Barres reproduites d’après les figures du rapport." class="imp" id="imp" role="img"></div>
+<noscript><p class="note">Activez JavaScript pour afficher ce graphique, ou consultez la même figure dans le rapport.</p></noscript>
+<p aria-live="polite" class="imp-note" id="imp-note"></p>
+<p class="note">Les lignes sont classées par importance. Les longueurs des barres sont reproduites à partir des figures du rapport : privilégiez les rangs plutôt que les valeurs exactes.</p>
+</div>
+<div class="block">
+<h3>À quel niveau l'arbre utilise-t-il la météo ?</h3>
+<p>Un arbre se divise d'abord sur le nombre d'usagers (une personne ou plusieurs), puis sur l'âge moyen et la localisation hors agglomération. La météo n'apparaît pas dans les trois premiers niveaux.</p>
+<div class="tree" id="tree"></div>
+<div class="tw" style="margin-top: 8px">
+<table class="depth">
+<thead><tr><th scope="col">Variable météo</th><th scope="col">Divisions</th><th scope="col">Première profondeur</th><th scope="col">Profondeur moyenne</th></tr></thead>
+<tbody>
+<tr><td>température</td><td>7</td><td>3</td><td>5.43</td></tr>
+<tr><td>pression</td><td>4</td><td>5</td><td>5.75</td></tr>
+<tr><td>vitesse du vent</td><td>3</td><td>6</td><td>6.00</td></tr>
+<tr><td>visibilité</td><td>0</td><td>–</td><td>–</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="block">
+<h3>Que se passe-t-il si l'on mélange une variable météo ?</h3>
+<p>Permuter une colonne rompt son lien avec la gravité ; la variation du F1 révèle l'usage qu'en fait la forêt. Tous les effets sont faibles. Le plus important, celui de la pression sur les accidents mortels, est d'environ 0,012 de F1. La visibilité n'a aucun effet.</p>
+<div class="tw" style="margin-top: 0">
+<table class="perm">
+<thead><tr><th scope="col">Colonne permutée</th><th scope="col">Toutes les classes</th><th scope="col">Mortels</th><th scope="col">Hospitalisés</th><th scope="col">Légers</th></tr></thead>
+<tbody>
+<tr><td class="f">température</td><td class="c" style="--v: .09"><span>1.1</span></td><td class="c" style="--v: .24"><span>2.9</span></td><td class="c" style="--v: .44"><span>5.3</span></td><td class="c" style="--v: .07"><span>0.9</span></td></tr>
+<tr><td class="f">vitesse du vent</td><td class="c" style="--v: .19"><span>2.3</span></td><td class="c" style="--v: .28"><span>3.4</span></td><td class="c" style="--v: .34"><span>4.1</span></td><td class="c" style="--v: .04"><span>0.5</span></td></tr>
+<tr><td class="f">pression</td><td class="c" style="--v: .03"><span>0.4</span></td><td class="c hi" style="--v: 1"><span>12.1</span></td><td class="c hi" style="--v: .71"><span>8.6</span></td><td class="c" style="--v: .18"><span>2.2</span></td></tr>
+<tr><td class="f">visibilité</td><td class="c" style="--v: 0"><span>0</span></td><td class="c" style="--v: 0"><span>0</span></td><td class="c" style="--v: 0"><span>0</span></td><td class="c" style="--v: 0"><span>0</span></td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">Amplitude de la variation du F1 en millièmes, sans tenir compte du signe. Les valeurs sont lues sur une figure du rapport et restent approximatives.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= CONCLUSION ================= -->
+<section class="sec dark" id="conclusion">
+<div class="wrap split">
+<header>
+<h2>La météo module la prédiction, elle ne la pilote pas</h2>
+<p>Réponse à la question de recherche et éléments à l'appui.</p>
+</header>
+<dl class="rows">
+<div>
+<dt>Facteurs principaux</dt>
+<dd>Les personnes impliquées (âge moyen, nombre d'usagers), le moment (jour, heure, mois) et l'environnement routier. Sans météo, les modèles atteignent déjà un F1 macro de 0,504.</dd>
+</div>
+<div>
+<dt>Apport de la météo</dt>
+<dd>L'exactitude augmente de 0,012 et le F1 macro reste à 0,504. On observe de légers gains pour les hospitalisations et blessures légères et une forêt plus prudente pour les accidents mortels.</dd>
+</div>
+<div>
+<dt>Où son influence apparaît</dt>
+<dd>La pression, la température et la vitesse du vent figurent parmi les sept principales variables de la forêt, mais un arbre n'y recourt qu'après le troisième niveau. La visibilité ne montre aucun effet.</dd>
+</div>
+<div>
+<dt>Une borne supérieure</dt>
+<dd>CatBoost, utilisé comme plafond de référence, atteint un F1 macro de 0,5487, soit environ 4,5 points de plus que la forêt, et un F1 de 0,2757 pour les accidents mortels.</dd>
+</div>
+</dl>
+</div>
+</section>
+<!-- ================= LIMITS ================= -->
+<section class="sec" id="limits">
+<div class="wrap split">
+<header>
+<h2>Les limites des résultats</h2>
+<p>Ces conclusions valent pour ces données et ces modèles.</p>
+</header>
+<dl class="rows">
+<div>
+<dt>Deux années, un seul pays</dt>
+<dd>Uniquement des accidents de 2022 et 2023, tous survenus en France.</dd>
+</div>
+<div>
+<dt>Couverture météo inégale</dt>
+<dd>De nombreuses stations ne mesurent pas la visibilité ni l'état du sol ; près de trois accidents sur dix n'ont donc aucune donnée de visibilité. Cette absence rend difficile l'interprétation de son effet nul.</dd>
+</div>
+<div>
+<dt>Peu d'accidents mortels</dt>
+<dd>4 614 sur 110 124. Aucune exécution n'atteint une précision supérieure à 0,23 pour la classe mortelle.</dd>
+</div>
+<div>
+<dt>L'importance n'est pas la causalité</dt>
+<dd>L'importance des variables et leur permutation indiquent ce qu'utilise le modèle, pas ce qui rend les accidents plus graves.</dd>
+</div>
+</dl>
+</div>
+</section>
+<!-- ================= REPORT ================= -->
+<section class="sec" id="report" style="background: var(--ink); padding-top: 0">
+<div class="wrap">
+<div class="report">
+<div>
+<h2>Le rapport complet détaille la méthode</h2>
+<p>Collecte des données, nettoyage, ensemble des exécutions de modèles et graphiques d'interprétabilité. 19 pages, en anglais.</p>
+</div>
+<a class="btn btn-light" href="../../assets/projects/road-accident-severity/report.pdf" rel="noreferrer" target="_blank">Ouvrir le PDF</a>
+</div>
+</div>
+</section>
+</main>
+<footer class="foot">
+<div class="wrap">
+<span>© 2026 Younes Arjdal</span>
+<a href="../index.html#projects">Retour aux projets ↑</a>
+</div>
+</footer>
+<script>
+  (() => {
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+    const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const f3 = (n) => n.toFixed(3);
+    const fmt = (n) => n.toLocaleString('fr-FR');
+
+    /* ============ Weather on/off comparison ============ */
+    const BASE = { acc: .672, f1: .504, prec: .490, rec: .528, p2: .219, r2: .343, p3: .426, r3: .478, p4: .826, r4: .762 };
+    const WX   = { acc: .684, f1: .504, prec: .496, rec: .515, p2: .224, r2: .278, p3: .438, r3: .487, p4: .824, r4: .780 };
+    const OVERALL = [['acc', 'Exactitude'], ['f1', 'Macro F1'], ['prec', 'Précision macro'], ['rec', 'Rappel macro']];
+    const CLASSES = [
+      ['Mortel', '4,2 % des accidents', 'p2', 'r2'],
+      ['Hospitalisation', '25,3 % des accidents', 'p3', 'r3'],
+      ['Blessure légère', '70,5 % des accidents', 'p4', 'r4']
+    ];
+    const mrow = (k, label) => `<div class="mrow" data-k="${k}"><span class="mlabel">${label}</span>
+      <div class="mbar"><span class="fill" style="width:${BASE[k] * 100}%"></span><span class="tick" style="left:${BASE[k] * 100}%"></span></div>
+      <span class="mval">${f3(BASE[k])}</span><span class="mdelta"></span></div>`;
+    $('#wx-overall').innerHTML = OVERALL.map(([k, l]) => mrow(k, l)).join('');
+    $('#wx-classes').innerHTML = CLASSES.map(([n, share, p, r]) =>
+      `<div class="cblock"><div class="chead"><b>${n}</b><span>${share}</span></div>${mrow(p, 'Précision')}${mrow(r, 'Rappel')}</div>`).join('');
+
+    const wx = { on: false };
+    function updateWx() {
+      $('#wx-demo').classList.toggle('on-wx', wx.on);
+      $('#wx-state').textContent = wx.on ? 'activées' : 'désactivées';
+      $$('#wx-demo .mrow').forEach((row) => {
+        const k = row.dataset.k;
+        const v = wx.on ? WX[k] : BASE[k];
+        $('.fill', row).style.width = v * 100 + '%';
+        $('.mval', row).textContent = f3(v);
+        const dEl = $('.mdelta', row);
+        if (!wx.on) { dEl.textContent = ''; dEl.className = 'mdelta'; return; }
+        const d = Math.round((WX[k] - BASE[k]) * 1000) / 1000;
+        if (d === 0) { dEl.textContent = 'inchangé'; dEl.className = 'mdelta flat'; }
+        else { dEl.textContent = (d > 0 ? '+' : '−') + Math.abs(d).toFixed(3); dEl.className = 'mdelta ' + (d > 0 ? 'up' : 'down'); }
+      });
+      $('#wx-verdict').textContent = wx.on
+        ? 'L’exactitude augmente de 0,012 tandis que le F1 macro reste identique. Pour les accidents mortels, la forêt devient plus prudente : elle en détecte 28 % contre 34 %, avec des alertes aussi fiables (22 %).'
+        : 'Référence : sans aucune variable météo, la forêt atteint déjà un F1 macro de 0,504. Elle détecte 34 % des accidents mortels et 22 % de ses alertes mortelles sont justes.';
+    }
+    $('#wx-toggle').addEventListener('change', (e) => { wx.on = e.target.checked; updateWx(); });
+    updateWx();
+
+    /* ============ Missing values ============ */
+    const N = 110124;
+    const MISS = [
+      ['visibility', '', 32832, 'g-wx'], ['circ', 'régime de circulation', 7046, 'g-road'],
+      ['wind_speed', '', 3226, 'g-wx'], ['temperature', '', 3226, 'g-wx'], ['pressure', '', 3226, 'g-wx'],
+      ['vma', 'limitation de vitesse', 1910, 'g-road'], ['infra', 'infrastructure', 1200, 'g-road'],
+      ['col, situ, prof, surf, atm, lum', 'six colonnes routières', 76, 'g-road', '4 à 76 lignes']
+    ];
+    $('#miss').innerHTML = MISS.map(([name, gloss, c, g, custom]) => {
+      const pct = c / N * 100;
+      const w = Math.max(0.6, c / 32832 * 100);
+      const val = custom
+        ? `${custom}<br><small>moins de 0,1 %</small>`
+        : `${fmt(c)}<br><small>${pct >= 1 ? pct.toFixed(1) : pct.toFixed(2)}%</small>`;
+      return `<div class="mi ${g}"><div><code>${esc(name)}</code>${gloss ? `<small>${esc(gloss)}</small>` : ''}</div>
+        <div class="tr"><span class="bw" style="--w:${w}%"></span></div><div class="v">${val}</div></div>`;
+    }).join('');
+
+    /* ============ Fatal-class trade-off scatter ============ */
+    const TREE = 'var(--g-users)', FOREST = 'var(--blue)';
+    const PTS = [
+      { id: 'dtF', fam: TREE, wx: 0, r: .538, p: .137, name: 'Arbre de décision, réglé sur le F1 macro', lab: ['arbre · F1', -10, 18, 'end'] },
+      { id: 'dtA', fam: TREE, wx: 0, r: .594, p: .124, name: 'Arbre de décision, réglé sur l’exactitude', lab: ['arbre · exact.', 0, 0, 'start'], skipLabel: true },
+      { id: 'rfS1', fam: FOREST, wx: 0, r: .443, p: .181, name: 'Forêt, recherche simple, réglée sur le F1 macro', lab: ['forêt simple · F1', 12, 4, 'start'] },
+      { id: 'rfS2', fam: FOREST, wx: 0, r: .564, p: .143, name: 'Forêt, recherche simple, réglée sur l’exactitude', lab: ['forêt simple · exact.', 0, -13, 'middle'] },
+      { id: 'rfC', fam: FOREST, wx: 0, r: .343, p: .219, name: 'Forêt, recherche complexe (F1 macro et exactitude identiques)', lab: ['forêt complexe', 12, 4, 'start'] },
+      { id: 'dtF_w', fam: TREE, wx: 1, r: .547, p: .137, from: 'dtF', name: 'Arbre de décision, réglé sur le F1 macro' },
+      { id: 'dtA_w', fam: TREE, wx: 1, r: .605, p: .122, from: 'dtA', name: 'Arbre de décision, réglé sur l’exactitude', lab: ['arbre · exact.', 16, 4, 'start'] },
+      { id: 'rfF_w', fam: FOREST, wx: 1, r: .273, p: .220, from: 'rfC', name: 'Forêt, réglée sur le F1 macro' },
+      { id: 'rfA_w', fam: FOREST, wx: 1, r: .278, p: .224, from: 'rfC', name: 'Forêt, réglée sur l’exactitude', lab: ['forêt + météo', -14, 4, 'end'] }
+    ];
+    const S = { W: 680, H: 410, l: 64, r: 20, t: 16, b: 64 };
+    const pw = S.W - S.l - S.r, ph = S.H - S.t - S.b;
+    const X = (v) => S.l + v / 0.7 * pw, Y = (v) => S.t + (1 - v / 0.3) * ph;
+    (function buildScatter() {
+      let g = '';
+      for (let i = 0; i <= 7; i++) { const v = i / 10; g += `<line class="gl" x1="${X(v)}" x2="${X(v)}" y1="${S.t}" y2="${S.t + ph}"/><text class="ax" x="${X(v)}" y="${S.t + ph + 16}" text-anchor="middle">${v.toFixed(1)}</text>`; }
+      for (let i = 0; i <= 6; i++) { const v = i * 0.05; g += `<line class="gl" x1="${S.l}" x2="${S.l + pw}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${S.l - 10}" y="${Y(v) + 4}" text-anchor="end">${v.toFixed(2)}</text>`; }
+      const byId = Object.fromEntries(PTS.map((p) => [p.id, p]));
+      const lines = PTS.filter((p) => p.from).map((p) => { const b = byId[p.from];
+        return `<line class="wxel" x1="${X(b.r)}" y1="${Y(b.p)}" x2="${X(p.r)}" y2="${Y(p.p)}" stroke="${p.fam}" stroke-width="2" stroke-dasharray="3 3" opacity=".6"/>`; }).join('');
+      const pts = [...PTS].sort((a, b) => b.wx - a.wx).map((p) => {
+        const lab = p.lab && !p.skipLabel ? `<text class="pl ${p.wx ? 'wxel' : ''}" x="${X(p.r) + p.lab[1]}" y="${Y(p.p) + p.lab[2]}" text-anchor="${p.lab[3]}">${p.lab[0]}</text>` : '';
+        const aria = `${p.name}, ${p.wx ? 'avec météo' : 'sans météo'}: rappel ${f3(p.r)}, précision ${f3(p.p)}`;
+        const circ = p.wx
+          ? `<circle cx="${X(p.r)}" cy="${Y(p.p)}" r="8" fill="#fff" stroke="${p.fam}" stroke-width="2"/>`
+          : `<circle cx="${X(p.r)}" cy="${Y(p.p)}" r="5.5" fill="${p.fam}" stroke="#fff" stroke-width="1.5"/>`;
+        return `<g class="pt ${p.wx ? 'wxel' : ''}" tabindex="0" role="img" aria-label="${esc(aria)}" data-t="${esc(aria)}">${circ}</g>${lab}`;
+      }).join('');
+      $('#scatter').innerHTML = `<svg viewBox="0 0 ${S.W} ${S.H}" role="group" aria-label="Précision contre rappel des accidents mortels pour chaque modèle">
+        ${g}${lines}${pts}
+        <text class="at" x="${S.l + pw / 2}" y="${S.H - 10}" text-anchor="middle">Accidents mortels détectés (rappel)</text>
+        <text class="ax" x="${S.l}" y="${S.H - 10}">← moins d’alertes</text>
+        <text class="ax" x="${S.l + pw}" y="${S.H - 10}" text-anchor="end">plus d’alertes →</text>
+        <text class="at" transform="translate(16 ${S.t + ph / 2}) rotate(-90)" text-anchor="middle">Alertes correctes (précision)</text></svg>`;
+      const ro = $('#sc-readout'), idle = 'Survolez un point ou placez-y le focus pour consulter ses valeurs.';
+      $$('#scatter .pt').forEach((el) => {
+        const show = () => { ro.textContent = el.dataset.t; };
+        el.addEventListener('mouseenter', show); el.addEventListener('focus', show);
+        el.addEventListener('mouseleave', () => { ro.textContent = idle; }); el.addEventListener('blur', () => { ro.textContent = idle; });
+      });
+    })();
+    $('#sc-wx').addEventListener('click', (e) => {
+      const on = e.currentTarget.getAttribute('aria-pressed') !== 'true';
+      e.currentTarget.setAttribute('aria-pressed', String(on));
+      $('#scatter').classList.toggle('wx-off', !on);
+    });
+
+    /* ============ Runs table ============ */
+    const RUNS = [
+      ['Sans météo', [
+        ['Arbre de décision · F1 macro', .623, .447, .137, .538], ['Arbre de décision · exactitude', .601, .433, .124, .594],
+        ['Forêt, recherche complexe · F1 macro', .672, .504, .219, .343], ['Forêt, recherche complexe · exactitude', .672, .504, .219, .343],
+        ['Forêt, recherche simple · F1 macro', .649, .485, .181, .443], ['Forêt, recherche simple · exactitude', .616, .448, .143, .564]]],
+      ['Avec météo', [
+        ['Arbre de décision · F1 macro', .620, .447, .137, .547], ['Arbre de décision · exactitude', .600, .433, .122, .605],
+        ['Forêt · F1 macro', .682, .500, .220, .273], ['Forêt · exactitude', .684, .504, .224, .278]]]
+    ];
+    $('#runs-body').innerHTML = RUNS.map(([grp, rows]) => {
+      const best = Math.max(...rows.map((r) => r[2]));
+      return `<tr class="grp"><th colspan="5" scope="colgroup">${grp}</th></tr>` + rows.map((r) =>
+        `<tr><td>${esc(r[0])}</td><td>${f3(r[1])}</td><td class="${r[2] === best ? 'best' : ''}">${f3(r[2])}</td><td>${f3(r[3])}</td><td>${f3(r[4])}</td></tr>`).join('');
+    }).join('');
+
+    /* ============ Column importance (animated ranking) ============ */
+    const IMP = {
+      no: { age_moyen: .170, jour: .100, heure: .091, nb_usagers: .084, mois: .073, nb_vehicules: .040, vma: .0385, has_PL: .0285, agg_hors_agglomeration: .026, circ_double_sens: .0258, has_2RM: .024, an: .0205, has_MD: .019, situ_chaussee: .016, col_autre: .0148, agg_en_agglomeration: .0145, catr_route_departementale: .0141, catr_voie_communale: .0138, col_frontale: .0108, has_VL: .010 },
+      wx: { age_moyen: .130, pressure: .088, nb_usagers: .076, temperature: .073, jour: .068, heure: .0645, wind_speed: .053, mois: .045, nb_vehicules: .0385, vma: .0305, has_PL: .0272, agg_hors_agglomeration: .0248, circ_double_sens: .0218, has_2RM: .0215, has_MD: .0158, agg_en_agglomeration: .0143, situ_chaussee: .0138, an: .0136, col_autre: .0130, catr_voie_communale: .0122 }
+    };
+    const GRP = { age_moyen: 'users', nb_usagers: 'users', jour: 'time', heure: 'time', mois: 'time', an: 'time',
+      nb_vehicules: 'veh', has_PL: 'veh', has_2RM: 'veh', has_MD: 'veh', has_VL: 'veh', col_autre: 'veh', col_frontale: 'veh',
+      vma: 'road', agg_hors_agglomeration: 'road', agg_en_agglomeration: 'road', circ_double_sens: 'road', situ_chaussee: 'road', catr_route_departementale: 'road', catr_voie_communale: 'road',
+      pressure: 'wx', temperature: 'wx', wind_speed: 'wx' };
+    const IMPMAX = .18, RH = () => parseFloat(getComputedStyle($('#imp')).getPropertyValue('--rh')) || 30;
+    const feats = [...new Set([...Object.keys(IMP.no), ...Object.keys(IMP.wx)])];
+    $('#imp').innerHTML = feats.map((f) => `<div class="irow g-${GRP[f]} gone" data-f="${f}" aria-hidden="true"><span class="irank"></span><code class="iname" title="${f}">${f}</code><div class="itrack"><span class="ifill" style="width:0"></span></div></div>`).join('');
+    const IMPNOTE = {
+      no: 'Sans météo, les cinq premières variables sont l’âge moyen, le jour, l’heure, le nombre d’usagers et le mois.',
+      wx: 'Avec la météo, la pression est deuxième, la température quatrième et la vitesse du vent septième. L’âge moyen reste premier et la visibilité ne figure pas dans le top 20.'
+    };
+    function setImp(mode) {
+      const sorted = Object.entries(IMP[mode]).sort((a, b) => b[1] - a[1]).map((e) => e[0]);
+      const rh = RH();
+      $$('#imp .irow').forEach((row) => {
+        const f = row.dataset.f, i = sorted.indexOf(f);
+        if (i >= 0) {
+          row.classList.remove('gone'); row.removeAttribute('aria-hidden');
+          row.style.transform = `translateY(${i * rh}px)`;
+          $('.irank', row).textContent = i + 1;
+          $('.ifill', row).style.width = (IMP[mode][f] / IMPMAX * 100) + '%';
+        } else {
+          row.classList.add('gone'); row.setAttribute('aria-hidden', 'true');
+          row.style.transform = `translateY(${20 * rh}px)`;
+          $('.ifill', row).style.width = '0';
+        }
+      });
+      $('#imp-note').textContent = IMPNOTE[mode];
+      $$('.tab[data-imp]').forEach((t) => t.setAttribute('aria-pressed', String(t.dataset.imp === mode)));
+    }
+    $$('.tab[data-imp]').forEach((t) => t.addEventListener('click', () => setImp(t.dataset.imp)));
+    setImp('no');
+    window.addEventListener('resize', () => setImp($('.tab[data-imp][aria-pressed="true"]').dataset.imp));
+
+    /* ============ Decision tree figure ============ */
+    (function buildTree() {
+      const cw = 6.6, nodeW = (t) => t.length * cw + 22;
+      const leafX = [55, 150, 245, 340, 435, 530, 625, 720];
+      const L2 = [[102.5, 'situ_chaussee ≤ 0.5', 'road'], [292.5, 'has_2RM ≤ 0.5', 'veh'], [482.5, 'age_moyen ≤ 53.9', 'users'], [672.5, 'circ_double_sens ≤ 0.5', 'road']];
+      const L1 = [[197.5, 'age_moyen ≤ 59.5', 'users', 'true'], [577.5, 'agg_hors_agglomeration ≤ 0.5', 'road', 'false']];
+      const root = [387.5, 'nb_usagers ≤ 1.5', 'users'];
+      const y0 = 34, y1 = 112, y2 = 190, yl = 262;
+      let out = '';
+      const edge = (x1, y1_, x2, y2_, label, side) => {
+        out += `<path class="e" d="M${x1} ${y1_ + 14} L${x2} ${y2_ - 14}"/>`;
+        if (label) out += `<text class="el" x="${(x1 + x2) / 2 + (side < 0 ? -8 : 8)}" y="${(y1_ + y2_) / 2 + 3}" text-anchor="${side < 0 ? 'end' : 'start'}">${label}</text>`;
+      };
+      edge(root[0], y0, L1[0][0], y1, 'vrai', -1); edge(root[0], y0, L1[1][0], y1, 'faux', 1);
+      [[0, 0], [0, 1], [1, 2], [1, 3]].forEach(([p, c], i) => edge(L1[p][0], y1, L2[c][0], y2, '', 0));
+      L2.forEach(([x], i) => { edge(x, y2, leafX[i * 2], yl + 3, '', 0); edge(x, y2, leafX[i * 2 + 1], yl + 3, '', 0); });
+      out += `<line class="cut" x1="8" x2="767" y1="${yl - 24}" y2="${yl - 24}"/>`;
+      leafX.forEach((x) => { out += `<rect class="leaf" x="${x - 20}" y="${yl - 8}" width="40" height="22" rx="4"/><text x="${x}" y="${yl + 7}" text-anchor="middle">…</text>`; });
+      const node = ([x, t, g], y) => `<g class="g-${g}"><rect class="n" x="${x - nodeW(t) / 2}" y="${y - 14}" width="${nodeW(t)}" height="28" rx="6"/><text x="${x}" y="${y + 4}" text-anchor="middle">${esc(t)}</text></g>`;
+      out += node(root, y0) + L1.map((n) => node(n, y1)).join('') + L2.map((n) => node(n, y2)).join('');
+      out += `<text class="cap" x="387.5" y="${yl + 40}" text-anchor="middle">Les divisions sur la météo commencent sous les pointillés : température à la profondeur 3, pression à 5, vent à 6</text>`;
+      $('#tree').innerHTML = `<svg viewBox="0 0 775 318" role="img" aria-label="Trois premiers niveaux de l’arbre : nombre d’usagers, âge moyen ou localisation en agglomération, puis situation routière, deux-roues, âge et sens de circulation. La météo n’apparaît qu’aux niveaux inférieurs.">${out}</svg>`;
+    })();
+
+    /* ============ Reveal bars on scroll ============ */
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('on'); io.unobserve(e.target); } });
+      }, { threshold: 0.25 });
+      $$('.grow').forEach((s) => io.observe(s));
+    } else { $$('.grow').forEach((s) => s.classList.add('on')); }
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+
+<html class="no-js" lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="Reproduction de JSONSchemaBench avec Outlines et Guidance pour étudier les réussites et limites du décodage contraint conforme aux schémas JSON." name="description"/>
+<meta content="#06121f" name="theme-color"/>
+<title>Sorties structurées des LLM - Younes Arjdal</title>
+<link href="../../assets/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<script>document.documentElement.classList.replace('no-js', 'js');</script>
+<style>
+    :root {
+      --ink: #06121f;
+      --ink-2: #0a1b2e;
+      --paper: #f4f6f8;
+      --text: #12202e;
+      --muted: #566677;
+      --line: #d6dee6;
+      --dline: rgba(255, 255, 255, 0.13);
+      --blue: #1d5f9b;
+      --cy: #6bb8f5;
+      --ok: #4fd69c;
+      --bad: #ff7a84;
+      --c-compile: #c98a12;
+      --c-gen: #6d4fe0;
+      --c-val: #d63d46;
+      --c-ok: #178f5b;
+      --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --r: 8px;
+      --w: 1160px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background: var(--paper);
+      font-family: var(--sans);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    code { font-family: var(--mono); }
+    .wrap { width: min(calc(100% - 40px), var(--w)); margin: 0 auto; }
+    :focus-visible { outline: 3px solid rgba(107, 184, 245, 0.7); outline-offset: 3px; }
+
+    /* ---------- Header ---------- */
+    .top {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(6, 18, 31, 0.84);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--dline);
+    }
+    .top .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 64px; }
+    .brand {
+      display: grid; place-items: center; width: 38px; height: 38px;
+      border-radius: 9px; background: #fff; color: var(--ink);
+      font-weight: 600; letter-spacing: -0.03em; text-decoration: none;
+    }
+    .top nav { display: flex; gap: 26px; }
+    .top nav a { color: #b4c4d4; font-size: 0.9rem; font-weight: 500; text-decoration: none; }
+    .top nav a:hover { color: #fff; }
+
+    /* ---------- Buttons ---------- */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 44px; padding: 0 18px; border-radius: var(--r);
+      border: 1px solid transparent; font: 600 0.92rem var(--sans);
+      text-decoration: none; cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.15s;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-light { background: #fff; color: var(--ink); }
+    .btn-light:hover { background: #e6eef6; }
+    .btn-ghost { background: transparent; color: #dbe7f2; border-color: rgba(255, 255, 255, 0.25); }
+    .btn-ghost:hover { border-color: rgba(255, 255, 255, 0.6); }
+    .btn-dark { background: var(--ink); color: #fff; }
+    .btn-dark:hover { background: #12304f; }
+    .btn[disabled] { opacity: 0.4; cursor: default; transform: none; }
+
+    /* ---------- Hero ---------- */
+    .hero { background: var(--ink); color: #fff; padding: 56px 0 88px; }
+    .back { display: inline-block; margin-bottom: 44px; color: #8fa6bb; font-size: 0.9rem; text-decoration: none; }
+    .back:hover { color: #fff; }
+    .hero-head { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); gap: 56px; align-items: end; }
+    h1 {
+      margin: 0; font-size: clamp(2.8rem, 6.6vw, 5.8rem);
+      line-height: 0.98; letter-spacing: -0.045em; font-weight: 600;
+    }
+    .sub { margin: 20px 0 0; font: 400 1rem var(--mono); color: var(--cy); }
+    .lede { margin: 0 0 24px; max-width: 52ch; color: #b9c9d9; font-size: 1.06rem; }
+    .meta { display: grid; gap: 10px; margin: 0; font-size: 0.88rem; }
+    .meta div { display: grid; grid-template-columns: 92px 1fr; gap: 12px; padding-top: 10px; border-top: 1px solid var(--dline); }
+    .meta dt { color: #7f95aa; }
+    .meta dd { margin: 0; color: #dbe7f2; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+
+    /* ---------- Live demo ---------- */
+    .demo {
+      margin-top: 64px; padding: 28px;
+      border: 1px solid var(--dline); border-radius: 12px;
+      background: var(--ink-2);
+    }
+    .demo-intro { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 20px; }
+    .demo-intro h2 { margin: 0; font-size: 1.25rem; letter-spacing: -0.02em; font-weight: 600; }
+    .demo-intro p { margin: 0; max-width: 62ch; color: #9fb4c8; font-size: 0.95rem; }
+    .schema-chip { font: 500 0.82rem var(--mono); color: #d8edff; padding: 4px 10px; border: 1px solid rgba(107, 184, 245, 0.4); border-radius: 6px; background: rgba(107, 184, 245, 0.1); white-space: nowrap; }
+    .demo-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; border-top: 1px solid var(--dline); border-bottom: 1px solid var(--dline); }
+    .switch { display: inline-flex; align-items: center; gap: 12px; color: #dbe7f2; font-weight: 500; cursor: pointer; }
+    .switch input { position: absolute; opacity: 0; pointer-events: none; }
+    .knob { position: relative; width: 46px; height: 26px; border-radius: 99px; background: #2a4561; transition: background 0.2s; }
+    .knob::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+    .switch input:checked + .knob { background: var(--ok); }
+    .switch input:checked + .knob::after { transform: translateX(20px); }
+    .switch input:focus-visible + .knob { outline: 3px solid rgba(107, 184, 245, 0.7); outline-offset: 3px; }
+    .switch b { font-family: var(--mono); font-weight: 600; }
+    .demo-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .fsm { display: flex; align-items: flex-end; overflow-x: auto; padding: 26px 2px 10px; scrollbar-width: thin; }
+    .fsm-node {
+      flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+      border: 1.5px solid #3b5876; color: #8fa6bb; font: 500 0.8rem var(--mono); transition: all 0.25s;
+    }
+    .fsm-node.acc { box-shadow: inset 0 0 0 3px var(--ink-2), inset 0 0 0 4.5px #3b5876; }
+    .fsm-node.cur { border-color: var(--cy); color: #fff; background: rgba(107, 184, 245, 0.18); box-shadow: 0 0 0 6px rgba(107, 184, 245, 0.12); }
+    .fsm-node.done { border-color: var(--ok); color: var(--ok); }
+    .fsm-edge { flex: 1 0 70px; min-width: 70px; padding: 0 6px; text-align: center; font: 500 0.78rem var(--mono); color: #7f98b0; }
+    .fsm-edge::after { content: ""; display: block; height: 1px; margin: 22px 0 21px; background: #3b5876; }
+    .fsm.off { opacity: 0.4; }
+    .fsm-note { margin: 4px 0 0; color: #7f98b0; font-size: 0.82rem; min-height: 1.4em; }
+
+    .thead, .trow { display: grid; grid-template-columns: minmax(96px, 0.9fr) minmax(0, 1fr) 54px minmax(0, 1.3fr); gap: 16px; align-items: center; }
+    .thead { padding: 22px 14px 10px; color: #7189a1; font-size: 0.78rem; }
+    .trow { padding: 10px 14px; border: 1px solid transparent; border-radius: 10px; transition: opacity 0.3s, background 0.3s; }
+    .trow.pick { background: rgba(107, 184, 245, 0.09); border-color: rgba(107, 184, 245, 0.35); }
+    .trow.masked { opacity: 0.38; }
+    .ttok { width: fit-content; max-width: 100%; padding: 4px 9px; border-radius: 6px; background: rgba(255, 255, 255, 0.06); color: #e8f1f8; font: 500 0.9rem var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ttok.legal { box-shadow: inset 0 0 0 1px rgba(79, 214, 156, 0.45); }
+    .ttok.illegal { box-shadow: inset 0 0 0 1px rgba(255, 122, 132, 0.45); }
+    .tlogit, .tprob { display: flex; align-items: center; gap: 10px; }
+    .bar { flex: 1; height: 8px; border-radius: 99px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
+    .bar i { display: block; width: 0; height: 100%; border-radius: inherit; background: #5a7894; transition: width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .tprob .legal i { background: var(--ok); }
+    .tprob .illegal i { background: var(--bad); }
+    .tlogit span, .tprob span { min-width: 46px; text-align: right; color: #9fb4c8; font: 500 0.78rem var(--mono); }
+    .tmask { text-align: center; font: 600 0.8rem var(--mono); }
+    .tmask.zero { color: var(--ok); }
+    .tmask.inf { color: var(--bad); }
+    .tmask.na { color: #58728c; }
+    .demo-done { margin: 18px 0 4px; padding: 16px 18px; border-left: 3px solid var(--cy); background: rgba(107, 184, 245, 0.07); color: #cfe0ef; }
+    .legend-line { display: flex; flex-wrap: wrap; gap: 18px; margin: 12px 14px 0; color: #7f98b0; font-size: 0.8rem; }
+    .legend-line span::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 7px; border-radius: 50%; background: var(--ok); }
+    .legend-line span:nth-child(2)::before { background: var(--bad); }
+
+    .out { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 22px; padding: 16px 18px; border-radius: 10px; background: #050e18; border: 1px solid var(--dline); }
+    .out-label { color: #7189a1; font-size: 0.8rem; }
+    #demo-out { flex: 1 1 260px; font: 500 1.02rem var(--mono); color: #dbe7f2; word-break: break-word; }
+    #demo-out span.o-ok { color: var(--ok); }
+    #demo-out span.o-bad { color: var(--bad); text-decoration: underline wavy rgba(255, 122, 132, 0.6); text-underline-offset: 4px; }
+    .verdict { padding: 5px 12px; border-radius: 99px; font-size: 0.82rem; font-weight: 600; }
+    .verdict.ok { background: rgba(79, 214, 156, 0.15); color: var(--ok); }
+    .verdict.bad { background: rgba(255, 122, 132, 0.15); color: var(--bad); }
+
+    /* ---------- Sections ---------- */
+    .sec { padding: 104px 0; }
+    .sec.white { background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .sec.dark { background: var(--ink); color: #fff; }
+    .split { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 72px; }
+    .split > header { align-self: start; position: sticky; top: 96px; }
+    h2 { margin: 0 0 16px; font-size: clamp(1.9rem, 3.4vw, 2.8rem); line-height: 1.1; letter-spacing: -0.035em; font-weight: 600; }
+    .split > header p { max-width: 34ch; margin: 0; color: var(--muted); }
+    .dark .split > header p { color: #9fb4c8; }
+    h3 { margin: 0; font-size: 1.15rem; letter-spacing: -0.02em; font-weight: 600; }
+    p { margin-top: 0; }
+
+    /* Approach */
+    .steps { counter-reset: s; margin: 0 0 56px; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .steps li { display: grid; grid-template-columns: 36px 130px 1fr; gap: 16px; align-items: baseline; padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .steps li::before { counter-increment: s; content: counter(s); color: var(--blue); font: 500 0.9rem var(--mono); }
+    .steps b { font-size: 1.15rem; letter-spacing: -0.02em; font-weight: 600; }
+    .steps span { color: var(--muted); }
+    .tests { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+    .test { padding-top: 16px; border-top: 3px solid var(--ink); }
+    .test p { margin: 10px 0 0; color: var(--muted); }
+    .test ul { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 0.92rem; }
+    .test li::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 9px; border-radius: 2px; background: var(--c); }
+    .k-compile { --c: var(--c-compile); } .k-gen { --c: var(--c-gen); } .k-val { --c: var(--c-val); } .k-ok { --c: var(--c-ok); }
+
+    /* Results */
+    .stack-group { max-width: 100%; }
+    .sb { display: grid; grid-template-columns: 150px minmax(0, 1fr) 84px; gap: 20px; align-items: center; padding: 14px 0; border-top: 1px solid var(--dline); }
+    .sb-name b { display: block; font-weight: 600; }
+    .sb-name small { color: #8097ac; }
+    .stack { display: flex; height: 34px; border-radius: 6px; overflow: hidden; background: rgba(255, 255, 255, 0.06); }
+    .stack i { display: block; width: var(--w); height: 100%; padding-left: 8px; overflow: hidden; color: #06121f; font: 500 0.72rem/34px var(--mono); font-style: normal; white-space: nowrap; transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .js .stack:not(.on) i { width: 0; }
+    .s-ok { background: var(--ok); } .s-val { background: var(--bad); } .s-gen { background: #b79cff; } .s-compile { background: #f5c26b; }
+    .sb-val { text-align: right; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.03em; }
+    .sb.hl .sb-val { color: var(--ok); }
+    .legend { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 18px 0 0; color: #9fb4c8; font-size: 0.85rem; }
+    .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 8px; border-radius: 2px; background: var(--c); }
+    .legend .k-ok { --c: var(--ok); } .legend .k-val { --c: var(--bad); } .legend .k-gen { --c: #b79cff; } .legend .k-compile { --c: #f5c26b; }
+    .res-block + .res-block { margin-top: 72px; }
+    .res-block h3 { margin-bottom: 8px; font-size: 1.5rem; letter-spacing: -0.03em; }
+    .res-block > p { max-width: 62ch; margin-bottom: 20px; color: #a9bccd; }
+
+    /* Failures */
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+    .tab { min-height: 40px; padding: 0 16px; border: 1px solid var(--line); border-radius: 99px; background: #fff; color: var(--text); font: 500 0.92rem var(--sans); cursor: pointer; }
+    .tab[aria-selected="true"], .tab[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .fa-head { max-width: 60ch; margin-bottom: 32px; }
+    .fa-head h3 { margin-bottom: 8px; font-size: 1.6rem; letter-spacing: -0.03em; }
+    .fa-head p { margin: 0; color: var(--muted); }
+    .fa-stages { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 36px; }
+    .fa-stage { border-top: 3px solid var(--c); }
+    .fa-stage h4 { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 14px 0 4px; font-size: 1.02rem; font-weight: 600; }
+    .fa-stage h4 span { color: var(--muted); font: 500 0.82rem var(--mono); white-space: nowrap; }
+    .fa-group { margin: 16px 0 2px; color: var(--muted); font-size: 0.8rem; }
+    .fa-row { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) 40px; gap: 10px; align-items: center; padding: 5px 0; }
+    .fa-row code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.78rem; }
+    .fa-bar { height: 8px; border-radius: 99px; background: #e6ecf2; overflow: hidden; }
+    .fa-bar i { display: block; width: var(--w); height: 100%; border-radius: inherit; background: var(--c); transition: width 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .js .fa-bar:not(.on) i { width: 0; }
+    .fa-row b { text-align: right; font: 500 0.8rem var(--mono); }
+
+    /* Features */
+    .insights { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; margin-bottom: 56px; }
+    .insights div { padding-top: 14px; border-top: 3px solid var(--ink); }
+    .insights h3 { margin-bottom: 8px; font-size: 1.05rem; }
+    .insights p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+    .hm-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+    .hm-tools .tab { min-height: 36px; font-size: 0.85rem; }
+    table.hm { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .hm th { padding: 10px 8px; border-bottom: 2px solid var(--ink); color: var(--text); font-size: 0.85rem; font-weight: 600; text-align: left; }
+    .hm th:not(:first-child) { text-align: center; }
+    .hm td { padding: 0; border-bottom: 1px solid var(--line); }
+    .hm td.f { padding: 9px 8px; font: 500 0.84rem var(--mono); }
+    .hm td.v { width: 19%; }
+    .hm td.v span { display: block; padding: 9px 0; text-align: center; font: 500 0.84rem var(--mono); }
+    .hm td.b span { background: rgba(18, 32, 46, calc(var(--v) * 0.5)); color: var(--text); }
+    .hm td.o span, .hm td.g span { background: rgba(29, 95, 155, calc(var(--v) * 0.92)); color: var(--text); }
+    .hm td.hi span { color: #fff; }
+    .hm-note { margin: 14px 0 0; color: var(--muted); font-size: 0.85rem; max-width: 70ch; }
+
+    /* Limits & next */
+    .rows { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .rows > li, .rows > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 32px; padding: 22px 0; border-bottom: 1px solid var(--line); }
+    .rows dt, .rows h3 { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; }
+    .rows dd, .rows p { margin: 0; color: var(--muted); }
+    .rows dd strong { color: var(--text); font-weight: 600; }
+    .drift { display: grid; gap: 4px; margin-top: 12px; font: 400 0.82rem var(--mono); color: var(--text); }
+    .dark .rows { border-color: var(--dline); }
+    .dark .rows > li { border-color: var(--dline); }
+    .dark .rows p { color: #a9bccd; }
+    .dark .rows h3 { color: #fff; }
+
+    /* Report */
+    .report { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 32px; }
+    .report h2 { max-width: 20ch; }
+    .report p { max-width: 56ch; margin: 0 0 20px; color: #a9bccd; }
+
+    footer.foot { padding: 30px 0 42px; color: var(--muted); font-size: 0.88rem; }
+    footer.foot .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+    footer.foot a { text-decoration: none; font-weight: 500; color: var(--blue); }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 980px) {
+      .hero-head { grid-template-columns: 1fr; gap: 36px; }
+      .split { grid-template-columns: 1fr; gap: 32px; }
+      .split > header { position: static; }
+      .insights, .tests { grid-template-columns: 1fr; }
+      .rows > li, .rows > div { grid-template-columns: 1fr; gap: 8px; }
+    }
+    @media (max-width: 720px) {
+      .top nav a:not(:first-child) { display: none; }
+      .sec { padding: 72px 0; }
+      .demo { padding: 20px 16px; }
+      .thead, .trow { grid-template-columns: minmax(80px, 1fr) 44px minmax(0, 1.4fr); gap: 10px; }
+      .thead > :nth-child(2), .trow > .tlogit { display: none; }
+      .steps li { grid-template-columns: 28px 1fr; }
+      .steps li span { grid-column: 2; }
+      .sb { grid-template-columns: 1fr 70px; gap: 10px 12px; }
+      .sb-name { grid-column: 1 / -1; }
+      .sb .stack { grid-column: 1; }
+      .sb-val { grid-column: 2; font-size: 1.2rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: 0.01ms !important; }
+    }
+  
+/* Feature table: fit the four headers comfortably on narrow screens */
+@media(max-width:420px){
+  .hm th{padding:8px 4px;font-size:.75rem}
+  .hm td.f{padding:8px 4px;font-size:.76rem}
+  .hm td.v span{font-size:.76rem}
+}
+/* Language switch : EN | FR, adjacent to YA */
+.identity-row{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.top .identity-row .lang-switch{position:static!important;top:auto;left:auto;right:auto;display:inline-flex!important;align-items:center;flex-direction:row!important;gap:7px!important;padding:0;background:none;border:0;white-space:nowrap}
+.top .identity-row .lang-switch a{display:inline-flex!important;align-items:center;font:600 .76rem var(--mono);text-decoration:none;color:#a9bfd2;padding:7px 2px;border:0}
+.top .identity-row .lang-switch a[aria-current="page"]{color:#fff;text-decoration:underline;text-underline-offset:4px}
+.top .identity-row .lang-switch a:hover{color:#fff}
+.lang-switch .lang-divider{color:#67839d;font-size:.8rem}
+@media(max-width:420px){.identity-row{gap:8px}.top .identity-row .lang-switch{gap:4px!important}}
+</style>
+<link href="https://younesmrc.github.io/projects/structured-outputs.html" hreflang="en" rel="alternate"/><link href="https://younesmrc.github.io/fr/projects/structured-outputs.html" hreflang="fr" rel="alternate"/><link href="https://younesmrc.github.io/projects/structured-outputs.html" hreflang="x-default" rel="alternate"/></head>
+<body>
+<header class="top">
+<div class="wrap">
+<div class="identity-row"><a aria-label="Aller à l’accueil" class="brand" href="../index.html#home">YA</a><nav aria-label="Choisir la langue" class="lang-switch"><a href="../../projects/structured-outputs.html" lang="en">EN</a><span aria-hidden="true" class="lang-divider">|</span><a aria-current="page" href="#" lang="fr">FR</a></nav></div>
+<nav aria-label="Navigation du projet">
+<a href="../index.html#projects">Tous les projets</a>
+<a href="#approach">Approche</a>
+<a href="#results">Résultats</a>
+<a href="#failures">Échecs</a>
+<a href="#features">Fonctionnalités</a>
+<a href="#report">Rapport</a>
+</nav>
+</div>
+</header>
+<main>
+<!-- ================= HERO + LIVE DEMO ================= -->
+<section class="hero" id="top">
+<div class="wrap">
+<a class="back" href="../index.html#projects">← Retour aux projets</a>
+<div class="hero-head">
+<div>
+<h1>Sorties structurées<br/>pour les LLM</h1>
+<p class="sub">Schémas JSON et décodage contraint</p>
+</div>
+<div>
+<p class="lede">
+              Demander à un modèle de produire du JSON ne garantit pas le respect du schéma dont dépend votre code. Le décodage contraint bloque les tokens interdits pendant la génération. Nous avons reproduit JSONSchemaBench sur 9 558 schémas réels pour comprendre quand cette méthode fonctionne et quand elle échoue.
+            </p>
+<dl class="meta">
+<div><dt>Projet</dt><dd>Projet de recherche M1 MIND, Sorbonne Université / LIP6, 2026</dd></div>
+<div><dt>Équipe</dt><dd>Younes Arjdal et Samy Mancer</dd></div>
+<div><dt>Encadrants</dt><dd>Mohamed-Amine Baazizi, Nour ElHouda Ben Ali</dd></div>
+<div><dt>Technologies</dt><dd>Llama-3.1-1B-Instruct, Outlines, Guidance, Python</dd></div>
+</dl>
+<div class="hero-actions">
+<a class="btn btn-light" href="../../assets/projects/structured-outputs/report.pdf" rel="noreferrer" target="_blank">Lire le rapport (PDF)</a>
+<a class="btn btn-ghost" href="#results">Accéder aux résultats</a>
+</div>
+</div>
+</div>
+<div class="demo" id="demo-app">
+<div class="demo-intro">
+<div>
+<h2>Suivre une génération étape par étape</h2>
+<p>Le modèle attribue un score à chaque token candidat. La contrainte ajoute −∞ aux tokens qui ne peuvent pas prolonger légalement la sortie, puis le softmax renormalise les scores. Activez ou désactivez la contrainte pour comparer.</p>
+</div>
+<code class="schema-chip">{ "nom": "Alice" | "Bob" }</code>
+</div>
+<div class="demo-bar">
+<label class="switch">
+<input id="demo-toggle" role="switch" type="checkbox"/>
+<span class="knob"></span>
+<span>Décodage contraint : <b id="demo-state">désactivé</b></span>
+</label>
+<div class="demo-btns">
+<button class="btn btn-light" id="demo-next" type="button">Token suivant</button>
+<button class="btn btn-ghost" id="demo-auto" type="button">Lecture automatique</button>
+<button class="btn btn-ghost" id="demo-reset" type="button">Réinitialiser</button>
+</div>
+</div>
+<div aria-label="Automate à états finis compilé depuis le schéma" class="fsm" id="demo-fsm"></div>
+<p class="fsm-note" id="demo-fsm-note"></p>
+<div aria-live="polite" id="demo-table"></div>
+<div class="out">
+<span class="out-label">Sortie</span>
+<code id="demo-out"></code>
+<span class="verdict" hidden="" id="demo-verdict"></span>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= APPROACH ================= -->
+<section class="sec" id="approach">
+<div class="wrap split">
+<header>
+<h2>Suivre chaque schéma jusqu'à son point d'échec</h2>
+<p>Un taux de réussite global masque l'origine des erreurs. Nous avons enregistré le résultat de chaque schéma à chaque étape.</p>
+</header>
+<div>
+<ol class="steps">
+<li><b>Schéma</b><span>Sélection d'un schéma JSON de JSONSchemaBench : GitHub, Kubernetes, Snowplow, appels de fonctions, etc.</span></li>
+<li><b>Compilation</b><span>Transformation en contraintes avec Outlines (automate à états finis) ou Guidance (génération entrelacée).</span></li>
+<li><b>Génération</b><span>Décodage contraint avec Llama-3.1-1B-Instruct.</span></li>
+<li><b>Validation</b><span>Vérification de la sortie avec un validateur externe, <code>jsonschema</code>.</span></li>
+</ol>
+<div class="tests">
+<div class="test">
+<h3>Pipeline A : de bout en bout</h3>
+<p>Exécution de l'ensemble de la chaîne sur les 9 558 schémas. Chaque schéma aboutit à un seul résultat.</p>
+<ul>
+<li class="k-compile">Erreur de compilation</li>
+<li class="k-gen">Erreur de génération (délai dépassé, mémoire insuffisante)</li>
+<li class="k-val">Erreur de validation</li>
+<li class="k-ok">Instance valide</li>
+</ul>
+</div>
+<div class="test">
+<h3>Pipeline B : sans LLM</h3>
+<p>Tokenisation des instances valides et invalides de JSON Schema Test Suite, puis passage dans chaque grammaire compilée, fonctionnalité par fonctionnalité.</p>
+<ul>
+<li>Rejette une instance valide : trop contraignant</li>
+<li>Accepte une instance invalide : pas assez contraignant</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= RESULTS ================= -->
+<section class="sec dark" id="results">
+<div class="wrap split">
+<header>
+<h2>Guidance obtient un meilleur score car il accepte davantage de schémas</h2>
+<p>Une fois le schéma compilé, les deux frameworks réussissent presque aussi souvent. Leurs modes d'échec diffèrent.</p>
+</header>
+<div>
+<div class="res-block">
+<h3>Résultat des 9 558 schémas</h3>
+<p>Sans framework, 39 schémas produisent une instance valide. Outlines atteint 54 %, Guidance environ 80 %.</p>
+<div class="stack-group" id="chart-all"></div>
+<div class="legend">
+<span class="k-ok">Valide</span><span class="k-val">Sortie invalide</span><span class="k-gen">Échec de génération</span><span class="k-compile">Échec de compilation</span>
+</div>
+</div>
+<div class="res-block">
+<h3>Après compilation, les résultats sont presque identiques</h3>
+<p>Outlines a compilé 5 827 schémas et Guidance 8 549. Ensuite, 88,6 % et 89,5 % réussissent. La différence tient aux autres échecs : Outlines retourne surtout des sorties invalides, tandis que Guidance dépasse souvent le délai imparti.</p>
+<div class="stack-group" id="chart-compiled"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= FAILURES ================= -->
+<section class="sec" id="failures">
+<div class="wrap split">
+<header>
+<h2>Les deux frameworks échouent à des étapes différentes</h2>
+<p>Résultats de notre exécution sur l'ensemble du benchmark, regroupés selon l'étape d'échec.</p>
+</header>
+<div>
+<div aria-label="Framework" class="tabs" role="tablist">
+<button aria-selected="true" class="tab" data-fa="outlines" role="tab">Outlines</button>
+<button aria-selected="false" class="tab" data-fa="guidance" role="tab">Guidance</button>
+<button aria-selected="false" class="tab" data-fa="free" role="tab">Sans framework</button>
+</div>
+<div id="fa-panel" role="tabpanel"></div>
+</div>
+</div>
+</section>
+<!-- ================= FEATURES ================= -->
+<section class="sec white" id="features">
+<div class="wrap">
+<div class="split" style="margin-bottom: 0">
+<header>
+<h2>Une prise en charge inégale selon les fonctionnalités</h2>
+<p>Pipeline B, sans LLM : proportion d'instances de la suite de tests correctement traitées par chaque grammaire compilée.</p>
+</header>
+<div class="insights" style="grid-template-columns: 1fr; gap: 24px; margin-bottom: 0">
+<div>
+<h3>Outlines privilégie la prudence</h3>
+<p>Il gère les vérifications locales comme <code>type</code>, <code>enum</code> et <code>default</code>, mais échoue sur les contraintes globales comme <code>if-then-else</code>, <code>contains</code> and <code>.</code>.</p>
+</div>
+<div>
+<h3>Guidance couvre davantage de cas, selon la version</h3>
+<p>Il obtient de bons scores pour <code>anyOf</code>, <code>items</code>, <code>required</code> et les bornes numériques. Plusieurs scores ont évolué entre la version de l'article et la nôtre.</p>
+</div>
+<div>
+<h3>Un score positif peut ne rien signifier</h3>
+<p>Certains groupes de tests ne contiennent aucune instance valide. Un système naïf qui rejette tout peut donc obtenir un score positif : c'est la colonne de référence.</p>
+</div>
+</div>
+</div>
+<div style="margin-top: 56px">
+<div aria-label="Options du tableau" class="hm-tools" role="group">
+<button aria-pressed="true" class="tab" id="hm-gap">Écart décroissant</button>
+<button aria-pressed="false" class="tab" id="hm-az">De A à Z</button>
+<button class="tab" id="hm-more" type="button">Tout afficher</button>
+</div>
+<table class="hm">
+<thead><tr><th scope="col">Fonctionnalité</th><th scope="col">Référence « tout rejeter »</th><th scope="col">Outlines</th><th scope="col">Guidance</th></tr></thead>
+<tbody id="hm-body"></tbody>
+</table>
+<p class="hm-note">1,00 signifie que toutes les instances valides sont acceptées et toutes les invalides rejetées. Notre reproduction s'appuie sur JSON Schema Test Suite.</p>
+</div>
+</div>
+</section>
+<!-- ================= LIMITS ================= -->
+<section class="sec" id="limits">
+<div class="wrap split">
+<header>
+<h2>Les limites de ces chiffres</h2>
+<p>Cette reproduction partielle, réalisée sous des contraintes concrètes, renseigne davantage sur les causes d'échec que sur la vitesse.</p>
+</header>
+<dl class="rows">
+<div>
+<dt>Délai de compilation de 60 secondes</dt>
+<dd>Notre pipeline laisse 60 secondes pour compiler chaque schéma, ce qui pénalise Outlines par construction. En production, une grammaire est généralement compilée une seule fois puis réutilisée, ce qui réduirait nettement cet écart. Ces chiffres décrivent notre configuration, pas un classement universel.</dd>
+</div>
+<div>
+<dt>Modèle de 1 milliard de paramètres et prompt de 2 048 tokens</dt>
+<dd>Nous avons utilisé Llama-3.1-1B-Instruct pour sa stabilité. Les grands schémas dépassaient sa fenêtre de contexte, ce qui explique à lui seul 1 355 échecs de la référence sans framework.</dd>
+</div>
+<div>
+<dt>GPU partagés</dt>
+<dd>Les calculs ont été effectués sur les machines PPTI mutualisées de la Sorbonne (Tesla V100), souvent avec seulement 30 % de VRAM disponible. Les erreurs de mémoire et dépassements de délai ont nécessité un mécanisme de surveillance et de relance, sans permettre un benchmark de latence stable (GCT, TTFT, TPOT).</dd>
+</div>
+<div>
+<dt>Évolution des versions des bibliothèques</dt>
+<dd>
+              Nous avons utilisé Outlines v0.1.8 et Guidance v0.3. Par rapport à l'article, certaines fonctionnalités ont progressé discrètement, d'autres ont régressé.
+              <div class="drift">
+<span>Guidance maxProperties 0.00 → 0.67</span>
+<span>Guidance multipleOf 0.20 → 0.60</span>
+<span>Guidance exclusiveMinimum 1.00 → 0.00</span>
+<span>Guidance pattern 1.00 → 0.67</span>
+</div>
+</dd>
+</div>
+</dl>
+</div>
+</section>
+<!-- ================= NEXT ================= -->
+<section class="sec dark" id="next">
+<div class="wrap split">
+<header>
+<h2>Ce que nous n'avons pas pu approfondir</h2>
+<p>Pistes de travail consignées dans le rapport.</p>
+</header>
+<ul class="rows">
+<li><h3>Ajouter XGrammar</h3><p>Comparer les trois frameworks sur le benchmark complet, notamment sur les schémas Hard et Ultra, pour vérifier si son avantage en latence se confirme.</p></li>
+<li><h3>Mesurer correctement la latence</h3><p>Utiliser un GPU dédié et des événements CUDA pour mesurer fiablement la compilation, le temps jusqu'au premier token et le temps par token selon la complexité du schéma.</p></li>
+<li><h3>Modéliser les causes d'échec des schémas</h3><p>Décrire chaque schéma par sa taille, sa profondeur d'imbrication et les mots-clés utilisés, puis ajuster un modèle interprétable (arbre de décision, XGBoost) aux résultats pour déterminer les facteurs d'échec.</p></li>
+<li><h3>Contraindre les séquences entières par diffusion</h3><p>Les masques appliqués token par token ne peuvent pas exprimer des règles comme <code>uniqueItems</code> ou <code>not</code>. Les modèles de diffusion discrète affinent la séquence entière ; ces règles pourraient alors être appliquées comme projections à chaque étape.</p></li>
+</ul>
+</div>
+</section>
+<!-- ================= REPORT ================= -->
+<section class="sec" id="report" style="background: var(--ink); padding-top: 0">
+<div class="wrap">
+<div class="report" style="padding-top: 72px; border-top: 1px solid var(--dline)">
+<div>
+<h2 style="color: #fff">Tous les détails dans le rapport</h2>
+<p>Formalisation du décodage contraint, exemples de schémas JSON, les deux pipelines, tableau complet des fonctionnalités et graphiques des échecs. 34 pages, rédigées en français.</p>
+</div>
+<a class="btn btn-light" href="../../assets/projects/structured-outputs/report.pdf" rel="noreferrer" target="_blank">Ouvrir le PDF</a>
+</div>
+</div>
+</section>
+</main>
+<footer class="foot">
+<div class="wrap">
+<span>© 2026 Younes Arjdal</span>
+<a href="../index.html#projects">Retour aux projets ↑</a>
+</div>
+</footer>
+<script>
+  (() => {
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+    const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const fmt = (n) => n.toLocaleString('fr-FR');
+
+    /* ============ Live demo ============ */
+    const STEPS = [
+      { valid: ['{'],                cand: [['Sure', 2.8], ['{', 2.5], ['```json', 1.4], ['Here', 0.9], ['[', 0.3]] },
+      { valid: ['"nom"'],            cand: [['"name"', 2.7], ['"nom"', 2.2], ['"user"', 1.1], ['"id"', 0.8], ['}', -0.2]] },
+      { valid: [':'],                cand: [[':', 3.0], ['=', 0.9], ['->', 0.4], ['is', 0.1]] },
+      { valid: ['"Alice"', '"Bob"'], cand: [['42', 2.6], ['"Alice"', 2.4], ['"Bob"', 2.0], ['"Charlie"', 1.2], ['null', 0.6]] },
+      { valid: ['}'],                cand: [[',', 2.6], ['}', 2.2], ['"age"', 1.0], ['\\n', 0.3]] }
+    ];
+    const EDGES = ['{', '"nom"', ':', '"Alice" | "Bob"', '}'];
+    const demo = { i: 0, on: false, out: [], timer: null };
+    const el = {
+      toggle: $('#demo-toggle'), state: $('#demo-state'), next: $('#demo-next'), auto: $('#demo-auto'), reset: $('#demo-reset'),
+      fsm: $('#demo-fsm'), note: $('#demo-fsm-note'), table: $('#demo-table'), out: $('#demo-out'), verdict: $('#demo-verdict')
+    };
+
+    const softmax = (a) => {
+      const m = Math.max(...a.filter(Number.isFinite));
+      const e = a.map((x) => Math.exp(x - m));
+      const s = e.reduce((p, c) => p + c, 0);
+      return e.map((x) => x / s);
+    };
+    const rawArgmax = (st) => st.cand.reduce((b, c, k, arr) => (c[1] > arr[b][1] ? k : b), 0);
+
+    function currentDist() {
+      const st = STEPS[demo.i];
+      const masked = st.cand.map(([t, l]) => (demo.on && !st.valid.includes(t) ? -Infinity : l));
+      const probs = softmax(masked);
+      return { st, probs, pick: probs.indexOf(Math.max(...probs)) };
+    }
+
+    function renderFsm() {
+      const done = demo.i >= STEPS.length;
+      let html = '';
+      for (let k = 0; k <= EDGES.length; k++) {
+        const cls = ['fsm-node'];
+        if (k === EDGES.length) cls.push('acc');
+        if (demo.on) {
+          if (k < demo.i) cls.push('done');
+          else if (k === demo.i) cls.push('cur');
+        }
+        html += `<div class="${cls.join(' ')}">q${k}</div>`;
+        if (k < EDGES.length) html += `<div class="fsm-edge">${esc(EDGES[k])}</div>`;
+      }
+      el.fsm.innerHTML = html;
+      el.fsm.classList.toggle('off', !demo.on);
+      el.note.textContent = demo.on
+        ? (done ? 'L’automate se termine dans son état acceptant q5.' : `Dans l’état q${demo.i}, seuls les tokens verts peuvent prolonger la sortie.`)
+        : 'Contrainte désactivée : aucune grammaire n’est appliquée, le modèle peut choisir n’importe quel token.';
+    }
+
+    function renderTable() {
+      if (demo.i >= STEPS.length) {
+        const overrides = demo.out.filter((o) => o.overrode).length;
+        el.table.innerHTML = `<p class="demo-done">${demo.on
+          ? `Tous les tokens respectent la grammaire : la sortie est donc valide par construction. La contrainte a écarté le premier choix du modèle ${overrides} fois.`
+          : 'Rien n’empêchait le modèle de choisir son token préféré à chaque étape. Activez le décodage contraint et recommencez.'}</p>`;
+        return;
+      }
+      const { st, probs, pick } = currentDist();
+      const rows = st.cand.map(([tok, logit], k) => {
+        const legal = st.valid.includes(tok);
+        const masked = demo.on && !legal;
+        const lw = Math.max(4, Math.min(100, ((logit + 1) / 4) * 100));
+        const mask = demo.on ? (legal ? '+0' : '−∞') : '·';
+        const mcls = demo.on ? (legal ? 'zero' : 'inf') : 'na';
+        return `<div class="trow ${masked ? 'masked' : ''} ${k === pick ? 'pick' : ''}">
+          <code class="ttok ${legal ? 'legal' : 'illegal'}">${esc(tok)}</code>
+          <div class="tlogit"><div class="bar"><i data-w="${lw}"></i></div><span>${logit.toFixed(1)}</span></div>
+          <div class="tmask ${mcls}">${mask}</div>
+          <div class="tprob"><div class="bar ${legal ? 'legal' : 'illegal'}"><i data-w="${(probs[k] * 100).toFixed(1)}"></i></div><span>${(probs[k] * 100).toFixed(1)}%</span></div>
+        </div>`;
+      }).join('');
+      el.table.innerHTML = `
+        <div class="thead"><span>Token candidat</span><span>Logit du modèle</span><span>Mask</span><span>Probabilité après softmax</span></div>
+        ${rows}
+        <div class="legend-line"><span>autorisé par le schéma</span><span>interdit par le schéma</span></div>`;
+      requestAnimationFrame(() => requestAnimationFrame(() => $$('#demo-table .bar i').forEach((b) => { b.style.width = b.dataset.w + '%'; })));
+    }
+
+    function renderOut() {
+      el.out.innerHTML = demo.out.length
+        ? demo.out.map((o) => `<span class="${o.legal ? 'o-ok' : 'o-bad'}">${esc(o.tok)}</span>`).join(' ')
+        : '<span style="color:#58728c">…</span>';
+      const done = demo.i >= STEPS.length;
+      el.verdict.hidden = !done;
+      if (done) {
+        const text = demo.out.map((o) => o.tok).join(' ');
+        let ok = false, msg = 'JSON impossible à analyser';
+        try {
+          const obj = JSON.parse(text);
+          ok = obj && typeof obj === 'object' && Object.keys(obj).length === 1 && ['Alice', 'Bob'].includes(obj.nom);
+          if (!ok) msg = 'JSON analysable, mais non conforme au schéma';
+        } catch (e) { /* stays "not parsable" */ }
+        el.verdict.className = 'verdict ' + (ok ? 'ok' : 'bad');
+        el.verdict.textContent = ok ? 'Conforme au schéma' : msg;
+      }
+      el.next.disabled = done;
+      el.auto.disabled = done;
+    }
+
+    function renderDemo() { renderFsm(); renderTable(); renderOut(); }
+
+    function stopAuto() {
+      clearInterval(demo.timer); demo.timer = null; el.auto.textContent = 'Lecture automatique';
+    }
+    function step() {
+      if (demo.i >= STEPS.length) { stopAuto(); return; }
+      const { st, pick } = currentDist();
+      const tok = st.cand[pick][0];
+      demo.out.push({ tok, legal: st.valid.includes(tok), overrode: pick !== rawArgmax(st) });
+      demo.i++;
+      renderDemo();
+      if (demo.i >= STEPS.length) stopAuto();
+    }
+    function resetDemo() { stopAuto(); demo.i = 0; demo.out = []; renderDemo(); }
+
+    el.next.addEventListener('click', () => { stopAuto(); step(); });
+    el.reset.addEventListener('click', resetDemo);
+    el.auto.addEventListener('click', () => {
+      if (demo.timer) { stopAuto(); return; }
+      if (demo.i >= STEPS.length) resetDemo();
+      el.auto.textContent = 'Pause';
+      step();
+      demo.timer = setInterval(step, 1300);
+    });
+    el.toggle.addEventListener('change', () => {
+      demo.on = el.toggle.checked;
+      el.state.textContent = demo.on ? 'activé' : 'désactivé';
+      resetDemo();
+    });
+    renderDemo();
+
+    /* ============ Stacked outcome charts ============ */
+    const TOTAL = 9558;
+    function stack(target, rows) {
+      target.innerHTML = rows.map((r) => {
+        const segs = r.segs.map((s) => {
+          const p = (s.v / r.total) * 100;
+          const label = p >= 6 ? p.toFixed(p >= 10 ? 0 : 1) + '%' : '';
+          return `<i class="s-${s.k}" style="--w:${p}%" title="${esc(s.t)}">${label}</i>`;
+        }).join('');
+        return `<div class="sb ${r.hl ? 'hl' : ''}">
+          <div class="sb-name"><b>${esc(r.name)}</b><small>${esc(r.note)}</small></div>
+          <div class="stack" role="img" aria-label="${esc(r.aria)}">${segs}</div>
+          <div class="sb-val">${esc(r.value)}</div>
+        </div>`;
+      }).join('');
+    }
+    stack($('#chart-all'), [
+      { name: 'Sans framework', note: 'prompt seul', value: '0.4%', total: TOTAL, aria: '39 valides sur 9 558',
+        segs: [{ k: 'ok', v: 39, t: 'Valide' }, { k: 'val', v: TOTAL - 39, t: 'Sortie invalide' }] },
+      { name: 'Outlines', note: 'compilation de l’automate', value: '54%', total: TOTAL, aria: 'Outlines : 54 % valides',
+        segs: [{ k: 'ok', v: 5160, t: 'Valide' }, { k: 'val', v: 371, t: 'Sortie invalide' }, { k: 'gen', v: 296, t: 'Échec de génération' }, { k: 'compile', v: 3731, t: 'Échec de compilation' }] },
+      { name: 'Guidance', note: 'génération entrelacée', value: '≈80%', hl: true, total: TOTAL, aria: 'Guidance : environ 80 % valides',
+        segs: [{ k: 'ok', v: 7654, t: 'Valide' }, { k: 'val', v: 59, t: 'Sortie invalide' }, { k: 'gen', v: 836, t: 'Échec de génération' }, { k: 'compile', v: 1009, t: 'Échec de compilation' }] }
+    ]);
+    stack($('#chart-compiled'), [
+      { name: 'Outlines', note: '5 827 compilés', value: '88.6%', total: 5827, aria: 'Outlines après compilation : 88,6 % valides',
+        segs: [{ k: 'ok', v: 5160, t: 'Valide' }, { k: 'val', v: 371, t: 'Sortie invalide' }, { k: 'gen', v: 296, t: 'Échec de génération' }] },
+      { name: 'Guidance', note: '8 549 compilés', value: '89.5%', hl: true, total: 8549, aria: 'Guidance après compilation : 89,5 % valides',
+        segs: [{ k: 'ok', v: 7654, t: 'Valide' }, { k: 'val', v: 59, t: 'Sortie invalide' }, { k: 'gen', v: 836, t: 'Échec de génération' }] }
+    ]);
+
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('on'); io.unobserve(e.target); } });
+      }, { threshold: 0.35 });
+      $$('.stack').forEach((s) => io.observe(s));
+    } else {
+      $$('.stack').forEach((s) => s.classList.add('on'));
+    }
+
+    /* ============ Failure anatomy ============ */
+    const FA = {
+      outlines: {
+        title: 'Outlines échoue tôt, avant que le modèle génère un token.',
+        text: 'La plupart des échecs surviennent à la compilation : certains schémas dépassent 60 secondes ou utilisent une logique (not, oneOf, anyOf) difficile à encoder par automate fini.',
+        stages: [
+          { k: 'compile', name: 'Compilation', total: '3,770 (39%)', items: [
+            { g: 'Délai dépassé', l: '> 60 s', v: 2019 },
+            { g: 'Logique non prise en charge', l: 'not', v: 676 }, { l: 'oneOf', v: 639 }, { l: 'anyOf', v: 235 }, { l: 'if', v: 85 }, { l: 'allOf', v: 38 }, { l: 'format', v: 15 },
+            { l: 'uniqueItems', v: 3 }, { l: 'then', v: 2 }, { l: 'dependencies', v: 2 }, { l: 'patternProperties', v: 2 },
+            { g: 'Autres', l: 'erreur interne', v: 54 } ] },
+          { k: 'gen', name: 'Génération', total: '297 (3%)', items: [{ l: 'délai dépassé', v: 193 }, { l: 'mémoire GPU insuffisante', v: 104 }] },
+          { k: 'val', name: 'Validation', total: '376 (3.9%)', items: [
+            { g: 'Syntaxe invalide', l: 'virgule manquante', v: 35 }, { l: 'chaîne non terminée', v: 15 }, { l: 'valeur manquante', v: 5 }, { l: 'ponctuation manquante', v: 4 }, { l: 'texte supplémentaire', v: 4 }, { l: 'autre erreur de syntaxe', v: 3 },
+            { g: 'JSON valide, mauvais schéma', l: 'structure incorrecte', v: 135 }, { l: 'champs non conformes', v: 86 }, { l: 'erreur de liste', v: 33 }, { l: 'champ dimensions', v: 26 }, { l: 'champ type', v: 13 }, { l: 'autre', v: 17 } ] }
+        ]
+      },
+      guidance: {
+        title: 'Guidance refuse tôt, puis dépasse surtout les délais.',
+        text: 'Guidance refuse les schémas qu’il ne peut pas imposer exactement au lieu de les approximer. Ensuite, 836 générations dépassent le délai, conséquence de l’entrelacement sur les longs schémas. Les sorties invalides restent rares.',
+        stages: [
+          { k: 'compile', name: 'Compilation', total: '1,009 (10.6%)', items: [
+            { g: 'Formats non pris en charge', l: 'uri', v: 285 }, { l: 'path', v: 47 }, { l: 'topic', v: 44 }, { l: 'url', v: 34 }, { l: 'uri-reference', v: 17 }, { l: 'autres formats', v: 134 },
+            { g: 'Mots-clés non pris en charge', l: 'dependencies', v: 122 }, { l: 'uniqueItems', v: 86 }, { l: 'not', v: 85 }, { l: 'if / then / else', v: 33 }, { l: 'propertyNames', v: 19 }, { l: 'min/maxProperties', v: 31 },
+            { g: 'Limites du moteur', l: 'grand schéma', v: 3 }, { l: 'expression régulière non prise en charge', v: 2 }, { l: 'autres erreurs techniques', v: 67 } ] },
+          { k: 'gen', name: 'Génération', total: '837 (8%)', items: [{ l: 'délai dépassé', v: 836 }, { l: 'plantage', v: 1 }] },
+          { k: 'val', name: 'Validation', total: '58 (0.6%)', items: [{ l: 'oneOf', v: 52 }, { l: 'multipleOf', v: 2 }, { l: 'uniqueItems', v: 1 }, { l: 'pattern', v: 1 }, { l: 'anyOf', v: 1 }, { l: 'bug', v: 1 }] }
+        ]
+      },
+      free: {
+        title: 'Un prompt seul ne suffit pas.',
+        text: 'Avec le même modèle de 1 milliard de paramètres sans contrainte, 39 schémas sur 9 558 produisent une instance valide. La plupart des sorties dérivent, recopient le schéma ou ne peuvent pas être analysées.',
+        stages: [
+          { k: 'val', name: 'Pourquoi 9 519 schémas échouent', total: '', wide: true, items: [
+            { l: 'boucle / dérive', v: 3453 }, { l: 'JSON illisible', v: 2755 }, { l: 'prompt > 2 048 tokens', v: 1355 }, { l: 'préfixe « ## »', v: 753 }, { l: 'schéma recopié', v: 600 }, { l: 'refus', v: 307 }, { l: 'texte hors JSON', v: 243 }, { l: 'autre', v: 53 } ] },
+          { k: 'ok', name: 'Instances valides', total: '39 (0.4%)', items: [{ l: 'réussite', v: 39 }] }
+        ]
+      }
+    };
+
+    function renderFA(key) {
+      const d = FA[key];
+      const max = Math.max(...d.stages.flatMap((s) => s.items.map((i) => i.v)));
+      $('#fa-panel').innerHTML = `
+        <div class="fa-head"><h3>${esc(d.title)}</h3><p>${esc(d.text)}</p></div>
+        <div class="fa-stages">${d.stages.map((s) => {
+          let rows = '';
+          s.items.forEach((it) => {
+            if (it.g) rows += `<div class="fa-group">${esc(it.g)}</div>`;
+            const w = Math.max(2, (it.v / max) * 100);
+            rows += `<div class="fa-row"><code title="${esc(it.l)}">${esc(it.l)}</code><div class="fa-bar"><i style="--w:${w}%"></i></div><b>${fmt(it.v)}</b></div>`;
+          });
+          return `<div class="fa-stage k-${s.k}"><h4>${esc(s.name)}<span>${esc(s.total)}</span></h4>${rows}</div>`;
+        }).join('')}</div>`;
+      requestAnimationFrame(() => requestAnimationFrame(() => $$('#fa-panel .fa-bar').forEach((b) => b.classList.add('on'))));
+    }
+    $$('.tab[data-fa]').forEach((t) => t.addEventListener('click', () => {
+      $$('.tab[data-fa]').forEach((x) => x.setAttribute('aria-selected', String(x === t)));
+      renderFA(t.dataset.fa);
+    }));
+    renderFA('outlines');
+
+    /* ============ Feature heatmap ============ */
+    // [feature, reject-all baseline, Outlines (ours), Guidance (ours)]
+    const FEAT = [
+      ['additionalProperties', .22, .22, .78], ['allOf', .17, .42, .75], ['anchor', 0, .75, 1], ['anyOf', .13, .38, 1],
+      ['boolean_schema', .5, .5, 1], ['const', 0, .47, .59], ['contains', 0, 0, 0], ['content', 0, 0, 1], ['default', 0, .67, 1],
+      ['defs', 0, 0, 0], ['dependentRequired', 0, 0, 0], ['dependentSchemas', 0, 0, 0], ['dynamicRef', 0, 0, 0], ['enum', .07, .53, .73],
+      ['exclusiveMaximum', 0, 0, 1], ['exclusiveMinimum', 0, 0, 0], ['if-then-else', 0, 0, 0], ['infinite-loop', 0, 0, 1], ['items', 0, .10, 1],
+      ['maxContains', 0, 0, 0], ['maxItems', 0, 0, .5], ['maxLength', 0, 0, 0], ['maxProperties', 0, 0, .67], ['maximum', 0, 0, 1],
+      ['minContains', .13, .13, .13], ['minItems', 0, 0, .5], ['minLength', 0, 0, .5], ['minProperties', 0, 0, .5], ['minimum', 0, 0, 1],
+      ['multipleOf', .2, .4, .6], ['not', .22, .22, .22], ['oneOf', .27, .46, .46], ['pattern', 0, 0, .67], ['patternProperties', 0, 0, .5],
+      ['prefixItems', 0, .25, 1], ['properties', 0, .17, .83], ['propertyNames', 0, 0, 0], ['$ref', .06, .33, .89], ['required', 0, .4, 1],
+      ['type', 0, .64, .91], ['unevaluatedItems', .10, .17, .10], ['unevaluatedProperties', .14, .21, .14], ['uniqueItems', 0, .17, 0]
+    ];
+    const hm = { sort: 'gap', all: false };
+    const cell = (cls, v) => `<td class="v ${cls} ${v > 0.5 ? 'hi' : ''}"><span style="--v:${v}">${v.toFixed(2)}</span></td>`;
+    function renderHM() {
+      const rows = [...FEAT].sort((a, b) => hm.sort === 'az'
+        ? a[0].localeCompare(b[0])
+        : Math.abs(b[3] - b[2]) - Math.abs(a[3] - a[2]) || a[0].localeCompare(b[0]));
+      const shown = hm.all ? rows : rows.slice(0, 12);
+      $('#hm-body').innerHTML = shown.map(([n, b, o, g]) =>
+        `<tr><td class="f">${esc(n)}</td>${cell('b', b)}${cell('o', o)}${cell('g', g)}</tr>`).join('');
+      $('#hm-more').textContent = hm.all ? 'Afficher moins' : `Afficher les ${FEAT.length} éléments`;
+      $('#hm-gap').setAttribute('aria-pressed', String(hm.sort === 'gap'));
+      $('#hm-az').setAttribute('aria-pressed', String(hm.sort === 'az'));
+    }
+    $('#hm-gap').addEventListener('click', () => { hm.sort = 'gap'; renderHM(); });
+    $('#hm-az').addEventListener('click', () => { hm.sort = 'az'; renderHM(); });
+    $('#hm-more').addEventListener('click', () => { hm.all = !hm.all; renderHM(); });
+    renderHM();
+  })();
+  </script>
+</body>
+</html>

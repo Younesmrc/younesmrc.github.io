@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html lang="en" class="no-js">
+
+<html class="no-js" lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Road Accident Severity: enriching French accident records with historical weather, then measuring with interpretable models how much weather adds to predicting severity." />
-  <meta name="theme-color" content="#06121f" />
-  <title>Road Accident Severity — Younes Arjdal</title>
-  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <script>document.documentElement.classList.replace('no-js', 'js');</script>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="Road Accident Severity: enriching French accident records with historical weather, then measuring with interpretable models how much weather adds to predicting severity." name="description"/>
+<meta content="#06121f" name="theme-color"/>
+<title>Road Accident Severity - Younes Arjdal</title>
+<link href="../assets/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<script>document.documentElement.classList.replace('no-js', 'js');</script>
+<style>
     :root {
       --ink: #06121f;
       --ink-2: #0a1b2e;
@@ -265,362 +266,350 @@
       html { scroll-behavior: auto; }
       *, *::before, *::after { transition-duration: 0.01ms !important; }
     }
-  </style>
-</head>
+  
+/* Language switch : EN | FR, adjacent to YA */
+.identity-row{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.top .identity-row .lang-switch{position:static!important;top:auto;left:auto;right:auto;display:inline-flex!important;align-items:center;flex-direction:row!important;gap:7px!important;padding:0;background:none;border:0;white-space:nowrap}
+.top .identity-row .lang-switch a{display:inline-flex!important;align-items:center;font:600 .76rem var(--mono);text-decoration:none;color:#a9bfd2;padding:7px 2px;border:0}
+.top .identity-row .lang-switch a[aria-current="page"]{color:#fff;text-decoration:underline;text-underline-offset:4px}
+.top .identity-row .lang-switch a:hover{color:#fff}
+.lang-switch .lang-divider{color:#67839d;font-size:.8rem}
+@media(max-width:420px){.identity-row{gap:8px}.top .identity-row .lang-switch{gap:4px!important}}
+</style>
+<link href="https://younesmrc.github.io/projects/road-accident-severity.html" hreflang="en" rel="alternate"/><link href="https://younesmrc.github.io/fr/projects/road-accident-severity.html" hreflang="fr" rel="alternate"/><link href="https://younesmrc.github.io/projects/road-accident-severity.html" hreflang="x-default" rel="alternate"/></head>
 <body>
-  <header class="top">
-    <div class="wrap">
-      <a class="brand" href="../index.html#home" aria-label="Go to home">YA</a>
-      <nav aria-label="Project navigation">
-        <a href="../index.html#projects">All projects</a>
-        <a href="#data">Data</a>
-        <a href="#models">Models</a>
-        <a href="#interpretability">Interpretability</a>
-        <a href="#conclusion">Conclusion</a>
-        <a href="#report">Report</a>
-      </nav>
-    </div>
-  </header>
-
-  <main>
-    <!-- ================= HERO + WEATHER DEMO ================= -->
-    <section class="hero" id="top">
-      <div class="wrap">
-        <a class="back" href="../index.html#projects">← Back to projects</a>
-
-        <div class="hero-head">
-          <div>
-            <h1>Road Accident<br />Severity</h1>
-            <p class="sub">Data enrichment and interpretable machine learning</p>
-          </div>
-          <div>
-            <p class="lede">
+<header class="top">
+<div class="wrap">
+<div class="identity-row"><a aria-label="Go to home" class="brand" href="../index.html#home">YA</a><nav aria-label="Choose language" class="lang-switch"><a aria-current="page" href="#" lang="en">EN</a><span aria-hidden="true" class="lang-divider">|</span><a href="../fr/projects/road-accident-severity.html" lang="fr">FR</a></nav></div>
+<nav aria-label="Project navigation">
+<a href="../index.html#projects">All projects</a>
+<a href="#data">Data</a>
+<a href="#models">Models</a>
+<a href="#interpretability">Interpretability</a>
+<a href="#conclusion">Conclusion</a>
+<a href="#report">Report</a>
+</nav>
+</div>
+</header>
+<main>
+<!-- ================= HERO + WEATHER DEMO ================= -->
+<section class="hero" id="top">
+<div class="wrap">
+<a class="back" href="../index.html#projects">← Back to projects</a>
+<div class="hero-head">
+<div>
+<h1>Road Accident<br/>Severity</h1>
+<p class="sub">Data enrichment and interpretable machine learning</p>
+</div>
+<div>
+<p class="lede">
               French accident records say who was involved and where, but not what the sky looked like. We attached
               historical weather to 110,124 accidents and measured how much it adds to predicting how severe they were.
             </p>
-            <dl class="meta">
-              <div><dt>Project</dt><dd>M1 MIND, DALAS course, Sorbonne University, 2025</dd></div>
-              <div><dt>Team</dt><dd>Younes Arjdal and Haidar Fico Ramadhan Aryputra</dd></div>
-              <div><dt>Data</dt><dd>BAAC accident files 2022–2023, Weather Underground, French open weather data</dd></div>
-              <div><dt>Stack</dt><dd>Python, Selenium, PostgreSQL/PostGIS, scikit-learn, CatBoost</dd></div>
-            </dl>
-            <div class="hero-actions">
-              <a class="btn btn-light" href="../assets/projects/road-accident-severity/report.pdf" target="_blank" rel="noreferrer">Read the report (PDF)</a>
-              <a class="btn btn-ghost" href="#conclusion">Jump to the answer</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="demo" id="wx-demo">
-          <div class="demo-intro">
-            <div>
-              <h2>Add the weather, see what moves</h2>
-              <p>The best random forest without weather against the best one with it. Same model family, same hyperparameter searches, same random seeds. White ticks mark the no-weather baseline.</p>
-            </div>
-            <code class="chip">Random forest · 110,124 accidents</code>
-          </div>
-
-          <div class="demo-bar">
-            <label class="switch">
-              <input type="checkbox" id="wx-toggle" role="switch" />
-              <span class="knob"></span>
-              <span>Weather variables: <b id="wx-state">off</b></span>
-            </label>
-            <span class="demo-hint">Target: the worst injury in each accident</span>
-          </div>
-
-          <div class="wx-grid">
-            <div><h3>Overall</h3><div id="wx-overall"></div></div>
-            <div><h3>By severity class</h3><div id="wx-classes"></div></div>
-          </div>
-          <noscript><p class="fine">Turn on JavaScript to use this comparison. The same numbers are in the table in the Models section.</p></noscript>
-          <p class="fine">Precision: of the accidents the model flags in a class, how many really belong to it. Recall: of the accidents that really belong to a class, how many the model flags.</p>
-          <p class="verdict" id="wx-verdict" aria-live="polite"></p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= DATA ================= -->
-    <section class="sec" id="data">
-      <div class="wrap split">
-        <header>
-          <h2>Three sources, one row per accident</h2>
-          <p>The accident file has no weather in it. Getting some meant scraping one source, then covering its gaps with a second.</p>
-        </header>
-        <div>
-          <ol class="steps">
-            <li><b>Accidents</b><span>BAAC files for 2022 and 2023 from data.gouv.fr: characteristics, places, vehicles and users. They are merged to one row per accident, with the number of users and vehicles added as new columns. The result is 110,124 accidents and 33 columns.</span></li>
-            <li><b>Scraping</b><span>Selenium on Weather Underground. Each accident’s coordinates became a city through a REST API, then a time-specific page URL. Over 100,000 records came back with little blocking, but many stations don’t report visibility or ground conditions.</span></li>
-            <li><b>Open data</b><span>Hourly weather files from the French government fill those gaps. They run to over 2 GB compressed and 20 GB unpacked, so they went into PostgreSQL with PostGIS, where lookups by place and hour dropped from minutes to milliseconds.</span></li>
-          </ol>
-
-          <div class="block">
-            <h3>Where weather values are missing</h3>
-            <p>The incomplete columns are the weather ones. About three accidents in ten have no visibility value.</p>
-            <div class="miss grow" id="miss"></div>
-            <p class="note">Share of the 110,124 accidents, computed from the report’s counts.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= PREPARATION ================= -->
-    <section class="sec white" id="prep">
-      <div class="wrap split">
-        <header>
-          <h2>Cleaning without deleting accidents</h2>
-          <p>Rows stay. Extreme values are clipped and unknowns get their own category.</p>
-        </header>
-        <dl class="rows">
-          <div>
-            <dt>Missing and invalid codes</dt>
-            <dd>The source marks unknowns with <code>-1</code>. Those became NaN. In categorical columns the NaN became an explicit <code>inconnu</code> category, so uncertainty stays visible to the model. Missing speed limits took the median for their road category.</dd>
-          </div>
-          <div>
-            <dt>Outliers</dt>
-            <dd>Quantile bounds per variable (average age, number of users, number of vehicles, speed limit), compared at the 95th, 97th, 98th and 99th percentiles and checked against domain knowledge. Values beyond a bound were replaced by the median of that tail, not dropped.</dd>
-          </div>
-          <div>
-            <dt>Codes to labels</dt>
-            <dd>Numeric BAAC codes became readable categories, and close ones were merged. Road surface went from seven values to four: normal, wet, slippery and degraded.</dd>
-          </div>
-          <div>
-            <dt>The target</dt>
-            <dd><code>grav_max</code> is the worst injury among the people in an accident: fatal, hospitalized or slight.</dd>
-          </div>
-        </dl>
-      </div>
-    </section>
-
-    <!-- ================= TARGET ================= -->
-    <section class="sec dark" id="target">
-      <div class="wrap split">
-        <header>
-          <h2>Fatal accidents are 4% of the data</h2>
-          <p>That makes accuracy a poor judge, so models are compared on macro F1 and read class by class.</p>
-        </header>
-        <div>
-          <div class="block">
-            <h3>110,124 accidents by worst injury</h3>
-            <p>A model that always answers “slight” is right about 7 times in 10 and misses every fatal accident.</p>
-            <div class="prop" role="img" aria-label="Slight injury 77,621 accidents, hospitalized 27,889, fatal 4,614">
-              <span class="p-slight" style="flex: 77621"></span>
-              <span class="p-hosp" style="flex: 27889"></span>
-              <span class="p-fatal" style="flex: 4614"></span>
-            </div>
-            <div class="plegend">
-              <div style="--c: #5a7894"><b>Slight injury</b><span>77,621 · 70.5%</span></div>
-              <div style="--c: var(--cy)"><b>Hospitalized</b><span>27,889 · 25.3%</span></div>
-              <div style="--c: var(--bad)"><b>Fatal</b><span>4,614 · 4.2%</span></div>
-            </div>
-          </div>
-          <div class="block">
-            <div class="defs">
-              <div>
-                <h4>Macro F1</h4>
-                <p>The average of each class’s F1 score. The 4.2% fatal class counts as much as the 70.5% slight class.</p>
-              </div>
-              <div>
-                <h4>Precision and recall, per class</h4>
-                <p>Precision: of the accidents flagged fatal, how many were. Recall: of the fatal accidents, how many were flagged.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= MODELS ================= -->
-    <section class="sec" id="models">
-      <div class="wrap split">
-        <header>
-          <h2>A fatal-accident alert is a trade-off</h2>
-          <p>Catching more fatal accidents floods the alerts with false ones. Trusting the alerts means missing more.</p>
-        </header>
-        <div>
-          <p class="note" style="margin: 0 0 24px; font-size: 1rem; color: var(--text)">
+<dl class="meta">
+<div><dt>Project</dt><dd>M1 MIND, DALAS course, Sorbonne University, 2025</dd></div>
+<div><dt>Team</dt><dd>Younes Arjdal and Haidar Fico Ramadhan Aryputra</dd></div>
+<div><dt>Data</dt><dd>BAAC accident files 2022–2023, Weather Underground, French open weather data</dd></div>
+<div><dt>Stack</dt><dd>Python, Selenium, PostgreSQL/PostGIS, scikit-learn, CatBoost</dd></div>
+</dl>
+<div class="hero-actions">
+<a class="btn btn-light" href="../assets/projects/road-accident-severity/report.pdf" rel="noreferrer" target="_blank">Read the report (PDF)</a>
+<a class="btn btn-ghost" href="#conclusion">Jump to the answer</a>
+</div>
+</div>
+</div>
+<div class="demo" id="wx-demo">
+<div class="demo-intro">
+<div>
+<h2>Add the weather, see what moves</h2>
+<p>The best random forest without weather against the best one with it. Same model family, same hyperparameter searches, same random seeds. White ticks mark the no-weather baseline.</p>
+</div>
+<code class="chip">Random forest · 110,124 accidents</code>
+</div>
+<div class="demo-bar">
+<label class="switch">
+<input id="wx-toggle" role="switch" type="checkbox"/>
+<span class="knob"></span>
+<span>Weather variables: <b id="wx-state">off</b></span>
+</label>
+<span class="demo-hint">Target: the worst injury in each accident</span>
+</div>
+<div class="wx-grid">
+<div><h3>Overall</h3><div id="wx-overall"></div></div>
+<div><h3>By severity class</h3><div id="wx-classes"></div></div>
+</div>
+<noscript><p class="fine">Turn on JavaScript to use this comparison. The same numbers are in the table in the Models section.</p></noscript>
+<p class="fine">Precision: of the accidents the model flags in a class, how many really belong to it. Recall: of the accidents that really belong to a class, how many the model flags.</p>
+<p aria-live="polite" class="verdict" id="wx-verdict"></p>
+</div>
+</div>
+</section>
+<!-- ================= DATA ================= -->
+<section class="sec" id="data">
+<div class="wrap split">
+<header>
+<h2>Three sources, one row per accident</h2>
+<p>The accident file has no weather in it. Getting some meant scraping one source, then covering its gaps with a second.</p>
+</header>
+<div>
+<ol class="steps">
+<li><b>Accidents</b><span>BAAC files for 2022 and 2023 from data.gouv.fr: characteristics, places, vehicles and users. They are merged to one row per accident, with the number of users and vehicles added as new columns. The result is 110,124 accidents and 33 columns.</span></li>
+<li><b>Scraping</b><span>Selenium on Weather Underground. Each accident’s coordinates became a city through a REST API, then a time-specific page URL. Over 100,000 records came back with little blocking, but many stations don’t report visibility or ground conditions.</span></li>
+<li><b>Open data</b><span>Hourly weather files from the French government fill those gaps. They run to over 2 GB compressed and 20 GB unpacked, so they went into PostgreSQL with PostGIS, where lookups by place and hour dropped from minutes to milliseconds.</span></li>
+</ol>
+<div class="block">
+<h3>Where weather values are missing</h3>
+<p>The incomplete columns are the weather ones. About three accidents in ten have no visibility value.</p>
+<div class="miss grow" id="miss"></div>
+<p class="note">Share of the 110,124 accidents, computed from the report’s counts.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= PREPARATION ================= -->
+<section class="sec white" id="prep">
+<div class="wrap split">
+<header>
+<h2>Cleaning without deleting accidents</h2>
+<p>Rows stay. Extreme values are clipped and unknowns get their own category.</p>
+</header>
+<dl class="rows">
+<div>
+<dt>Missing and invalid codes</dt>
+<dd>The source marks unknowns with <code>-1</code>. Those became NaN. In categorical columns the NaN became an explicit <code>inconnu</code> category, so uncertainty stays visible to the model. Missing speed limits took the median for their road category.</dd>
+</div>
+<div>
+<dt>Outliers</dt>
+<dd>Quantile bounds per variable (average age, number of users, number of vehicles, speed limit), compared at the 95th, 97th, 98th and 99th percentiles and checked against domain knowledge. Values beyond a bound were replaced by the median of that tail, not dropped.</dd>
+</div>
+<div>
+<dt>Codes to labels</dt>
+<dd>Numeric BAAC codes became readable categories, and close ones were merged. Road surface went from seven values to four: normal, wet, slippery and degraded.</dd>
+</div>
+<div>
+<dt>The target</dt>
+<dd><code>grav_max</code> is the worst injury among the people in an accident: fatal, hospitalized or slight.</dd>
+</div>
+</dl>
+</div>
+</section>
+<!-- ================= TARGET ================= -->
+<section class="sec dark" id="target">
+<div class="wrap split">
+<header>
+<h2>Fatal accidents are 4% of the data</h2>
+<p>That makes accuracy a poor judge, so models are compared on macro F1 and read class by class.</p>
+</header>
+<div>
+<div class="block">
+<h3>110,124 accidents by worst injury</h3>
+<p>A model that always answers “slight” is right about 7 times in 10 and misses every fatal accident.</p>
+<div aria-label="Slight injury 77,621 accidents, hospitalized 27,889, fatal 4,614" class="prop" role="img">
+<span class="p-slight" style="flex: 77621"></span>
+<span class="p-hosp" style="flex: 27889"></span>
+<span class="p-fatal" style="flex: 4614"></span>
+</div>
+<div class="plegend">
+<div style="--c: #5a7894"><b>Slight injury</b><span>77,621 · 70.5%</span></div>
+<div style="--c: var(--cy)"><b>Hospitalized</b><span>27,889 · 25.3%</span></div>
+<div style="--c: var(--bad)"><b>Fatal</b><span>4,614 · 4.2%</span></div>
+</div>
+</div>
+<div class="block">
+<div class="defs">
+<div>
+<h4>Macro F1</h4>
+<p>The average of each class’s F1 score. The 4.2% fatal class counts as much as the 70.5% slight class.</p>
+</div>
+<div>
+<h4>Precision and recall, per class</h4>
+<p>Precision: of the accidents flagged fatal, how many were. Recall: of the fatal accidents, how many were flagged.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= MODELS ================= -->
+<section class="sec" id="models">
+<div class="wrap split">
+<header>
+<h2>A fatal-accident alert is a trade-off</h2>
+<p>Catching more fatal accidents floods the alerts with false ones. Trusting the alerts means missing more.</p>
+</header>
+<div>
+<p class="note" style="margin: 0 0 24px; font-size: 1rem; color: var(--text)">
             Decision trees and random forests handle mixed numeric and categorical columns and can be inspected afterwards.
             Each got a hyperparameter search, scored once on accuracy and once on macro F1. A simple forest search covers
             trees, depth and leaf size, and a complex one adds split size and features per split. The weather runs reuse the
             same searches and seeds, so the only change is the columns.
           </p>
-
-          <div class="tabs">
-            <button class="tab" id="sc-wx" type="button" aria-pressed="true">Show runs with weather</button>
-          </div>
-          <div class="legend-row" aria-hidden="true">
-            <span><i style="background: var(--g-users)"></i>Decision tree</span>
-            <span><i style="background: var(--blue)"></i>Random forest</span>
-            <span><i style="background: var(--muted)"></i>No weather</span>
-            <span><i class="ring"></i>With weather</span>
-          </div>
-          <div class="scatter" id="scatter"></div>
-          <p class="readout" id="sc-readout" aria-live="polite">Hover or focus a point to read its numbers.</p>
-
-          <div class="tw">
-            <table class="runs">
-              <thead><tr><th scope="col">Model</th><th scope="col">Accuracy</th><th scope="col">Macro F1</th><th scope="col">Fatal precision</th><th scope="col">Fatal recall</th></tr></thead>
-              <tbody id="runs-body"></tbody>
-            </table>
-          </div>
-
-          <dl class="rows" style="margin-top: 40px">
-            <div>
-              <dt>Forests lead overall</dt>
-              <dd>Best forest: accuracy 0.672, macro F1 0.504. Best tree: 0.623 and 0.447. Forests gain most on hospitalized accidents (F1 around 0.45), the class between slight and severe.</dd>
-            </div>
-            <div>
-              <dt>Trees shout, forests hedge</dt>
-              <dd>The tree tuned on accuracy catches 59% of fatal accidents, but only 12% of its alerts are right. The forest tuned on macro F1 catches 34%, with 22% of alerts right.</dd>
-            </div>
-            <div>
-              <dt>Weather makes forests cautious</dt>
-              <dd>With weather, forests catch 27–28% of fatal accidents with 22% precision: fewer alerts, about as reliable, and small gains on the other two classes.</dd>
-            </div>
-          </dl>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= INTERPRETABILITY ================= -->
-    <section class="sec white" id="interpretability">
-      <div class="wrap split">
-        <header>
-          <h2>Who and when matter first. Weather comes after</h2>
-          <p>Three views of the same question: which columns do the models use, and what happens when one is scrambled?</p>
-        </header>
-        <div>
-          <div class="block">
-            <h3>What the forest relies on</h3>
-            <p>Average age of the people involved ranks first in both runs, followed by day, hour and number of users. With weather added, pressure jumps to second, temperature to fourth and wind speed to seventh. Continuous columns like these tend to score high on this measure, so the checks below matter.</p>
-            <div class="tabs" role="group" aria-label="Forest run">
-              <button class="tab" type="button" data-imp="no" aria-pressed="true">Without weather</button>
-              <button class="tab" type="button" data-imp="wx" aria-pressed="false">With weather</button>
-            </div>
-            <div class="imp-legend" aria-hidden="true">
-              <span class="g-users">People involved</span><span class="g-time">Time</span><span class="g-veh">Vehicles and collision</span><span class="g-road">Road and setting</span><span class="g-wx">Weather</span>
-            </div>
-            <div class="imp" id="imp" role="img" aria-label="Top 20 column importances for the random forest. Bars are traced from the report’s figures."></div>
-            <noscript><p class="note">Turn on JavaScript to see this chart, or open the report for the same figure.</p></noscript>
-            <p class="imp-note" id="imp-note" aria-live="polite"></p>
-            <p class="note">Rows are ranked by importance. Bar lengths are traced from the report’s figures, so read the ranks rather than exact values.</p>
-          </div>
-
-          <div class="block">
-            <h3>Where the decision tree uses weather</h3>
-            <p>One tree splits first on the number of users (one person or more), then on average age and on whether the crash was outside a built-up area. Weather never appears in the first three levels.</p>
-            <div class="tree" id="tree"></div>
-            <div class="tw" style="margin-top: 8px">
-              <table class="depth">
-                <thead><tr><th scope="col">Weather column</th><th scope="col">Splits</th><th scope="col">First depth</th><th scope="col">Average depth</th></tr></thead>
-                <tbody>
-                  <tr><td>temperature</td><td>7</td><td>3</td><td>5.43</td></tr>
-                  <tr><td>pressure</td><td>4</td><td>5</td><td>5.75</td></tr>
-                  <tr><td>wind speed</td><td>3</td><td>6</td><td>6.00</td></tr>
-                  <tr><td>visibility</td><td>0</td><td>–</td><td>–</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="block">
-            <h3>What happens when a weather column is shuffled</h3>
-            <p>Shuffling a column breaks its link to severity, and the change in F1 shows how much the forest used it. All changes are small. The largest, pressure on fatal accidents, is about 0.012 of F1. Visibility changes nothing.</p>
-            <div class="tw" style="margin-top: 0">
-              <table class="perm">
-                <thead><tr><th scope="col">Shuffled column</th><th scope="col">All classes</th><th scope="col">Fatal</th><th scope="col">Hospitalized</th><th scope="col">Slight</th></tr></thead>
-                <tbody>
-                  <tr><td class="f">temperature</td><td class="c" style="--v: .09"><span>1.1</span></td><td class="c" style="--v: .24"><span>2.9</span></td><td class="c" style="--v: .44"><span>5.3</span></td><td class="c" style="--v: .07"><span>0.9</span></td></tr>
-                  <tr><td class="f">wind_speed</td><td class="c" style="--v: .19"><span>2.3</span></td><td class="c" style="--v: .28"><span>3.4</span></td><td class="c" style="--v: .34"><span>4.1</span></td><td class="c" style="--v: .04"><span>0.5</span></td></tr>
-                  <tr><td class="f">pressure</td><td class="c" style="--v: .03"><span>0.4</span></td><td class="c hi" style="--v: 1"><span>12.1</span></td><td class="c hi" style="--v: .71"><span>8.6</span></td><td class="c" style="--v: .18"><span>2.2</span></td></tr>
-                  <tr><td class="f">visibility</td><td class="c" style="--v: 0"><span>0</span></td><td class="c" style="--v: 0"><span>0</span></td><td class="c" style="--v: 0"><span>0</span></td><td class="c" style="--v: 0"><span>0</span></td></tr>
-                </tbody>
-              </table>
-            </div>
-            <p class="note">Size of the F1 change in thousandths, ignoring direction. Values are read from the report’s figure, so treat them as approximate.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= CONCLUSION ================= -->
-    <section class="sec dark" id="conclusion">
-      <div class="wrap split">
-        <header>
-          <h2>Weather modulates the prediction. It doesn’t drive it</h2>
-          <p>The answer to the research question, and what backs it up.</p>
-        </header>
-        <dl class="rows">
-          <div>
-            <dt>Main drivers</dt>
-            <dd>Who is involved (average age, number of users), when it happens (day, hour, month) and the road setting. Without any weather, models already reach macro F1 0.504.</dd>
-          </div>
-          <div>
-            <dt>What weather adds</dt>
-            <dd>Accuracy rises by 0.012 and macro F1 stays at 0.504. There are small gains on hospitalized and slight injuries, and a more cautious forest on fatal accidents.</dd>
-          </div>
-          <div>
-            <dt>Where it shows up</dt>
-            <dd>Pressure, temperature and wind speed sit in the forest’s top seven columns, yet a single tree only uses them below its third level. Visibility shows no effect.</dd>
-          </div>
-          <div>
-            <dt>An upper bound</dt>
-            <dd>CatBoost, used as a ceiling, reaches macro F1 0.5487, about 4.5 points above the forest, and F1 0.2757 on fatal accidents.</dd>
-          </div>
-        </dl>
-      </div>
-    </section>
-
-    <!-- ================= LIMITS ================= -->
-    <section class="sec" id="limits">
-      <div class="wrap split">
-        <header>
-          <h2>What limits these results</h2>
-          <p>The conclusions hold for this data and these models.</p>
-        </header>
-        <dl class="rows">
-          <div>
-            <dt>Two years, one country</dt>
-            <dd>Accidents from 2022 and 2023 only, all in France.</dd>
-          </div>
-          <div>
-            <dt>Uneven weather coverage</dt>
-            <dd>Many stations don’t record visibility or ground state, so about three accidents in ten have no visibility value. That makes visibility’s null result hard to interpret.</dd>
-          </div>
-          <div>
-            <dt>Few fatal accidents</dt>
-            <dd>4,614 out of 110,124. Fatal-class precision never exceeds 0.23 in any run.</dd>
-          </div>
-          <div>
-            <dt>Importance isn’t cause</dt>
-            <dd>Feature importance and shuffling describe what the models use, not what makes a crash deadlier.</dd>
-          </div>
-        </dl>
-      </div>
-    </section>
-
-    <!-- ================= REPORT ================= -->
-    <section class="sec" id="report" style="background: var(--ink); padding-top: 0">
-      <div class="wrap">
-        <div class="report">
-          <div>
-            <h2>The full report has the details</h2>
-            <p>Data collection, cleaning, every model run and the interpretability figures. 19 pages, in English.</p>
-          </div>
-          <a class="btn btn-light" href="../assets/projects/road-accident-severity/report.pdf" target="_blank" rel="noreferrer">Open the PDF</a>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="foot">
-    <div class="wrap">
-      <span>© 2026 Younes Arjdal</span>
-      <a href="../index.html#projects">Back to projects ↑</a>
-    </div>
-  </footer>
-
-  <script>
+<div class="tabs">
+<button aria-pressed="true" class="tab" id="sc-wx" type="button">Show runs with weather</button>
+</div>
+<div aria-hidden="true" class="legend-row">
+<span><i style="background: var(--g-users)"></i>Decision tree</span>
+<span><i style="background: var(--blue)"></i>Random forest</span>
+<span><i style="background: var(--muted)"></i>No weather</span>
+<span><i class="ring"></i>With weather</span>
+</div>
+<div class="scatter" id="scatter"></div>
+<p aria-live="polite" class="readout" id="sc-readout">Hover or focus a point to read its numbers.</p>
+<div class="tw">
+<table class="runs">
+<thead><tr><th scope="col">Model</th><th scope="col">Accuracy</th><th scope="col">Macro F1</th><th scope="col">Fatal precision</th><th scope="col">Fatal recall</th></tr></thead>
+<tbody id="runs-body"></tbody>
+</table>
+</div>
+<dl class="rows" style="margin-top: 40px">
+<div>
+<dt>Forests lead overall</dt>
+<dd>Best forest: accuracy 0.672, macro F1 0.504. Best tree: 0.623 and 0.447. Forests gain most on hospitalized accidents (F1 around 0.45), the class between slight and severe.</dd>
+</div>
+<div>
+<dt>Trees shout, forests hedge</dt>
+<dd>The tree tuned on accuracy catches 59% of fatal accidents, but only 12% of its alerts are right. The forest tuned on macro F1 catches 34%, with 22% of alerts right.</dd>
+</div>
+<div>
+<dt>Weather makes forests cautious</dt>
+<dd>With weather, forests catch 27–28% of fatal accidents with 22% precision: fewer alerts, about as reliable, and small gains on the other two classes.</dd>
+</div>
+</dl>
+</div>
+</div>
+</section>
+<!-- ================= INTERPRETABILITY ================= -->
+<section class="sec white" id="interpretability">
+<div class="wrap split">
+<header>
+<h2>Who and when matter first. Weather comes after</h2>
+<p>Three views of the same question: which columns do the models use, and what happens when one is scrambled?</p>
+</header>
+<div>
+<div class="block">
+<h3>What the forest relies on</h3>
+<p>Average age of the people involved ranks first in both runs, followed by day, hour and number of users. With weather added, pressure jumps to second, temperature to fourth and wind speed to seventh. Continuous columns like these tend to score high on this measure, so the checks below matter.</p>
+<div aria-label="Forest run" class="tabs" role="group">
+<button aria-pressed="true" class="tab" data-imp="no" type="button">Without weather</button>
+<button aria-pressed="false" class="tab" data-imp="wx" type="button">With weather</button>
+</div>
+<div aria-hidden="true" class="imp-legend">
+<span class="g-users">People involved</span><span class="g-time">Time</span><span class="g-veh">Vehicles and collision</span><span class="g-road">Road and setting</span><span class="g-wx">Weather</span>
+</div>
+<div aria-label="Top 20 column importances for the random forest. Bars are traced from the report’s figures." class="imp" id="imp" role="img"></div>
+<noscript><p class="note">Turn on JavaScript to see this chart, or open the report for the same figure.</p></noscript>
+<p aria-live="polite" class="imp-note" id="imp-note"></p>
+<p class="note">Rows are ranked by importance. Bar lengths are traced from the report’s figures, so read the ranks rather than exact values.</p>
+</div>
+<div class="block">
+<h3>Where the decision tree uses weather</h3>
+<p>One tree splits first on the number of users (one person or more), then on average age and on whether the crash was outside a built-up area. Weather never appears in the first three levels.</p>
+<div class="tree" id="tree"></div>
+<div class="tw" style="margin-top: 8px">
+<table class="depth">
+<thead><tr><th scope="col">Weather column</th><th scope="col">Splits</th><th scope="col">First depth</th><th scope="col">Average depth</th></tr></thead>
+<tbody>
+<tr><td>temperature</td><td>7</td><td>3</td><td>5.43</td></tr>
+<tr><td>pressure</td><td>4</td><td>5</td><td>5.75</td></tr>
+<tr><td>wind speed</td><td>3</td><td>6</td><td>6.00</td></tr>
+<tr><td>visibility</td><td>0</td><td>–</td><td>–</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="block">
+<h3>What happens when a weather column is shuffled</h3>
+<p>Shuffling a column breaks its link to severity, and the change in F1 shows how much the forest used it. All changes are small. The largest, pressure on fatal accidents, is about 0.012 of F1. Visibility changes nothing.</p>
+<div class="tw" style="margin-top: 0">
+<table class="perm">
+<thead><tr><th scope="col">Shuffled column</th><th scope="col">All classes</th><th scope="col">Fatal</th><th scope="col">Hospitalized</th><th scope="col">Slight</th></tr></thead>
+<tbody>
+<tr><td class="f">temperature</td><td class="c" style="--v: .09"><span>1.1</span></td><td class="c" style="--v: .24"><span>2.9</span></td><td class="c" style="--v: .44"><span>5.3</span></td><td class="c" style="--v: .07"><span>0.9</span></td></tr>
+<tr><td class="f">wind_speed</td><td class="c" style="--v: .19"><span>2.3</span></td><td class="c" style="--v: .28"><span>3.4</span></td><td class="c" style="--v: .34"><span>4.1</span></td><td class="c" style="--v: .04"><span>0.5</span></td></tr>
+<tr><td class="f">pressure</td><td class="c" style="--v: .03"><span>0.4</span></td><td class="c hi" style="--v: 1"><span>12.1</span></td><td class="c hi" style="--v: .71"><span>8.6</span></td><td class="c" style="--v: .18"><span>2.2</span></td></tr>
+<tr><td class="f">visibility</td><td class="c" style="--v: 0"><span>0</span></td><td class="c" style="--v: 0"><span>0</span></td><td class="c" style="--v: 0"><span>0</span></td><td class="c" style="--v: 0"><span>0</span></td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">Size of the F1 change in thousandths, ignoring direction. Values are read from the report’s figure, so treat them as approximate.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= CONCLUSION ================= -->
+<section class="sec dark" id="conclusion">
+<div class="wrap split">
+<header>
+<h2>Weather modulates the prediction. It doesn’t drive it</h2>
+<p>The answer to the research question, and what backs it up.</p>
+</header>
+<dl class="rows">
+<div>
+<dt>Main drivers</dt>
+<dd>Who is involved (average age, number of users), when it happens (day, hour, month) and the road setting. Without any weather, models already reach macro F1 0.504.</dd>
+</div>
+<div>
+<dt>What weather adds</dt>
+<dd>Accuracy rises by 0.012 and macro F1 stays at 0.504. There are small gains on hospitalized and slight injuries, and a more cautious forest on fatal accidents.</dd>
+</div>
+<div>
+<dt>Where it shows up</dt>
+<dd>Pressure, temperature and wind speed sit in the forest’s top seven columns, yet a single tree only uses them below its third level. Visibility shows no effect.</dd>
+</div>
+<div>
+<dt>An upper bound</dt>
+<dd>CatBoost, used as a ceiling, reaches macro F1 0.5487, about 4.5 points above the forest, and F1 0.2757 on fatal accidents.</dd>
+</div>
+</dl>
+</div>
+</section>
+<!-- ================= LIMITS ================= -->
+<section class="sec" id="limits">
+<div class="wrap split">
+<header>
+<h2>What limits these results</h2>
+<p>The conclusions hold for this data and these models.</p>
+</header>
+<dl class="rows">
+<div>
+<dt>Two years, one country</dt>
+<dd>Accidents from 2022 and 2023 only, all in France.</dd>
+</div>
+<div>
+<dt>Uneven weather coverage</dt>
+<dd>Many stations don’t record visibility or ground state, so about three accidents in ten have no visibility value. That makes visibility’s null result hard to interpret.</dd>
+</div>
+<div>
+<dt>Few fatal accidents</dt>
+<dd>4,614 out of 110,124. Fatal-class precision never exceeds 0.23 in any run.</dd>
+</div>
+<div>
+<dt>Importance isn’t cause</dt>
+<dd>Feature importance and shuffling describe what the models use, not what makes a crash deadlier.</dd>
+</div>
+</dl>
+</div>
+</section>
+<!-- ================= REPORT ================= -->
+<section class="sec" id="report" style="background: var(--ink); padding-top: 0">
+<div class="wrap">
+<div class="report">
+<div>
+<h2>The full report has the details</h2>
+<p>Data collection, cleaning, every model run and the interpretability figures. 19 pages, in English.</p>
+</div>
+<a class="btn btn-light" href="../assets/projects/road-accident-severity/report.pdf" rel="noreferrer" target="_blank">Open the PDF</a>
+</div>
+</div>
+</section>
+</main>
+<footer class="foot">
+<div class="wrap">
+<span>© 2026 Younes Arjdal</span>
+<a href="../index.html#projects">Back to projects ↑</a>
+</div>
+</footer>
+<script>
   (() => {
     const $ = (s, r = document) => r.querySelector(s);
     const $$ = (s, r = document) => [...r.querySelectorAll(s)];

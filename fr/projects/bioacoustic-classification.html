@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+
+<html class="no-js" lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="BirdCLEF+ 2026 : classification audio multi-étiquette de 234 espèces du Pantanal, caractéristiques spectrales, CatBoost One-vs-Rest et analyse du décalage entre sons ciblés et paysages sonores." name="description"/>
+<meta content="#06121f" name="theme-color"/>
+<title>Classification bioacoustique - Younes Arjdal</title>
+<link href="../../assets/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<script>document.documentElement.classList.replace('no-js', 'js');</script>
+<style>
+    :root {
+      --ink: #06121f; --ink-2: #0a1b2e; --paper: #f4f6f8; --text: #12202e; --muted: #566677;
+      --line: #d6dee6; --dline: rgba(255, 255, 255, 0.13);
+      --blue: #1d5f9b; --cy: #6bb8f5; --ok: #4fd69c; --bad: #ff7a84; --warn: #f5c26b; --pub: #b79cff;
+      --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --r: 8px; --w: 1160px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+    body { margin: 0; color: var(--text); background: var(--paper); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+    code { font-family: var(--mono); }
+    .wrap { width: min(calc(100% - 40px), var(--w)); margin: 0 auto; }
+    :focus-visible { outline: 3px solid rgba(107, 184, 245, 0.7); outline-offset: 3px; }
+
+    .top { position: sticky; top: 0; z-index: 50; background: rgba(6, 18, 31, 0.84); backdrop-filter: blur(14px); border-bottom: 1px solid var(--dline); }
+    .top .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 64px; }
+    .brand { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 9px; background: #fff; color: var(--ink); font-weight: 600; letter-spacing: -0.03em; text-decoration: none; }
+    .top nav { display: flex; gap: 26px; }
+    .top nav a { color: #b4c4d4; font-size: 0.9rem; font-weight: 500; text-decoration: none; }
+    .top nav a:hover { color: #fff; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: var(--r); border: 1px solid transparent; font: 600 0.92rem var(--sans); text-decoration: none; cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.15s; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-light { background: #fff; color: var(--ink); }
+    .btn-light:hover { background: #e6eef6; }
+    .btn-ghost { background: transparent; color: #dbe7f2; border-color: rgba(255, 255, 255, 0.25); }
+    .btn-ghost:hover { border-color: rgba(255, 255, 255, 0.6); }
+    .btn[disabled] { opacity: 0.4; cursor: default; transform: none; }
+
+    /* ---------- Hero ---------- */
+    .hero { background: var(--ink); color: #fff; padding: 56px 0 88px; }
+    .back { display: inline-block; margin-bottom: 44px; color: #8fa6bb; font-size: 0.9rem; text-decoration: none; }
+    .back:hover { color: #fff; }
+    .hero-head { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); gap: 56px; align-items: end; }
+    h1 { margin: 0; font-size: clamp(2.8rem, 6.6vw, 5.8rem); line-height: 0.98; letter-spacing: -0.045em; font-weight: 600; }
+    .sub { margin: 20px 0 0; font: 400 1rem var(--mono); color: var(--cy); }
+    .lede { margin: 0 0 24px; max-width: 52ch; color: #b9c9d9; font-size: 1.06rem; }
+    .meta { display: grid; gap: 10px; margin: 0; font-size: 0.88rem; }
+    .meta div { display: grid; grid-template-columns: 92px 1fr; gap: 12px; padding-top: 10px; border-top: 1px solid var(--dline); }
+    .meta dt { color: #7f95aa; }
+    .meta dd { margin: 0; color: #dbe7f2; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+
+    /* ---------- Traversal demo ---------- */
+    .demo { margin-top: 64px; padding: 28px; border: 1px solid var(--dline); border-radius: 12px; background: var(--ink-2); }
+    .demo-intro { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 20px; }
+    .demo-intro h2 { margin: 0; font-size: 1.25rem; letter-spacing: -0.02em; font-weight: 600; }
+    .demo-intro p { margin: 6px 0 0; max-width: 66ch; color: #9fb4c8; font-size: 0.95rem; }
+    .chip { font: 500 0.82rem var(--mono); color: #d8edff; padding: 4px 10px; border: 1px solid rgba(107, 184, 245, 0.4); border-radius: 6px; background: rgba(107, 184, 245, 0.1); white-space: nowrap; }
+    .demo-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; border-top: 1px solid var(--dline); }
+    .modes { display: flex; flex-wrap: wrap; gap: 8px; }
+    .mode { min-height: 40px; padding: 0 16px; border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 99px; background: transparent; color: #dbe7f2; font: 500 0.9rem var(--sans); cursor: pointer; }
+    .mode[aria-pressed="true"] { background: #fff; border-color: #fff; color: var(--ink); }
+    .demo-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+    .trap { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--dline); border-bottom: 1px solid var(--dline); }
+    .switch { display: inline-flex; align-items: center; gap: 12px; color: #dbe7f2; font-weight: 500; cursor: pointer; }
+    .switch input { position: absolute; opacity: 0; pointer-events: none; }
+    .knob { position: relative; flex: none; width: 46px; height: 26px; border-radius: 99px; background: #2a4561; transition: background 0.2s; }
+    .knob::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+    .switch input:checked + .knob { background: var(--warn); }
+    .switch input:checked + .knob::after { transform: translateX(20px); }
+    .switch input:focus-visible + .knob { outline: 3px solid rgba(107, 184, 245, 0.7); outline-offset: 3px; }
+    .trap small { color: #7f98b0; font-size: 0.85rem; }
+    .out { margin-top: 18px; padding: 16px 18px; border-left: 3px solid var(--cy); background: rgba(107, 184, 245, 0.07); color: #cfe0ef; min-height: 3.2em; }
+    .out.diff { border-color: var(--warn); background: rgba(245, 194, 107, 0.08); }
+    .tw { overflow-x: auto; }
+    /* ---------- Sections ---------- */
+    .sec { padding: 104px 0; }
+    .sec.white { background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .sec.dark { background: var(--ink); color: #fff; }
+    .split { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 72px; }
+    .split > * { min-width: 0; }
+    .split > header { align-self: start; position: sticky; top: 96px; }
+    h2 { margin: 0 0 16px; font-size: clamp(1.9rem, 3.4vw, 2.8rem); line-height: 1.1; letter-spacing: -0.035em; font-weight: 600; }
+    .split > header p { max-width: 34ch; margin: 0; color: var(--muted); }
+    .dark .split > header p { color: #9fb4c8; }
+    h3 { margin: 0; font-size: 1.15rem; letter-spacing: -0.02em; font-weight: 600; }
+    p { margin-top: 0; }
+    .block + .block { margin-top: 64px; }
+    .block > h3 { margin-bottom: 8px; font-size: 1.5rem; letter-spacing: -0.03em; }
+    .block > p { max-width: 64ch; margin-bottom: 20px; color: var(--muted); }
+    .dark .block > p { color: #a9bccd; }
+    .note { margin: 14px 0 0; color: var(--muted); font-size: 0.85rem; max-width: 72ch; }
+    .dark .note { color: #8097ac; }
+
+    .rows { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .rows > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 32px; padding: 22px 0; border-bottom: 1px solid var(--line); }
+    .rows dt { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; }
+    .rows dd { margin: 0; color: var(--muted); }
+    .rows dd code { color: var(--text); font-size: 0.86em; }
+    .formula { display: block; margin-top: 8px; padding: 10px 12px; border-radius: 6px; background: #eef3f8; color: var(--text); font: 500 0.82rem var(--mono); overflow-x: auto; white-space: nowrap; }
+
+    .steps { counter-reset: s; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .steps li { display: grid; grid-template-columns: 36px 150px 1fr; gap: 16px; align-items: baseline; padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .steps li::before { counter-increment: s; content: counter(s); color: var(--blue); font: 500 0.9rem var(--mono); }
+    .steps b { font-size: 1.1rem; letter-spacing: -0.02em; font-weight: 600; }
+    .steps span { color: var(--muted); }
+
+    .facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; margin: 0 0 12px; }
+    .facts div { padding-top: 12px; border-top: 3px solid var(--ink); }
+    .facts b { display: block; font: 600 1.35rem var(--mono); letter-spacing: -0.03em; }
+    .facts span { color: var(--muted); font-size: 0.85rem; }
+    table.wp { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .wp th { padding: 10px; border-bottom: 2px solid var(--ink); font-size: 0.82rem; font-weight: 600; text-align: left; }
+    .wp td { padding: 9px 10px; border-bottom: 1px solid var(--line); font: 500 0.84rem var(--mono); }
+    .wp td.bad { color: #c0303c; } .wp td.good { color: #178f5b; font-weight: 600; }
+    /* results */
+    .pair { display: grid; grid-template-columns: 190px minmax(0, 1fr) 96px; gap: 16px; align-items: center; padding: 14px 0; border-top: 1px solid var(--dline); }
+    .pair b { display: block; font-weight: 600; }
+    .pair small { color: #8097ac; }
+    .pbars { display: grid; gap: 6px; }
+    .pb { display: flex; align-items: center; gap: 10px; }
+    .pb .tr { flex: 1; height: 12px; border-radius: 99px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
+    .pb .bw { display: block; width: var(--w); height: 100%; border-radius: inherit; background: var(--c); transition: width 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .js .grow:not(.on) .bw { width: 0; }
+    .pb em { min-width: 76px; color: #9fb4c8; font: 500 0.78rem var(--mono); font-style: normal; }
+    .pb.bm { --c: #5a7894; } .pb.di { --c: var(--cy); } .pb.pu { --c: var(--pub); }
+    .gain { text-align: right; color: var(--ok); font: 600 1.15rem var(--mono); letter-spacing: -0.03em; }
+    .tag-pub { display: inline-block; margin-bottom: 14px; padding: 3px 10px; border: 1px solid rgba(183, 156, 255, 0.5); border-radius: 6px; background: rgba(183, 156, 255, 0.1); color: var(--pub); font: 500 0.78rem var(--mono); }
+    .callout { margin: 20px 0 0; padding: 14px 18px; border-left: 3px solid var(--warn); background: rgba(245, 194, 107, 0.08); color: #e6d6b4; max-width: 74ch; }
+    .rows > div > *, .rows dd { min-width: 0; }
+    .formula { max-width: 100%; }
+    @media (max-width: 760px) { table.runs { display: block; overflow-x: auto; } }
+    table.runs { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 0.9rem; }
+    .runs th { padding: 10px; border-bottom: 1px solid var(--dline); color: #9fb4c8; font-size: 0.8rem; font-weight: 500; text-align: right; white-space: nowrap; }
+    .runs th:first-child, .runs th:nth-child(2) { text-align: left; }
+    .runs td { padding: 9px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.07); text-align: right; font: 500 0.84rem var(--mono); }
+    .runs td:first-child, .runs td:nth-child(2) { text-align: left; font-family: var(--sans); font-weight: 400; }
+    .runs td.best { color: var(--cy); font-weight: 600; }
+
+    .report { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 32px; padding-top: 72px; border-top: 1px solid var(--dline); }
+    .report h2 { max-width: 20ch; color: #fff; }
+    .report p { max-width: 56ch; margin: 0 0 20px; color: #a9bccd; }
+    footer.foot { padding: 30px 0 42px; color: var(--muted); font-size: 0.88rem; }
+    footer.foot .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+    footer.foot a { text-decoration: none; font-weight: 500; color: var(--blue); }
+    h1 { font-size: clamp(2.4rem, 5.2vw, 4.7rem); }
+    .hero-head > div { min-width: 0; }
+
+    /* ---------- Wave demo ---------- */
+    .ctl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding: 18px 0; border-top: 1px solid var(--dline); }
+    .ctl label { display: block; color: #dbe7f2; font-weight: 500; font-size: 0.92rem; }
+    .ctl label output { float: right; font: 500 0.88rem var(--mono); color: var(--cy); }
+    .ctl input[type=range] { width: 100%; margin: 10px 0 0; accent-color: #6bb8f5; }
+    .ctl small { display: block; margin-top: 2px; color: #7f98b0; font-size: 0.78rem; }
+    .ctl label.switch { display: inline-flex; margin-top: 4px; }
+    .wv { margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--dline); }
+    .wv + .wv { margin-top: 14px; }
+    .wv-h { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; margin-bottom: 6px; font-size: 0.88rem; color: #dbe7f2; }
+    .wv-h span { color: #7f98b0; font: 400 0.8rem var(--mono); }
+    .wv svg { display: block; width: 100%; height: 96px; border-radius: 6px; background: rgba(255, 255, 255, 0.035); }
+    .wv path.mix { stroke: #8da3b8; stroke-width: 1; fill: none; }
+    .wv path.tgt { stroke: #6bb8f5; stroke-width: 1.2; fill: none; }
+    .wv line.mid { stroke: rgba(255, 255, 255, 0.1); }
+    .share b { font: 600 1.6rem var(--mono); color: var(--cy); letter-spacing: -0.03em; }
+    .share { margin-top: 18px; padding: 14px 18px; border-left: 3px solid var(--cy); background: rgba(107, 184, 245, 0.07); color: #cfe0ef; }
+
+    /* ---------- Class grid ---------- */
+    .grid-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+    .gmode { min-height: 40px; padding: 0 16px; border: 1px solid var(--line); border-radius: 99px; background: #fff; color: var(--text); font: 500 0.9rem var(--sans); cursor: pointer; }
+    .gmode[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .groups { display: flex; flex-wrap: wrap; gap: 22px 40px; }
+    .grp { min-width: 0; }
+    .grp.wide { flex-basis: 100%; }
+    .grp h4 { margin: 0 0 8px; font: 500 0.82rem var(--mono); color: var(--muted); }
+    .dots { display: flex; flex-wrap: wrap; gap: 3px; max-width: 760px; }
+    .d { width: 11px; height: 11px; border-radius: 3px; border: 1.5px solid transparent; transition: background 0.3s, border-color 0.3s, opacity 0.3s; }
+    .d.c { background: #178f5b; } .d.v { background: #1d5f9b; } .d.s { background: #b87a0a; }
+    .d.s.off { background: transparent; border-color: #b87a0a; opacity: 0.55; }
+    .gleg { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 18px 0 0; color: var(--muted); font-size: 0.85rem; }
+    .gleg i { display: inline-block; width: 11px; height: 11px; margin-right: 7px; border-radius: 3px; vertical-align: -1px; }
+    .gcap { margin: 14px 0 0; padding: 14px 18px; border-left: 3px solid var(--blue); background: #eef3f8; color: var(--text); max-width: 74ch; min-height: 3.4em; }
+
+    /* ---------- Score bars + dumbbells ---------- */
+    .kag { display: grid; gap: 12px; margin-top: 8px; }
+    .kag .pb em { min-width: 64px; color: #dbe7f2; }
+    .kag .lab { display: block; margin-bottom: 4px; font-size: 0.9rem; color: #dbe7f2; }
+    .axisnote { margin: 8px 0 0; color: #7f98b0; font: 400 0.78rem var(--mono); }
+    .stack { display: flex; height: 34px; margin: 6px 0 4px; border-radius: 6px; overflow: hidden; gap: 2px; }
+    .stack span { display: grid; place-items: center; min-width: 0; color: #06121f; font: 600 0.82rem var(--mono); }
+    .stack .up { flex: 29; background: var(--ok); } .stack .eq { flex: 5; background: #8da3b8; } .stack .dn { flex: 8; background: var(--bad); }
+    .stack-l { display: flex; flex-wrap: wrap; gap: 4px 20px; color: #9fb4c8; font-size: 0.84rem; margin-bottom: 8px; }
+    .db { display: grid; grid-template-columns: 220px minmax(0, 1fr) 156px; gap: 16px; align-items: center; padding: 11px 0; border-top: 1px solid var(--dline); }
+    .db b { display: block; font-weight: 500; font-size: 0.92rem; }
+    .db small { color: #7f98b0; }
+    .dtrack { position: relative; height: 26px; }
+    .dtrack::before { content: ""; position: absolute; left: 0; right: 0; top: 12px; height: 2px; background: rgba(255, 255, 255, 0.08); }
+    .dtrack .chance { position: absolute; top: 0; bottom: 0; left: var(--ch); border-left: 1px dashed rgba(255, 255, 255, 0.28); }
+    .dtrack .seg2 { position: absolute; top: 10px; height: 6px; border-radius: 3px; left: var(--a); width: var(--wd); background: var(--k); opacity: 0.55; }
+    .dtrack .m { position: absolute; top: 4px; left: var(--x); width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; border: 2px solid var(--k); background: var(--ink); }
+    .dtrack .m.f { background: var(--k); }
+    .dv { font: 500 0.82rem var(--mono); color: #cfe0ef; text-align: right; white-space: nowrap; }
+    .dv.up { --k: var(--ok); } .dv.dn { --k: var(--bad); } .dv.ce { --k: var(--warn); }
+    .db.up { --k: var(--ok); } .db.dn { --k: var(--bad); } .db.ce { --k: var(--warn); }
+    .dleg { margin: 10px 0 0; color: #7f98b0; font-size: 0.82rem; }
+    .case { display: inline-block; margin-left: 8px; padding: 1px 9px; border-radius: 99px; background: #eef3f8; color: var(--blue); font: 500 0.74rem var(--mono); vertical-align: 2px; white-space: nowrap; }
+    table.wp td.num, table.wp th.num { text-align: right; }
+    table.wp td.top { color: var(--blue); font-weight: 600; }
+    .tw { overflow-x: auto; }
+
+    @media (max-width: 980px) {
+      .hero-head { grid-template-columns: 1fr; gap: 36px; }
+      .split { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+      .split > header { position: static; }
+      .rows > div { grid-template-columns: 1fr; gap: 8px; }
+      .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .ctl { grid-template-columns: 1fr; gap: 16px; }
+    }
+    @media (max-width: 720px) {
+      .top nav a:not(:first-child) { display: none; }
+      .sec { padding: 72px 0; }
+      .demo { padding: 20px 16px; }
+      .steps li { grid-template-columns: 28px 1fr; }
+      .steps li span { grid-column: 2; }
+      .pair { grid-template-columns: 1fr 76px; gap: 8px 12px; }
+      .pair > div:first-child { grid-column: 1 / -1; }
+      .db { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; }
+      .db .dtrack { grid-column: 1 / -1; order: 3; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: 0.01ms !important; }
+    }
+  
+/* Allow the demonstration label to wrap on narrow screens. */
+@media(max-width:420px){.demo .chip{max-width:100%;white-space:normal;overflow-wrap:anywhere}}
+/* Language switch : EN | FR, adjacent to YA */
+.identity-row{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.top .identity-row .lang-switch{position:static!important;top:auto;left:auto;right:auto;display:inline-flex!important;align-items:center;flex-direction:row!important;gap:7px!important;padding:0;background:none;border:0;white-space:nowrap}
+.top .identity-row .lang-switch a{display:inline-flex!important;align-items:center;font:600 .76rem var(--mono);text-decoration:none;color:#a9bfd2;padding:7px 2px;border:0}
+.top .identity-row .lang-switch a[aria-current="page"]{color:#fff;text-decoration:underline;text-underline-offset:4px}
+.top .identity-row .lang-switch a:hover{color:#fff}
+.lang-switch .lang-divider{color:#67839d;font-size:.8rem}
+@media(max-width:420px){.identity-row{gap:8px}.top .identity-row .lang-switch{gap:4px!important}}
+</style>
+<link href="https://younesmrc.github.io/projects/bioacoustic-classification.html" hreflang="en" rel="alternate"/><link href="https://younesmrc.github.io/fr/projects/bioacoustic-classification.html" hreflang="fr" rel="alternate"/><link href="https://younesmrc.github.io/projects/bioacoustic-classification.html" hreflang="x-default" rel="alternate"/></head>
+<body>
+<header class="top">
+<div class="wrap">
+<div class="identity-row"><a aria-label="Aller à l’accueil" class="brand" href="../index.html#home">YA</a><nav aria-label="Choisir la langue" class="lang-switch"><a href="../../projects/bioacoustic-classification.html" lang="en">EN</a><span aria-hidden="true" class="lang-divider">|</span><a aria-current="page" href="#" lang="fr">FR</a></nav></div>
+<nav aria-label="Navigation du projet">
+<a href="../index.html#projects">Tous les projets</a>
+<a href="#data">Données</a>
+<a href="#v1">Version 1</a>
+<a href="#v2">Version 2</a>
+<a href="#results">Résultats</a>
+<a href="#errors">Erreurs</a>
+<a href="#report">Rapport</a>
+</nav>
+</div>
+</header>
+<main>
+<!-- ================= HERO + DOMAIN-GAP DEMO ================= -->
+<section class="hero" id="top">
+<div class="wrap">
+<a class="back" href="../index.html#projects">← Retour aux projets</a>
+<div class="hero-head">
+<div>
+<h1>Classification<br/>bioacoustique</h1>
+<p class="sub">BirdCLEF+ 2026 : 234 espèces, descripteurs audio classiques</p>
+</div>
+<div>
+<p class="lede">
+              Un concours Kaggle : identifier les espèces qui vocalisent parmi les 234 présentes dans un enregistrement passif de cinq secondes au Pantanal. Les audios d'entraînement sont des prises de son ciblées et propres, tandis que les tests sont des mélanges bruités. Un vecteur de caractéristiques construit à la main et un CatBoost par espèce atteignent 0,737 au classement ; le rapport analyse surtout pourquoi ce score reste limité.
+            </p>
+<dl class="meta">
+<div><dt>Projet</dt><dd>M1 MIND, Sorbonne Université</dd></div>
+<div><dt>Concours</dt><dd>BirdCLEF+ 2026 sur Kaggle</dd></div>
+<div><dt>Tâche</dt><dd>Multi-étiquette, 234 classes, AUC-ROC macro</dd></div>
+<div><dt>Technologies</dt><dd>Python, librosa, scikit-learn, XGBoost, CatBoost</dd></div>
+</dl>
+<div class="hero-actions">
+<a class="btn btn-light" href="#results">Accéder aux résultats</a>
+<a class="btn btn-ghost" href="../../assets/projects/bioacoustic-classification/report.pdf" rel="noreferrer" target="_blank">Lire le rapport</a>
+</div>
+</div>
+</div>
+<div aria-labelledby="demo-title" class="demo">
+<div class="demo-intro">
+<div>
+<h2 id="demo-title">La même grenouille, deux enregistrements</h2>
+<p>Les extraits d'entraînement isolent une espèce proche du microphone. Le test utilise un microphone passif qui capte environ quatre espèces à la fois, parfois dix. Ajoutez des espèces et du bruit pour voir la faible part du signal appartenant à la cible.</p>
+</div>
+<span class="chip">signal synthétique, pas un véritable audio</span>
+</div>
+<div class="ctl">
+<div>
+<label for="nsp">Espèces dans le segment <output id="nsp-o">4</output></label>
+<input id="nsp" max="10" min="1" step="1" type="range" value="4"/>
+<small>Moyenne dans les paysages sonores : 4,2</small>
+</div>
+<div>
+<label for="nz">Bruit de fond <output id="nz-o">35 %</output></label>
+<input id="nz" max="100" min="0" step="5" type="range" value="35"/>
+<small>Vent, insectes, cris lointains</small>
+</div>
+<div>
+<label class="switch"><input checked="" id="hl" type="checkbox"/><span class="knob"></span><span>Mettre en évidence la grenouille cible</span></label>
+</div>
+</div>
+<div class="wv">
+<div class="wv-h"><b>Enregistrement ciblé</b><span>Base 1 · une espèce, microphone dirigé vers elle</span></div>
+<svg aria-label="Forme d’onde d’un enregistrement ciblé propre contenant trois cris" id="w-focal" preserveaspectratio="none" role="img" viewbox="0 0 600 96"></svg>
+</div>
+<div class="wv">
+<div class="wv-h"><b>Segment de paysage sonore</b><span id="w-cap">Test · 5 s, 4 espèces et du bruit</span></div>
+<svg aria-label="Forme d’onde d’un mélange bruité de paysage sonore" id="w-soup" preserveaspectratio="none" role="img" viewbox="0 0 600 96"></svg>
+</div>
+<p aria-live="polite" class="share" id="share"></p>
+</div>
+</div>
+</section>
+<!-- ================= DATA ================= -->
+<section class="sec" id="data">
+<div class="wrap split">
+<header>
+<h2>Trois jeux de données qui ne concordent pas</h2>
+<p>Avant de modéliser, le rapport recense les données disponibles et les écarts attendus entre entraînement et test.</p>
+</header>
+<div>
+<div class="block">
+<h3>Données disponibles</h3>
+<p>Tous les audios sont en OGG Vorbis, mono, 32 kHz. La difficulté ne vient pas du format mais de la façon dont chaque ensemble a été enregistré.</p>
+<dl class="rows">
+<div><dt>Base 1<br/><span style="font-weight:400;color:var(--muted)">train_audio</span></dt><dd>35 549 enregistrements de xeno-canto (23 043) et iNaturalist (12 506). Une étiquette principale par fichier, durée variable (de 0,03 s à 549 s, médiane 19,6 s). Couverture : 206 des 234 classes.</dd></div>
+<div><dt>Base 2<br/><span style="font-weight:400;color:var(--muted)">train_soundscapes</span></dt><dd>1 478 segments de cinq secondes issus d'enregistreurs passifs du Pantanal, avec un vecteur multi-étiquette. Couverture : 75 classes, 4,2 espèces par segment en moyenne, jusqu'à 10.</dd></div>
+<div><dt>Test</dt><dd>Environ 7 200 segments de cinq secondes issus des mêmes enregistreurs passifs. Une probabilité par classe, évaluée par l'AUC-ROC moyenne sur les classes : un insecte rare compte autant qu'un oiseau courant.</dd></div>
+</dl>
+</div>
+<div class="block">
+<h3>Quelles espèces peut-on apprendre, et avec quelles données ?</h3>
+<p>Le croisement des deux bases d'entraînement donne quatre situations pour les 234 espèces cibles. Changez les données d'entraînement pour voir ce que débloque la version 2.</p>
+<dl class="facts">
+<div><b>47</b><span>présentes dans les deux bases</span></div>
+<div><b>159</b><span>Base 1 uniquement : beaucoup d'audio, jamais entendues dans un paysage sonore</span></div>
+<div><b>28</b><span>Base 2 uniquement : peu d'exemples, mais proches du test</span></div>
+<div><b>0</b><span>espèces sans aucune donnée</span></div>
+</dl>
+<div aria-label="Données d’entraînement" class="grid-tools" role="group">
+<button aria-pressed="true" class="gmode" data-g="v1" type="button">Version 1 : entraînement sur la base 1</button>
+<button aria-pressed="false" class="gmode" data-g="v2" type="button">Version 2 : base 1 + 80 % de la base 2</button>
+</div>
+<div class="groups" id="groups"></div>
+<div class="gleg">
+<span><i style="background:#178f5b"></i>Présentes dans les deux bases</span>
+<span><i style="background:#1d5f9b"></i>Base 1 uniquement</span>
+<span><i style="background:#b87a0a"></i>Base 2 uniquement</span>
+<span style="color:var(--muted)">Un carré = une espèce</span>
+</div>
+<p aria-live="polite" class="gcap" id="gcap"></p>
+<p class="note">Répartition des groupes d'après la figure de couverture et les effectifs du rapport. Les oiseaux dominent avec 162 espèces sur 234 ; presque tous les insectes (25 sur 28) sont uniquement dans la base 2.</p>
+</div>
+<div class="block">
+<h3>Trois décalages entre entraînement et test</h3>
+<dl class="rows">
+<div><dt>Ciblé contre passif</dt><dd>Dans la base 1, le microphone vise un animal. Dans le test, des enregistreurs autonomes captent tous les sons alentour. Un modèle apprenant un signal propre doit ensuite le reconnaître dans un mélange : une validation issue de la base 1 surestimerait donc ses performances.</dd></div>
+<div><dt>Deux sources</dt><dd>xeno-canto attribue une note de qualité de 1 à 5 (généralement 4 ou 5). iNaturalist ne fournit pas de note : ses fichiers affichent 0. Impossible de filtrer les deux sources de la même manière. Environ 12 % des fichiers, provenant uniquement de xeno-canto, comportent des étiquettes secondaires.</dd></div>
+<div><dt>Du monde entier au Pantanal</dt><dd>97 % des enregistrements de la base 1 viennent d'ailleurs que du Pantanal. Environ 70 espèces peuvent y vocaliser différemment : le modèle risque d'apprendre des variantes absentes du test.</dd></div>
+</dl>
+</div>
+<div class="block">
+<h3>Trois signatures acoustiques</h3>
+<dl class="rows">
+<div><dt>Oiseaux</dt><dd>Syllabes modulées courtes séparées par des silences. Il faut conserver la dynamique, que les moyennes écrasent.</dd></div>
+<div><dt>Insectes</dt><dd>Signal continu à large bande, sans structure temporelle.</dd></div>
+<div><dt>Amphibiens</dt><dd>Signaux également continus, mais à bande étroite. Les statistiques globales conviennent aux insectes et amphibiens ; les descripteurs doivent donc mêler informations statiques et dynamiques.</dd></div>
+</dl>
+<p class="note">La majorité de l'énergie est située sous 8 kHz : on peut rééchantillonner l'audio de 32 à 16 kHz sans perdre l'essentiel.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= VERSION 1 ================= -->
+<section class="sec white" id="v1">
+<div class="wrap split">
+<header>
+<h2>Un vecteur de caractéristiques conçu à la main</h2>
+<p>La version 1 mise sur l'analyse plutôt que sur la taille du modèle : aucun réseau de neurones, seulement ce que les données justifient.</p>
+</header>
+<div>
+<div class="block">
+<h3>Le pipeline</h3>
+<ol class="steps">
+<li><b>Rééchantillonner</b><span>À 16 kHz, conformément à l'analyse spectrale.</span></li>
+<li><b>Découper</b><span>Segments de 5 s sans chevauchement, au maximum 20 par fichier pour qu'un enregistrement de dix minutes ne surreprésente pas son espèce. La base 1 donne 198 437 segments ; la base 2 conserve ses 1 478 segments.</span></li>
+<li><b>Décrire</b><span>170 valeurs par segment, moyenne et écart-type de chacun des descripteurs : MFCC avec delta et delta-delta, centroïde spectral, largeur de bande, rolloff, flatness, contraste, RMS, taux de passage par zéro, chroma.</span></li>
+<li><b>One-vs-Rest</b><span>Un classifieur binaire par espèce, produisant chacun une probabilité. Les exemples positifs sont automatiquement repondérés, avec <code>scale_pos_weight</code> plafonné à 100.</span></li>
+<li><b>CatBoost</b><span>Profondeur 6, taux d'apprentissage 0,05, régularisation L2 de 3 et arrêt anticipé : un compromis robuste plutôt qu'un optimum finement réglé.</span></li>
+</ol>
+</div>
+<div class="block">
+<h3>Trois classifieurs, même protocole</h3>
+<p>Entraînés sur toute la base 1, évalués sur toute la base 2, AUC macro.</p>
+<div class="tw">
+<table class="wp">
+<thead><tr><th>Classifieur</th><th class="num">Toutes</th><th class="num">47 communes</th><th class="num">Mammalia</th><th class="num">Aves</th><th class="num">Amphibia</th><th class="num">Temps</th></tr></thead>
+<tbody>
+<tr><td>SGD (linéaire)</td><td class="num">0.543</td><td class="num">0.569</td><td class="num">0.518</td><td class="num">0.602</td><td class="num">0.518</td><td class="num">5 min</td></tr>
+<tr><td>XGBoost</td><td class="num">0.609</td><td class="num">0.674</td><td class="num">0.841</td><td class="num">0.651</td><td class="num">0.653</td><td class="num">7 min</td></tr>
+<tr><td>CatBoost</td><td class="num top">0.652</td><td class="num top">0.742</td><td class="num">0.839</td><td class="num top">0.752</td><td class="num top">0.680</td><td class="num">2 min</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">CatBoost domine presque toutes les colonnes et est le plus rapide grâce au GPU. Soumis à Kaggle, il obtient <b>0.728</b>, bien au-dessus du score local de 0,65.</p>
+</div>
+<div class="block">
+<h3>Bilan de la version 1</h3>
+<dl class="rows">
+<div><dt>Les classes apprenables fonctionnent</dt><dd>Sur les 47 classes communes, CatBoost atteint en moyenne 0,742 et certaines espèces dépassent 0,98.</dd></div>
+<div><dt>Une limite inhérente aux données</dt><dd>Les 28 classes présentes uniquement en base 2 restent à 0,5 pour les trois modèles : la base 1 ne contient aucun positif pour elles. Cela tire mécaniquement l'AUC macro vers le bas.</dd></div>
+<div><dt>Classes prédites à l'envers</dt><dd>Trois classes obtiennent un score inférieur à 0,4 (trsowl, 116570, magant1) malgré des centaines ou milliers d'exemples d'entraînement : symptôme typique d'un fort décalage entre enregistrements ciblés et paysages sonores.</dd></div>
+<div><dt>Des résultats inégaux selon les groupes</dt><dd>Mammalia 0,84, Aves 0,75, Amphibia 0,68, Insecta 0,50, Reptilia 0,43 : les statistiques simples ne captent pas les mêmes informations dans tous les types de signaux.</dd></div>
+</dl>
+</div>
+<div class="block">
+<h3>Une impasse : les embeddings BirdNET</h3>
+<p>BirdNET v2.4 produit un vecteur de 1 024 dimensions par segment de 3 s et a été entraîné en grande partie sur xeno-canto ; il semblait donc adapté. Sur CPU, il prenait environ deux secondes par fichier ciblé, soit des heures pour la base 1 (plus de vingt selon une estimation ultérieure du rapport). Le traitement par lots et le parallélisme n'ont pas aidé. Cette piste a été abandonnée pour conserver un pipeline déjà performant et perfectible.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= VERSION 2 ================= -->
+<section class="sec" id="v2">
+<div class="wrap split">
+<header>
+<h2>Version 2 : plus de signal et plus de données</h2>
+<p>Trois améliorations cumulées, chacune répondant à une limite de la première version.</p>
+</header>
+<div>
+<div class="block">
+<h3>Trois changements cumulés</h3>
+<dl class="rows">
+<div><dt>307 caractéristiques</dt><dd>Asymétrie (skewness) et kurtosis des MFCC pour la dynamique temporelle, huit bandes mel (moyenne et écart-type) pour distinguer les signatures stationnaires d'insectes et d'amphibiens, et taux de silence pour séparer les prises de son ciblées denses des paysages sonores plus espacés.</dd></div>
+<div><dt>Cibles multi-étiquettes</dt><dd>Les étiquettes secondaires, présentes dans 12,2 % des fichiers de la base 1, transforment chaque cible en vecteur binaire de 234 dimensions, ajoutant des positifs pour les espèces coexistantes.</dd></div>
+<div><dt>Entraînement sur les deux bases</dt><dd>La base 2 ressemble au test mais est très petite et facile à surapprendre. Elle est donc divisée par fichier de paysage sonore : 52 fichiers (1 182 segments) rejoignent l'entraînement, 14 fichiers (296 segments) sont réservés pour une évaluation indépendante. Cela rend apprenables les 28 classes uniquement présentes en base 2 ; le rapport recense 229 classes entraînées.</dd></div>
+</dl>
+</div>
+<div class="block">
+<h3>Les mêmes trois classifieurs, une nouvelle partition</h3>
+<p>Arrêt anticipé sur le jeu réservé, évaluation sur ses 296 segments. Parmi eux, 42 classes ont au moins un positif et peuvent être évaluées.</p>
+<div class="tw">
+<table class="wp">
+<thead><tr><th>Classifieur</th><th class="num">AUC macro</th><th class="num">Classes communes</th><th class="num">Base 2 uniquement</th><th class="num">Temps</th></tr></thead>
+<tbody>
+<tr><td>SGD (linéaire)</td><td class="num">0.641</td><td class="num">0.642</td><td class="num">0.639</td><td class="num">8 min</td></tr>
+<tr><td>XGBoost</td><td class="num">0.749</td><td class="num">0.816</td><td class="num">0.639</td><td class="num">44 min</td></tr>
+<tr><td>CatBoost</td><td class="num top">0.803</td><td class="num top">0.880</td><td class="num top">0.677</td><td class="num">14 min</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">CatBoost devance XGBoost de 0,05 et SGD de 0,16. Ces chiffres ne sont pas comparables au tableau de la version 1 : l'évaluation passe de 1 478 segments et 75 classes à 296 segments et 42 classes.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= RESULTS ================= -->
+<section class="sec dark" id="results">
+<div class="wrap split">
+<header>
+<h2>Petit gain sur Kaggle, grand changement en profondeur</h2>
+<p>Seul le score Kaggle est comparable entre les versions. Le jeu réservé montre d'où vient le gain.</p>
+</header>
+<div>
+<div class="block grow">
+<h3>Classement Kaggle</h3>
+<p>AUC macro sur le test caché.</p>
+<div class="kag">
+<div><span class="lab">Version 1, 170 caractéristiques, base 1 uniquement</span><div class="pb bm"><span class="tr"><span class="bw" style="--w:45.6%"></span></span><em>0.728</em></div></div>
+<div><span class="lab">Version 2, 307 caractéristiques, base 1 + 80 % de la base 2</span><div class="pb di"><span class="tr"><span class="bw" style="--w:47.4%"></span></span><em>0.737</em></div></div>
+</div>
+<p class="axisnote">Les barres commencent à 0,5, soit le hasard. Gain : +0,009.</p>
+</div>
+<div class="block grow">
+<h3>Par groupe biologique</h3>
+<p>AUC CatBoost sur les 42 classes évaluables dans les deux versions, V1 contre V2 sur le jeu réservé. Gain moyen : +0,165 ; tous les groupes progressent.</p>
+<div id="grp-pairs"></div>
+</div>
+<div class="block">
+<h3>Classe par classe</h3>
+<div aria-label="29 classes en progression, 5 stables et 8 en régression" class="stack" role="img"><span class="up">29</span><span class="eq">5</span><span class="dn">8</span></div>
+<div class="stack-l"><span>29 en progression (plus de +0,02)</span><span>5 stables</span><span>8 en régression</span></div>
+<div id="dumbbells" style="margin-top:18px"></div>
+<p class="dleg">Cercles vides = version 1 ; pleins = version 2. Ligne pointillée = 0,5, le hasard. Les quatre sons d'insectes (son17, son21, son22, son23) passent tous de 0,5 imposé à une valeur entre 0,97 et 1,00.</p>
+</div>
+<p class="callout">Pourquoi seulement +0,009 sur Kaggle ? La moitié des classes nouvellement apprenables restent proches de 0,5, les insectes se distinguent mal avec des statistiques moyennées, et les 47 classes communes étaient déjà les mieux prédites : leurs gains pèsent donc peu dans une AUC macro tirée vers le bas par les classes difficiles. Le score public ne couvre également qu'une partie du test caché ; l'écart privé pourrait être plus grand.</p>
+</div>
+</div>
+</section>
+<!-- ================= ERRORS ================= -->
+<section class="sec white" id="errors">
+<div class="wrap split">
+<header>
+<h2>Là où les caractéristiques ne suffisent plus</h2>
+<p>Trois classes que la version 2 ne parvient pas à corriger, chacune pour une raison différente.</p>
+</header>
+<div>
+<dl class="rows">
+<div><dt>Grenouille ovale bicolore<span class="case">décalage de domaine</span><br/><span style="font-weight:400;color:var(--muted);font-size:.9rem">Amphibia, 0.85 → 0.52</span></dt><dd>Le clip ciblé est dominé par un bruit continu à large bande autour de 2 kHz, avec quelques impulsions graves. Dans le paysage sonore, on observe des bandes horizontales régulières entre 2 et 5 kHz, probablement un chœur d'individus. En version 1, le modèle ne rencontrait les paysages sonores qu'à l'évaluation et y trouvait des corrélations fortuites. En s'entraînant sur ces paysages, il apprend que sa signature ciblée diffère fortement des annotations.</dd></div>
+<div><dt>Caïman à lunettes du Sud<span class="case">trop peu de données</span><br/><span style="font-weight:400;color:var(--muted);font-size:.9rem">Reptilia, 0.43 → 0.55</span></dt><dd>Ses cris sont de brèves bandes graves puissantes, mais il vocalise rarement : la plupart des segments positifs sont du bruit ambiant avec un signal très faible. La base 1 ne contient qu'un seul enregistrement ciblé ; apprendre une frontière de décision sur un unique exemple est statistiquement impossible. Les 26 positifs de la base 2 améliorent légèrement le résultat, puis il plafonne.</dd></div>
+<div><dt>Crapaud rococo<span class="case">masqué par d'autres sons</span><br/><span style="font-weight:400;color:var(--muted);font-size:.9rem">Amphibia, 0.87 → 0.59</span></dt><dd>Son cri typique est un son continu entre 500 et 1 000 Hz. Dans les paysages sonores, il est noyé sous les transitoires d'oiseaux et d'amphibiens, que des statistiques moyennées sur cinq secondes ne permettent pas d'isoler. La version 2 révèle une faiblesse masquée en version 1 : les caractéristiques ne séparent pas les sources qui se chevauchent.</dd></div>
+</dl>
+<p class="note" style="margin-top:24px">Selon le rapport, le pipeline fonctionne quand la signature d'une espèce reste stable entre enregistrement ciblé et paysage sonore (la plupart des oiseaux et mammifères) et débloque mécaniquement les classes uniquement présentes en base 2. Il échoue pour les classes rares, les signatures noyées sous d'autres sources et les cas où les statistiques moyennées perdent l'information propre à une espèce. Ce sont des limites structurelles, pas de simples problèmes de réglage.</p>
+</div>
+</div>
+</section>
+<!-- ================= NEXT ================= -->
+<section class="sec" id="next">
+<div class="wrap split">
+<header>
+<h2>Que tester dans une version 3 ?</h2>
+<p>Pistes classées par rapport entre gain attendu et effort, issues du rapport. Aucune n'a été exécutée.</p>
+</header>
+<div>
+<ol class="steps">
+<li><b>Embeddings préentraînés</b><span>BirdNET (1 024 dimensions), Perch (1 280 dimensions) ou AVES à la place des 307 statistiques. Ils aideraient surtout le transfert entre ciblé et paysage sonore et les signaux masqués, mais nécessiteraient du temps GPU ou une extraction par lots. Peu d'aide pour le caïman, qui manque d'exemples.</span></li>
+<li><b>Augmentation ciblée des données</b><span>Mélanger le bruit de fond des paysages sonores aux enregistrements ciblés et superposer plusieurs clips ciblés pour simuler la cooccurrence. Solution peu coûteuse visant directement le décalage de domaine, qui pourrait réduire les régressions chez les amphibiens.</span></li>
+<li><b>Métadonnées non audio</b><span>Un a priori géographique fondé sur les lieux d'entraînement des espèces et le Pantanal, un filtre saisonnier (test en février-mars) et un essai simple qualité contre quantité : entraîner sur xeno-canto avec note au moins 3 ainsi que sur iNaturalist.</span></li>
+<li><b>Ensemble de modèles et réglages</b><span>Moyenne géométrique des probabilités XGBoost et CatBoost, puis courte recherche Optuna sur les classes difficiles. Un gain probable mais marginal, à garder pour la fin.</span></li>
+</ol>
+</div>
+</div>
+</section>
+<!-- ================= REPORT ================= -->
+<section class="sec" id="report" style="background: var(--ink); padding-top: 0">
+<div class="wrap">
+<div class="report">
+<div>
+<h2>Lire le rapport complet</h2>
+<p>15 pages, en français : analyse des données, deux versions, analyse d'erreurs avec spectrogrammes et perspectives.</p>
+</div>
+<a class="btn btn-light" href="../../assets/projects/bioacoustic-classification/report.pdf" rel="noreferrer" target="_blank">Ouvrir le rapport (PDF)</a>
+</div>
+</div>
+</section>
+</main>
+<footer class="foot">
+<div class="wrap">
+<span>© 2026 Younes Arjdal</span>
+<a href="../index.html#projects">Retour aux projets ↑</a>
+</div>
+</footer>
+<script>
+  (() => {
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+    /* ============ Wave demo (synthetic, seeded) ============ */
+    function rng(a) { return () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+    const N = 300, W = 600, MID = 48;
+    const R = rng(7), sg = () => R() * 2 - 1;
+    const bump = (t, c, w) => Math.exp(-Math.pow((t - c) / w, 2));
+    const tgt = Array.from({ length: N }, (_, i) => { const t = i / N * 5; return (0.9 * bump(t, 0.9, 0.16) + 0.8 * bump(t, 2.1, 0.2) + 0.95 * bump(t, 3.5, 0.14) + 0.55 * bump(t, 4.3, 0.1)) * sg(); });
+    const others = Array.from({ length: 9 }, (_, j) => {
+      const kind = j % 3, cs = [0, 1, 2, 3].map(() => R() * 4.6 + 0.2), ph = R() * 6;
+      return Array.from({ length: N }, (_, i) => {
+        const t = i / N * 5;
+        if (kind === 0) return 0.7 * cs.reduce((a, c) => a + bump(t, c, 0.09), 0) * sg();
+        if (kind === 1) return 0.3 * sg();
+        return 0.42 * (0.6 + 0.4 * Math.sin(t * 3 + ph)) * sg();
+      });
+    });
+    const noise = Array.from({ length: N }, sg);
+
+    function path(arr, scale) {
+      let d = '';
+      for (let i = 0; i < N; i++) {
+        const x = (i + 0.5) / N * W, a = Math.min(Math.abs(arr[i]) * scale, 1) * (MID - 4);
+        d += `M${x.toFixed(1)} ${(MID - a).toFixed(1)}V${(MID + a).toFixed(1)}`;
+      }
+      return d;
+    }
+    const svgWave = (el, layers) => { el.innerHTML = `<line class="mid" x1="0" x2="${W}" y1="${MID}" y2="${MID}"/>` + layers.map((l) => `<path class="${l.c}" d="${path(l.a, l.s)}"/>`).join(''); };
+
+    const nsp = $('#nsp'), nz = $('#nz'), hl = $('#hl');
+    function wave() {
+      const k = +nsp.value, nzv = +nz.value / 100;
+      $('#nsp-o').textContent = k; $('#nz-o').textContent = nz.value + ' %';
+      const mix = Array.from({ length: N }, (_, i) => {
+        let v = tgt[i] + 0.4 * nzv * 2 * noise[i];
+        for (let j = 0; j < k - 1; j++) v += others[j][i];
+        return v;
+      });
+      const mx = Math.max(...mix.map(Math.abs), 1), sc = 1 / mx;
+      const fo = tgt.map((v, i) => v + 0.05 * noise[i]);
+      svgWave($('#w-focal'), [{ c: 'tgt', a: fo, s: 1 }]);
+      svgWave($('#w-soup'), [{ c: 'mix', a: mix, s: sc }].concat(hl.checked ? [{ c: 'tgt', a: tgt, s: sc }] : []));
+      $('#w-cap').textContent = `Test · 5 s, ${k} espèces et du bruit`;
+      const e = (a) => a.reduce((s, v) => s + v * v, 0);
+      let eo = 0; for (let j = 0; j < k - 1; j++) eo += e(others[j]);
+      const en = e(noise.map((v) => 0.8 * nzv * v)), et = e(tgt);
+      const share = et / (et + eo + en);
+      $('#share').innerHTML = `Part de l’énergie du signal provenant de la cible dans ce mélange fictif : <b>${Math.round(share * 100)} %</b>. Dans le clip ciblé, elle est proche de 100 %.`;
+    }
+    [nsp, nz, hl].forEach((el) => el.addEventListener('input', wave));
+    wave();
+
+    /* ============ Species grid ============ */
+    const G = [['Aves', 28, 134, 0, true], ['Amphibia', 14, 18, 3], ['Insecta', 0, 3, 25], ['Mammalia', 4, 4, 0], ['Reptilia', 1, 0, 0]];
+    const gwrap = $('#groups');
+    gwrap.innerHTML = G.map(([n, c, v, s, wide]) => {
+      const dots = [['c', c, 'dans les deux bases'], ['v', v, 'Base 1 uniquement'], ['s', s, 'Base 2 uniquement']].map(([k, m, lab]) => Array.from({ length: m }, () => `<span class="d ${k}" title="${n}: ${lab}"></span>`).join('')).join('');
+      return `<div class="grp${wide ? ' wide' : ''}"><h4>${n} · ${c + v + s}</h4><div class="dots">${dots}</div></div>`;
+    }).join('');
+    const CAP = {
+      v1: 'Avec un entraînement sur la seule base 1, les 28 espèces uniquement présentes en base 2 (carrés vides) n’ont aucun exemple positif. Leur AUC reste bloquée à 0,5 et fait mécaniquement baisser l’AUC macro.',
+      v2: 'Ajouter 80 % de la base 2 à l’entraînement permet d’apprendre ces 28 espèces, et les paysages sonores proches du test améliorent les 47 classes communes. Le rapport recense 229 classes entraînées.'
+    };
+    function setG(m) {
+      $$('.gmode').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.g === m)));
+      $$('.d.s').forEach((d) => d.classList.toggle('off', m === 'v1'));
+      $('#gcap').textContent = CAP[m];
+    }
+    $$('.gmode').forEach((b) => b.addEventListener('click', () => setG(b.dataset.g)));
+    setG('v1');
+
+    /* ============ Per-group pairs ============ */
+    const P = [['Mammalia', 3, 0.785, 0.991, '+0.206'], ['Aves', 9, 0.756, 0.931, '+0.175'], ['Insecta', 13, 0.5, 0.662, '+0.162'], ['Amphibia', 16, 0.668, 0.825, '+0.157'], ['Reptilia', 1, 0.431, 0.552, '+0.121']];
+    $('#grp-pairs').innerHTML = P.map(([n, k, a, b, g]) => `
+      <div class="pair">
+        <div><b>${n}</b><small>${k} classe${k > 1 ? 's' : ''}</small></div>
+        <div class="pbars">
+          <div class="pb bm"><span class="tr"><span class="bw" style="--w:${a * 100}%"></span></span><em>v1 ${a.toFixed(3)}</em></div>
+          <div class="pb di"><span class="tr"><span class="bw" style="--w:${b * 100}%"></span></span><em>v2 ${b.toFixed(3)}</em></div>
+        </div>
+        <div class="gain">${g}</div>
+      </div>`).join('');
+
+    /* ============ Dumbbells ============ */
+    const lo = 0.4, hi = 1.0, pos = (v) => ((v - lo) / (hi - lo) * 100).toFixed(2) + '%';
+    const D = [
+      ['Grenouille des feuilles guarani', 'Amphibia', 0.5, 0.93, null, 'up'],
+      ['Petit engoulevent', 'Aves', 0.52, 0.98, null, 'up'],
+      ['Engoulevent pauraqué', 'Aves', 0.53, 0.90, null, 'up'],
+      ['Héron strié', 'Aves', 0.57, 0.94, null, 'up'],
+      ['Quatre sons d’insectes', 'son17, son21, son22, son23', 0.5, 0.97, 1.0, 'up'],
+      ['Caïman à lunettes du Sud', 'Reptilia, un enregistrement ciblé dans la base 1', 0.43, 0.55, null, 'ce'],
+      ['Grenouille ovale bicolore', 'Amphibia', 0.85, 0.52, null, 'dn'],
+      ['Crapaud rococo', 'Amphibia', 0.87, 0.59, null, 'dn']
+    ];
+    $('#dumbbells').innerHTML = D.map(([n, s, a, b, b2, k]) => {
+      const l = Math.min(a, b), r = Math.max(a, b2 || b);
+      const val = b2 ? `${a.toFixed(2)} → ${b.toFixed(2)}–${b2.toFixed(2)}` : `${a.toFixed(2)} → ${b.toFixed(2)}`;
+      return `<div class="db ${k}">
+        <div><b>${n}</b><small>${s}</small></div>
+        <div class="dtrack" style="--ch:${pos(0.5)}">
+          <span class="chance"></span>
+          <span class="seg2" style="--a:${pos(l)};--wd:calc(${pos(r)} - ${pos(l)})"></span>
+          <span class="m" style="--x:${pos(a)}"></span>
+          <span class="m f" style="--x:${pos(b)}"></span>
+          ${b2 ? `<span class="m f" style="--x:${pos(b2)}"></span>` : ''}
+        </div>
+        <div class="dv ${k}">${val}</div>
+      </div>`;
+    }).join('');
+
+    /* ============ Reveal bars on scroll ============ */
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('on'); io.unobserve(e.target); } });
+      }, { threshold: 0.2 });
+      $$('.grow').forEach((s) => io.observe(s));
+    } else { $$('.grow').forEach((s) => s.classList.add('on')); }
+  })();
+  </script>
+</body>
+</html>

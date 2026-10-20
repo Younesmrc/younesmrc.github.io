@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html lang="en" class="no-js">
+
+<html class="no-js" lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Information Retrieval Engine: reproducing Guided Traversal (SIGIR 2022) with BM25 and DeepImpact, and rebuilding a dual-score inverted index for 8.8 million MS MARCO passages." />
-  <meta name="theme-color" content="#06121f" />
-  <title>Information Retrieval Engine — Younes Arjdal</title>
-  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <script>document.documentElement.classList.replace('no-js', 'js');</script>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="Information Retrieval Engine: reproducing Guided Traversal (SIGIR 2022) with BM25 and DeepImpact, and rebuilding a dual-score inverted index for 8.8 million MS MARCO passages." name="description"/>
+<meta content="#06121f" name="theme-color"/>
+<title>Information Retrieval Engine - Younes Arjdal</title>
+<link href="../assets/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<script>document.documentElement.classList.replace('no-js', 'js');</script>
+<style>
     :root {
       --ink: #06121f; --ink-2: #0a1b2e; --paper: #f4f6f8; --text: #12202e; --muted: #566677;
       --line: #d6dee6; --dline: rgba(255, 255, 255, 0.13);
@@ -220,357 +221,345 @@
       html { scroll-behavior: auto; }
       *, *::before, *::after { transition-duration: 0.01ms !important; }
     }
-  </style>
-</head>
+  
+/* Language switch : EN | FR, adjacent to YA */
+.identity-row{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.top .identity-row .lang-switch{position:static!important;top:auto;left:auto;right:auto;display:inline-flex!important;align-items:center;flex-direction:row!important;gap:7px!important;padding:0;background:none;border:0;white-space:nowrap}
+.top .identity-row .lang-switch a{display:inline-flex!important;align-items:center;font:600 .76rem var(--mono);text-decoration:none;color:#a9bfd2;padding:7px 2px;border:0}
+.top .identity-row .lang-switch a[aria-current="page"]{color:#fff;text-decoration:underline;text-underline-offset:4px}
+.top .identity-row .lang-switch a:hover{color:#fff}
+.lang-switch .lang-divider{color:#67839d;font-size:.8rem}
+@media(max-width:420px){.identity-row{gap:8px}.top .identity-row .lang-switch{gap:4px!important}}
+</style>
+<link href="https://younesmrc.github.io/projects/information-retrieval.html" hreflang="en" rel="alternate"/><link href="https://younesmrc.github.io/fr/projects/information-retrieval.html" hreflang="fr" rel="alternate"/><link href="https://younesmrc.github.io/projects/information-retrieval.html" hreflang="x-default" rel="alternate"/></head>
 <body>
-  <header class="top">
-    <div class="wrap">
-      <a class="brand" href="../index.html#home" aria-label="Go to home">YA</a>
-      <nav aria-label="Project navigation">
-        <a href="../index.html#projects">All projects</a>
-        <a href="#method">Method</a>
-        <a href="#index">Index</a>
-        <a href="#bugs">Bugs</a>
-        <a href="#results">Results</a>
-        <a href="#limits">Limits</a>
-        <a href="#paper">Paper</a>
-      </nav>
-    </div>
-  </header>
-
-  <main>
-    <!-- ================= HERO + TRAVERSAL DEMO ================= -->
-    <section class="hero" id="top">
-      <div class="wrap">
-        <a class="back" href="../index.html#projects">← Back to projects</a>
-
-        <div class="hero-head">
-          <div>
-            <h1>Information<br />Retrieval</h1>
-            <p class="sub">BM25, DeepImpact and Guided Traversal on MS MARCO</p>
-          </div>
-          <div>
-            <p class="lede">
+<header class="top">
+<div class="wrap">
+<div class="identity-row"><a aria-label="Go to home" class="brand" href="../index.html#home">YA</a><nav aria-label="Choose language" class="lang-switch"><a aria-current="page" href="#" lang="en">EN</a><span aria-hidden="true" class="lang-divider">|</span><a href="../fr/projects/information-retrieval.html" lang="fr">FR</a></nav></div>
+<nav aria-label="Project navigation">
+<a href="../index.html#projects">All projects</a>
+<a href="#method">Method</a>
+<a href="#index">Index</a>
+<a href="#bugs">Bugs</a>
+<a href="#results">Results</a>
+<a href="#limits">Limits</a>
+<a href="#paper">Paper</a>
+</nav>
+</div>
+</header>
+<main>
+<!-- ================= HERO + TRAVERSAL DEMO ================= -->
+<section class="hero" id="top">
+<div class="wrap">
+<a class="back" href="../index.html#projects">← Back to projects</a>
+<div class="hero-head">
+<div>
+<h1>Information<br/>Retrieval</h1>
+<p class="sub">BM25, DeepImpact and Guided Traversal on MS MARCO</p>
+</div>
+<div>
+<p class="lede">
               Learned sparse retrieval ranks better than BM25 but is harder to prune. We reproduced a SIGIR 2022 paper
               that lets BM25 steer the search while DeepImpact scores the documents it finds, and rebuilt the dual-score
               index it needs when the original became unavailable.
             </p>
-            <dl class="meta">
-              <div><dt>Project</dt><dd>M1 MIND, RITAL course (4IN0813), Sorbonne University, 2025–2026</dd></div>
-              <div><dt>Paper</dt><dd>Mallia et al., Faster Learned Sparse Retrieval with Guided Traversal, SIGIR 2022</dd></div>
-              <div><dt>Data</dt><dd>MS MARCO Passage expanded with DocT5Query (8,841,823 passages), TREC Deep Learning 2019 and 2020</dd></div>
-              <div><dt>Stack</dt><dd>Python, PyTorch, NumPy, C++</dd></div>
-            </dl>
-            <div class="hero-actions">
-              <a class="btn btn-light" href="#results">Jump to results</a>
-              <a class="btn btn-ghost" href="https://doi.org/10.1145/3477495.3531774" target="_blank" rel="noreferrer">Read the paper</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="demo" id="gt-demo">
-          <div class="demo-intro">
-            <div>
-              <h2>Score fewer documents, keep the top results</h2>
-              <p>A toy index with three query terms and eight documents. Step through it with the top 2 results wanted. The numbers are invented, the logic is the one described in the paper.</p>
-            </div>
-            <code class="chip">query: cheap flights paris</code>
-          </div>
-
-          <div class="demo-bar">
-            <div class="modes" role="group" aria-label="Retrieval strategy">
-              <button class="mode" type="button" data-mode="exh" aria-pressed="false">Score everything with DeepImpact</button>
-              <button class="mode" type="button" data-mode="gt" aria-pressed="true">Guided Traversal</button>
-              <button class="mode" type="button" data-mode="gti" aria-pressed="false">GT with interpolation</button>
-            </div>
-            <div class="demo-btns">
-              <button class="btn btn-light" id="gt-next" type="button">Next document</button>
-              <button class="btn btn-ghost" id="gt-all" type="button">Run all</button>
-              <button class="btn btn-ghost" id="gt-reset" type="button">Reset</button>
-            </div>
-          </div>
-
-          <div class="trap">
-            <label class="switch">
-              <input type="checkbox" id="gt-trap" role="switch" />
-              <span class="knob"></span>
-              <span>Hide a good document from BM25</span>
-            </label>
-            <small>d3 gets a very high DeepImpact weight on “cheap” but a weak BM25 score.</small>
-          </div>
-
-          <div class="lists" id="gt-lists" aria-label="Postings lists, each document with its BM25 and DeepImpact weights"></div>
-          <p class="legend-line">Each chip shows the document, then its BM25 and DeepImpact weight for that term.</p>
-
-          <div class="status" aria-live="polite">
-            <div><b>Threshold θ (2nd-best BM25 so far)</b><span id="gt-theta">–</span></div>
-            <div><b>BM25 heap</b><span id="gt-hb">–</span></div>
-            <div><b id="gt-rl">Result heap</b><span id="gt-hs">–</span></div>
-          </div>
-
-          <div class="tw">
-            <table class="dtable">
-              <thead><tr><th scope="col">Doc</th><th scope="col">Decision</th><th scope="col" style="text-align:right">BM25</th><th scope="col" style="text-align:right">DeepImpact</th></tr></thead>
-              <tbody id="gt-body"></tbody>
-            </table>
-          </div>
-          <noscript><p class="note">Turn on JavaScript to run this demo.</p></noscript>
-          <p class="out" id="gt-out" aria-live="polite"></p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= METHOD ================= -->
-    <section class="sec" id="method">
-      <div class="wrap split">
-        <header>
-          <h2>Let BM25 steer, let DeepImpact judge</h2>
-          <p>DeepImpact ranks better, but its score distribution makes skipping documents less effective. The paper separates the signal that guides the search from the one that scores results.</p>
-        </header>
-        <dl class="rows">
-          <div>
-            <dt>Upper bounds</dt>
-            <dd>Each posting stores a BM25 weight and a DeepImpact weight. For a term, <code>UB_BM25</code> is its highest BM25 score in the collection, so a document’s best possible score can be bounded without reading all its postings.</dd>
-          </div>
-          <div>
-            <dt>MaxScore</dt>
-            <dd>Sorts query terms by upper bound. When the bounds of some terms add up to less than the current top-k threshold, those terms become non-essential: alone they can’t get a document into the top-k, so the search stops using them as starting points.</dd>
-          </div>
-          <div>
-            <dt>Guided Traversal</dt>
-            <dd>Walks the index using BM25 bounds, but scores the documents it visits with DeepImpact. Two heaps: BM25 sets the threshold, DeepImpact ranks the results. A document pruned on BM25 can’t come back, so this is a heuristic for the DeepImpact ranking.</dd>
-          </div>
-          <div>
-            <dt>With interpolation</dt>
-            <dd>Ranks visited documents by an unweighted sum of BM25 and DeepImpact. There is no BERT call at query time: DeepImpact weights are computed once, at indexing.</dd>
-          </div>
-        </dl>
-      </div>
-    </section>
-
-    <!-- ================= INDEX ================= -->
-    <section class="sec white" id="index">
-      <div class="wrap split">
-        <header>
-          <h2>Rebuilding the index that disappeared</h2>
-          <p>The paper’s dual-score index couldn’t be recovered, and the README notes this was checked with researchers. So we built our own at MS MARCO scale.</p>
-        </header>
-        <div>
-          <div class="block">
-            <div class="facts">
-              <div><b>8,841,823</b><span>passages indexed</span></div>
-              <div><b>≈3.5 M</b><span>terms</span></div>
-              <div><b>≈620 M</b><span>postings</span></div>
-              <div><b>≈15 h</b><span>of GPU compute</span></div>
-            </div>
-            <p class="note" style="margin: 0 0 28px">The passage count comes from the indexing script. The other three figures are the team’s estimates from the presentation, not from execution logs.</p>
-            <ol class="steps">
-              <li><b>Per document</b><span>Each passage is cleaned and tokenized, its terms counted, and a batch goes through DeepImpact. For each kept term the script writes one binary record: term, document, normalized frequency and DeepImpact score. Going document by document avoids rescanning the collection for every term.</span></li>
-              <li><b>Per term</b><span>The raw records are loaded, sorted by term then document, grouped into postings lists, and given an IDF. Two compact binary files come out, readable by the C++ engine.</span></li>
-            </ol>
-          </div>
-
-          <div class="block">
-            <h3>Compact on disk</h3>
-            <p>Both scores are stored as 16-bit floats. A reader finds a term’s list from its offset and length in the dictionary, without scanning the file.</p>
-            <div class="bytes">
-              <div>
-                <div class="brow-h"><code>postings_raw.bin</code><span>16 bytes per record</span></div>
-                <div class="brow" style="width: 80%">
-                  <div class="seg k1" style="--b: 4">term_id<small>u32</small></div><div class="seg k2" style="--b: 4">doc_id<small>u32</small></div><div class="seg k3" style="--b: 4">tf_norm<small>f32</small></div><div class="seg k4" style="--b: 4">DI<small>f32</small></div>
-                </div>
-              </div>
-              <div>
-                <div class="brow-h"><code>term_meta.bin</code><span>20 bytes per term</span></div>
-                <div class="brow">
-                  <div class="seg k1" style="--b: 4">term_id<small>u32</small></div><div class="seg k3" style="--b: 4">UB_BM25<small>f32</small></div><div class="seg k2" style="--b: 8">offset<small>u64</small></div><div class="seg k4" style="--b: 4">count<small>u32</small></div>
-                </div>
-              </div>
-              <div>
-                <div class="brow-h"><code>term_doc_scores.bin</code><span>8 bytes per posting</span></div>
-                <div class="brow" style="width: 40%">
-                  <div class="seg k2" style="--b: 4">doc_id<small>u32</small></div><div class="seg k3" style="--b: 2">BM25<small>f16</small></div><div class="seg k4" style="--b: 2">DI<small>f16</small></div>
-                </div>
-              </div>
-            </div>
-            <p class="note">Bar widths are proportional to bytes.</p>
-          </div>
-
-          <dl class="rows" style="margin-top: 48px">
-            <div>
-              <dt>Scoring</dt>
-              <dd>k1 = 0.82, b = 0.68 and an average length of 89.3 on the expanded collection. For repeated terms the script keeps the highest DeepImpact score.
+<dl class="meta">
+<div><dt>Project</dt><dd>M1 MIND, RITAL course (4IN0813), Sorbonne University, 2025–2026</dd></div>
+<div><dt>Paper</dt><dd>Mallia et al., Faster Learned Sparse Retrieval with Guided Traversal, SIGIR 2022</dd></div>
+<div><dt>Data</dt><dd>MS MARCO Passage expanded with DocT5Query (8,841,823 passages), TREC Deep Learning 2019 and 2020</dd></div>
+<div><dt>Stack</dt><dd>Python, PyTorch, NumPy, C++</dd></div>
+</dl>
+<div class="hero-actions">
+<a class="btn btn-light" href="#results">Jump to results</a>
+<a class="btn btn-ghost" href="https://doi.org/10.1145/3477495.3531774" rel="noreferrer" target="_blank">Read the paper</a>
+</div>
+</div>
+</div>
+<div class="demo" id="gt-demo">
+<div class="demo-intro">
+<div>
+<h2>Score fewer documents, keep the top results</h2>
+<p>A toy index with three query terms and eight documents. Step through it with the top 2 results wanted. The numbers are invented, the logic is the one described in the paper.</p>
+</div>
+<code class="chip">query: cheap flights paris</code>
+</div>
+<div class="demo-bar">
+<div aria-label="Retrieval strategy" class="modes" role="group">
+<button aria-pressed="false" class="mode" data-mode="exh" type="button">Score everything with DeepImpact</button>
+<button aria-pressed="true" class="mode" data-mode="gt" type="button">Guided Traversal</button>
+<button aria-pressed="false" class="mode" data-mode="gti" type="button">GT with interpolation</button>
+</div>
+<div class="demo-btns">
+<button class="btn btn-light" id="gt-next" type="button">Next document</button>
+<button class="btn btn-ghost" id="gt-all" type="button">Run all</button>
+<button class="btn btn-ghost" id="gt-reset" type="button">Reset</button>
+</div>
+</div>
+<div class="trap">
+<label class="switch">
+<input id="gt-trap" role="switch" type="checkbox"/>
+<span class="knob"></span>
+<span>Hide a good document from BM25</span>
+</label>
+<small>d3 gets a very high DeepImpact weight on “cheap” but a weak BM25 score.</small>
+</div>
+<div aria-label="Postings lists, each document with its BM25 and DeepImpact weights" class="lists" id="gt-lists"></div>
+<p class="legend-line">Each chip shows the document, then its BM25 and DeepImpact weight for that term.</p>
+<div aria-live="polite" class="status">
+<div><b>Threshold θ (2nd-best BM25 so far)</b><span id="gt-theta">–</span></div>
+<div><b>BM25 heap</b><span id="gt-hb">–</span></div>
+<div><b id="gt-rl">Result heap</b><span id="gt-hs">–</span></div>
+</div>
+<div class="tw">
+<table class="dtable">
+<thead><tr><th scope="col">Doc</th><th scope="col">Decision</th><th scope="col" style="text-align:right">BM25</th><th scope="col" style="text-align:right">DeepImpact</th></tr></thead>
+<tbody id="gt-body"></tbody>
+</table>
+</div>
+<noscript><p class="note">Turn on JavaScript to run this demo.</p></noscript>
+<p aria-live="polite" class="out" id="gt-out"></p>
+</div>
+</div>
+</section>
+<!-- ================= METHOD ================= -->
+<section class="sec" id="method">
+<div class="wrap split">
+<header>
+<h2>Let BM25 steer, let DeepImpact judge</h2>
+<p>DeepImpact ranks better, but its score distribution makes skipping documents less effective. The paper separates the signal that guides the search from the one that scores results.</p>
+</header>
+<dl class="rows">
+<div>
+<dt>Upper bounds</dt>
+<dd>Each posting stores a BM25 weight and a DeepImpact weight. For a term, <code>UB_BM25</code> is its highest BM25 score in the collection, so a document’s best possible score can be bounded without reading all its postings.</dd>
+</div>
+<div>
+<dt>MaxScore</dt>
+<dd>Sorts query terms by upper bound. When the bounds of some terms add up to less than the current top-k threshold, those terms become non-essential: alone they can’t get a document into the top-k, so the search stops using them as starting points.</dd>
+</div>
+<div>
+<dt>Guided Traversal</dt>
+<dd>Walks the index using BM25 bounds, but scores the documents it visits with DeepImpact. Two heaps: BM25 sets the threshold, DeepImpact ranks the results. A document pruned on BM25 can’t come back, so this is a heuristic for the DeepImpact ranking.</dd>
+</div>
+<div>
+<dt>With interpolation</dt>
+<dd>Ranks visited documents by an unweighted sum of BM25 and DeepImpact. There is no BERT call at query time: DeepImpact weights are computed once, at indexing.</dd>
+</div>
+</dl>
+</div>
+</section>
+<!-- ================= INDEX ================= -->
+<section class="sec white" id="index">
+<div class="wrap split">
+<header>
+<h2>Rebuilding the index that disappeared</h2>
+<p>The paper’s dual-score index couldn’t be recovered, and the README notes this was checked with researchers. So we built our own at MS MARCO scale.</p>
+</header>
+<div>
+<div class="block">
+<div class="facts">
+<div><b>8,841,823</b><span>passages indexed</span></div>
+<div><b>≈3.5 M</b><span>terms</span></div>
+<div><b>≈620 M</b><span>postings</span></div>
+<div><b>≈15 h</b><span>of GPU compute</span></div>
+</div>
+<p class="note" style="margin: 0 0 28px">The passage count comes from the indexing script. The other three figures are the team’s estimates from the presentation, not from execution logs.</p>
+<ol class="steps">
+<li><b>Per document</b><span>Each passage is cleaned and tokenized, its terms counted, and a batch goes through DeepImpact. For each kept term the script writes one binary record: term, document, normalized frequency and DeepImpact score. Going document by document avoids rescanning the collection for every term.</span></li>
+<li><b>Per term</b><span>The raw records are loaded, sorted by term then document, grouped into postings lists, and given an IDF. Two compact binary files come out, readable by the C++ engine.</span></li>
+</ol>
+</div>
+<div class="block">
+<h3>Compact on disk</h3>
+<p>Both scores are stored as 16-bit floats. A reader finds a term’s list from its offset and length in the dictionary, without scanning the file.</p>
+<div class="bytes">
+<div>
+<div class="brow-h"><code>postings_raw.bin</code><span>16 bytes per record</span></div>
+<div class="brow" style="width: 80%">
+<div class="seg k1" style="--b: 4">term_id<small>u32</small></div><div class="seg k2" style="--b: 4">doc_id<small>u32</small></div><div class="seg k3" style="--b: 4">tf_norm<small>f32</small></div><div class="seg k4" style="--b: 4">DI<small>f32</small></div>
+</div>
+</div>
+<div>
+<div class="brow-h"><code>term_meta.bin</code><span>20 bytes per term</span></div>
+<div class="brow">
+<div class="seg k1" style="--b: 4">term_id<small>u32</small></div><div class="seg k3" style="--b: 4">UB_BM25<small>f32</small></div><div class="seg k2" style="--b: 8">offset<small>u64</small></div><div class="seg k4" style="--b: 4">count<small>u32</small></div>
+</div>
+</div>
+<div>
+<div class="brow-h"><code>term_doc_scores.bin</code><span>8 bytes per posting</span></div>
+<div class="brow" style="width: 40%">
+<div class="seg k2" style="--b: 4">doc_id<small>u32</small></div><div class="seg k3" style="--b: 2">BM25<small>f16</small></div><div class="seg k4" style="--b: 2">DI<small>f16</small></div>
+</div>
+</div>
+</div>
+<p class="note">Bar widths are proportional to bytes.</p>
+</div>
+<dl class="rows" style="margin-top: 48px">
+<div>
+<dt>Scoring</dt>
+<dd>k1 = 0.82, b = 0.68 and an average length of 89.3 on the expanded collection. For repeated terms the script keeps the highest DeepImpact score.
                 <span class="formula">BM25(t,d) = IDF(t) · tf(k1+1) / [tf + k1(1 − b + b·dl/AVGDL)]</span>
-                <span class="formula">IDF(t) = ln[1 + (N − df + 0.5) / (df + 0.5)]</span></dd>
-            </div>
-            <div>
-              <dt>Batches on GPU</dt>
-              <dd>512 passages per batch on CUDA when available, with inputs capped at 300 BERT tokens.</dd>
-            </div>
-            <div>
-              <dt>Surviving crashes</dt>
-              <dd>A checkpoint every four hours stores the last validated document and the raw file size. On restart the raw file is truncated to that point, so a crash doesn’t duplicate postings.</dd>
-            </div>
-            <div>
-              <dt>Memory</dt>
-              <dd>Postings stream to disk during inference. The final in-place NumPy sort still needs a lot of RAM.</dd>
-            </div>
-          </dl>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= BUGS ================= -->
-    <section class="sec" id="bugs">
-      <div class="wrap split">
-        <header>
-          <h2>Two bugs that produced plausible numbers</h2>
-          <p>Both gave scores that looked fine and were attached to the wrong things.</p>
-        </header>
-        <div>
-          <div class="block">
-            <h3>Checkpoint layers that didn’t match</h3>
-            <p>The DeepImpact checkpoint named its last layers differently from our model code. Loading with <code>strict=False</code> silently skipped them, so the scoring head was never loaded and every impact was compromised. We remapped the keys and made loading strict.</p>
-            <pre class="diff"><span class="c"># checkpoint key  →  local model key</span>
+<span class="formula">IDF(t) = ln[1 + (N − df + 0.5) / (df + 0.5)]</span></dd>
+</div>
+<div>
+<dt>Batches on GPU</dt>
+<dd>512 passages per batch on CUDA when available, with inputs capped at 300 BERT tokens.</dd>
+</div>
+<div>
+<dt>Surviving crashes</dt>
+<dd>A checkpoint every four hours stores the last validated document and the raw file size. On restart the raw file is truncated to that point, so a crash doesn’t duplicate postings.</dd>
+</div>
+<div>
+<dt>Memory</dt>
+<dd>Postings stream to disk during inference. The final in-place NumPy sort still needs a lot of RAM.</dd>
+</div>
+</dl>
+</div>
+</div>
+</section>
+<!-- ================= BUGS ================= -->
+<section class="sec" id="bugs">
+<div class="wrap split">
+<header>
+<h2>Two bugs that produced plausible numbers</h2>
+<p>Both gave scores that looked fine and were attached to the wrong things.</p>
+</header>
+<div>
+<div class="block">
+<h3>Checkpoint layers that didn’t match</h3>
+<p>The DeepImpact checkpoint named its last layers differently from our model code. Loading with <code>strict=False</code> silently skipped them, so the scoring head was never loaded and every impact was compromised. We remapped the keys and made loading strict.</p>
+<pre class="diff"><span class="c"># checkpoint key  →  local model key</span>
 pre_classifier  →  impact_score_encoder.0
 classifier      →  impact_score_encoder.3
 
 <span class="m">- load_state_dict(state, strict=False)</span>
 <span class="p">+ load_state_dict(state, strict=True)</span></pre>
-          </div>
-
-          <div class="block">
-            <h3>Word positions are not WordPiece positions</h3>
-            <p>The model’s <code>index()</code> expects positions of BERT sub-tokens. Our first version passed word indices from <code>split()</code>. As soon as one word breaks into several pieces, every later word is shifted. The fix rebuilds positions from each word’s first sub-token, adds the <code>[CLS]</code> offset and respects truncation.</p>
-            <div class="toks" aria-label="Example WordPiece sequence">
-              <span>[CLS]<i>0</i></span><span>the<i>1</i></span><span>em<i>2</i></span><span>##bed<i>3</i></span><span>##ding<i>4</i></span><span>##s<i>5</i></span><span>are<i>6</i></span><span>cached<i>7</i></span>
-            </div>
-            <div class="tw">
-              <table class="wp">
-                <thead><tr><th scope="col">Word</th><th scope="col">Index from split()</th><th scope="col">Lands on</th><th scope="col">Correct position</th></tr></thead>
-                <tbody>
-                  <tr><td>the</td><td>0</td><td class="bad">[CLS]</td><td class="good">1</td></tr>
-                  <tr><td>embeddings</td><td>1</td><td class="bad">the</td><td class="good">2</td></tr>
-                  <tr><td>are</td><td>2</td><td class="bad">em</td><td class="good">6</td></tr>
-                  <tr><td>cached</td><td>3</td><td class="bad">##bed</td><td class="good">7</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <p class="note">Illustrative split of a made-up sentence, not data from the project. A shift like this still gives believable numbers, just for the wrong terms.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= RESULTS ================= -->
-    <section class="sec dark" id="results">
-      <div class="wrap split">
-        <header>
-          <h2>DeepImpact ranks better, at about the same cost here</h2>
-          <p>Saved notebook outputs for the two baselines. They show the ranking gain, not a speed-up for Guided Traversal.</p>
-        </header>
-        <div>
-          <div class="block">
-            <h3>Ranking quality, DeepImpact against BM25</h3>
-            <p>Each query set is shown with its main metric: MRR@10 for MS MARCO, NDCG@10 for TREC.</p>
-            <div class="grow" id="rank"></div>
-            <div class="tw">
-              <table class="runs">
-                <thead><tr><th scope="col">Query set</th><th scope="col">Method</th><th scope="col">Mean latency (ms)</th><th scope="col">P99 (ms)</th><th scope="col">MRR@10</th><th scope="col">NDCG@10</th></tr></thead>
-                <tbody id="runs-body"></tbody>
-              </table>
-            </div>
-            <p class="callout">Latencies are within 3.3 ms of each other (175.4 against 172.1 ms on MS MARCO Dev). Both methods read the same postings and aggregate both score columns, so these numbers can’t show a speed advantage for Guided Traversal.</p>
-          </div>
-
-          <div class="block">
-            <span class="tag-pub">Published figures, not our run</span>
-            <h3>What the paper reports</h3>
-            <p>On MS MARCO Dev, Guided Traversal is about four times faster than DeepImpact (19.5 ms to 4.8 ms) at the same RR@10, and the interpolated version scores higher. Our notebook latencies can’t be compared with these: hardware, software, aggregation and candidate handling differ, and the paper used a 512 GiB server with single-threaded traversal.</p>
-            <div class="grow" id="paper-chart"></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= LIMITS ================= -->
-    <section class="sec" id="limits">
-      <div class="wrap split">
-        <header>
-          <h2>What these numbers can’t say</h2>
-          <p>The index and the ranking gain are solid. The speed story belongs to the paper.</p>
-        </header>
-        <dl class="rows">
-          <div>
-            <dt>No GT or GTI timings from our engine</dt>
-            <dd>The C++ engine implements MaxScore, Guided Traversal and the interpolated version, and our presentation described favourable results. The saved outputs don’t include figures that would back a speed-up factor.</dd>
-          </div>
-          <div>
-            <dt>Baseline latencies aren’t a speed test</dt>
-            <dd>BM25 and DeepImpact both read the same postings in our notebook, so they take about the same time and sit far from the paper’s 5 to 20 ms.</dd>
-          </div>
-          <div>
-            <dt>Close to the paper’s index, not identical</dt>
-            <dd>Our vocabulary size and postings count differ slightly from the paper’s. Tokenization, normalization or term filtering are the likely causes, but no ablation tested them.</dd>
-          </div>
-          <div>
-            <dt>Two different metrics</dt>
-            <dd>MRR@10 rewards the rank of the first relevant passage (MS MARCO). NDCG@10 uses graded relevance (TREC). They aren’t comparable to each other.</dd>
-          </div>
-        </dl>
-      </div>
-    </section>
-
-    <!-- ================= NEXT ================= -->
-    <section class="sec white" id="next">
-      <div class="wrap split">
-        <header>
-          <h2>What we’d do next</h2>
-          <p>Directions listed in the project’s own write-up.</p>
-        </header>
-        <dl class="rows">
-          <div>
-            <dt>Keep the engine’s output</dt>
-            <dd>Save top-k results, query counts, mean, median and P99 latency and the ranking metric for BM25, DeepImpact, GT and GTI.</dd>
-          </div>
-          <div>
-            <dt>Check index coverage</dt>
-            <dd>Inspect a sample of the index from both Python and C++: posting coverage and non-zero scores.</dd>
-          </div>
-          <div>
-            <dt>Pin versions, split timings</dt>
-            <dd>Document the exact tokenizer and model versions, measure sensitivity to parameters, and separate indexing, loading and search time.</dd>
-          </div>
-          <div>
-            <dt>Retrain DeepImpact</dt>
-            <dd>Check, or retrain, DeepImpact on the expanded collection, after studying the original models and training.</dd>
-          </div>
-        </dl>
-      </div>
-    </section>
-
-    <!-- ================= PAPER ================= -->
-    <section class="sec" id="paper" style="background: var(--ink); padding-top: 0">
-      <div class="wrap">
-        <div class="report">
-          <div>
-            <h2>Start from the paper</h2>
-            <p>The method this project reproduces: Mallia, Mackenzie, Suel and Tonellotto, SIGIR 2022.</p>
-          </div>
-          <a class="btn btn-light" href="https://doi.org/10.1145/3477495.3531774" target="_blank" rel="noreferrer">Open the paper</a>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="foot">
-    <div class="wrap">
-      <span>© 2026 Younes Arjdal</span>
-      <a href="../index.html#projects">Back to projects ↑</a>
-    </div>
-  </footer>
-
-  <script>
+</div>
+<div class="block">
+<h3>Word positions are not WordPiece positions</h3>
+<p>The model’s <code>index()</code> expects positions of BERT sub-tokens. Our first version passed word indices from <code>split()</code>. As soon as one word breaks into several pieces, every later word is shifted. The fix rebuilds positions from each word’s first sub-token, adds the <code>[CLS]</code> offset and respects truncation.</p>
+<div aria-label="Example WordPiece sequence" class="toks">
+<span>[CLS]<i>0</i></span><span>the<i>1</i></span><span>em<i>2</i></span><span>##bed<i>3</i></span><span>##ding<i>4</i></span><span>##s<i>5</i></span><span>are<i>6</i></span><span>cached<i>7</i></span>
+</div>
+<div class="tw">
+<table class="wp">
+<thead><tr><th scope="col">Word</th><th scope="col">Index from split()</th><th scope="col">Lands on</th><th scope="col">Correct position</th></tr></thead>
+<tbody>
+<tr><td>the</td><td>0</td><td class="bad">[CLS]</td><td class="good">1</td></tr>
+<tr><td>embeddings</td><td>1</td><td class="bad">the</td><td class="good">2</td></tr>
+<tr><td>are</td><td>2</td><td class="bad">em</td><td class="good">6</td></tr>
+<tr><td>cached</td><td>3</td><td class="bad">##bed</td><td class="good">7</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">Illustrative split of a made-up sentence, not data from the project. A shift like this still gives believable numbers, just for the wrong terms.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= RESULTS ================= -->
+<section class="sec dark" id="results">
+<div class="wrap split">
+<header>
+<h2>DeepImpact ranks better, at about the same cost here</h2>
+<p>Saved notebook outputs for the two baselines. They show the ranking gain, not a speed-up for Guided Traversal.</p>
+</header>
+<div>
+<div class="block">
+<h3>Ranking quality, DeepImpact against BM25</h3>
+<p>Each query set is shown with its main metric: MRR@10 for MS MARCO, NDCG@10 for TREC.</p>
+<div class="grow" id="rank"></div>
+<div class="tw">
+<table class="runs">
+<thead><tr><th scope="col">Query set</th><th scope="col">Method</th><th scope="col">Mean latency (ms)</th><th scope="col">P99 (ms)</th><th scope="col">MRR@10</th><th scope="col">NDCG@10</th></tr></thead>
+<tbody id="runs-body"></tbody>
+</table>
+</div>
+<p class="callout">Latencies are within 3.3 ms of each other (175.4 against 172.1 ms on MS MARCO Dev). Both methods read the same postings and aggregate both score columns, so these numbers can’t show a speed advantage for Guided Traversal.</p>
+</div>
+<div class="block">
+<span class="tag-pub">Published figures, not our run</span>
+<h3>What the paper reports</h3>
+<p>On MS MARCO Dev, Guided Traversal is about four times faster than DeepImpact (19.5 ms to 4.8 ms) at the same RR@10, and the interpolated version scores higher. Our notebook latencies can’t be compared with these: hardware, software, aggregation and candidate handling differ, and the paper used a 512 GiB server with single-threaded traversal.</p>
+<div class="grow" id="paper-chart"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= LIMITS ================= -->
+<section class="sec" id="limits">
+<div class="wrap split">
+<header>
+<h2>What these numbers can’t say</h2>
+<p>The index and the ranking gain are solid. The speed story belongs to the paper.</p>
+</header>
+<dl class="rows">
+<div>
+<dt>No GT or GTI timings from our engine</dt>
+<dd>The C++ engine implements MaxScore, Guided Traversal and the interpolated version, and our presentation described favourable results. The saved outputs don’t include figures that would back a speed-up factor.</dd>
+</div>
+<div>
+<dt>Baseline latencies aren’t a speed test</dt>
+<dd>BM25 and DeepImpact both read the same postings in our notebook, so they take about the same time and sit far from the paper’s 5 to 20 ms.</dd>
+</div>
+<div>
+<dt>Close to the paper’s index, not identical</dt>
+<dd>Our vocabulary size and postings count differ slightly from the paper’s. Tokenization, normalization or term filtering are the likely causes, but no ablation tested them.</dd>
+</div>
+<div>
+<dt>Two different metrics</dt>
+<dd>MRR@10 rewards the rank of the first relevant passage (MS MARCO). NDCG@10 uses graded relevance (TREC). They aren’t comparable to each other.</dd>
+</div>
+</dl>
+</div>
+</section>
+<!-- ================= NEXT ================= -->
+<section class="sec white" id="next">
+<div class="wrap split">
+<header>
+<h2>What we’d do next</h2>
+<p>Directions listed in the project’s own write-up.</p>
+</header>
+<dl class="rows">
+<div>
+<dt>Keep the engine’s output</dt>
+<dd>Save top-k results, query counts, mean, median and P99 latency and the ranking metric for BM25, DeepImpact, GT and GTI.</dd>
+</div>
+<div>
+<dt>Check index coverage</dt>
+<dd>Inspect a sample of the index from both Python and C++: posting coverage and non-zero scores.</dd>
+</div>
+<div>
+<dt>Pin versions, split timings</dt>
+<dd>Document the exact tokenizer and model versions, measure sensitivity to parameters, and separate indexing, loading and search time.</dd>
+</div>
+<div>
+<dt>Retrain DeepImpact</dt>
+<dd>Check, or retrain, DeepImpact on the expanded collection, after studying the original models and training.</dd>
+</div>
+</dl>
+</div>
+</section>
+<!-- ================= PAPER ================= -->
+<section class="sec" id="paper" style="background: var(--ink); padding-top: 0">
+<div class="wrap">
+<div class="report">
+<div>
+<h2>Start from the paper</h2>
+<p>The method this project reproduces: Mallia, Mackenzie, Suel and Tonellotto, SIGIR 2022.</p>
+</div>
+<a class="btn btn-light" href="https://doi.org/10.1145/3477495.3531774" rel="noreferrer" target="_blank">Open the paper</a>
+</div>
+</div>
+</section>
+</main>
+<footer class="foot">
+<div class="wrap">
+<span>© 2026 Younes Arjdal</span>
+<a href="../index.html#projects">Back to projects ↑</a>
+</div>
+</footer>
+<script>
   (() => {
     const $ = (s, r = document) => r.querySelector(s);
     const $$ = (s, r = document) => [...r.querySelectorAll(s)];
